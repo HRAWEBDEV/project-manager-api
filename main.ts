@@ -1,8 +1,21 @@
 import { Hono } from "hono";
+
 const app = new Hono();
 
-app.get("/", (c) => {
-  return c.text("my first deno app");
+// Middleware
+app.use(async (_, next) => {
+  console.log("middleware");
+  await next();
 });
 
-Deno.serve(app.fetch);
+// Routes
+app.get("/", (c) => {
+  return c.html("<h1>Hello World</h1>");
+});
+
+Deno.serve(
+  {
+    port: 8080,
+  },
+  app.fetch,
+);
