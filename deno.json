@@ -1,10 +1,18 @@
 {
   "imports": {
     "@std/dotenv": "jsr:@std/dotenv@^0.225.6",
-    "hono": "jsr:@hono/hono@^4.11.9"
+    "@types/pg": "npm:@types/pg@^8.16.0",
+    "drizzle-kit": "npm:drizzle-kit@^0.31.9",
+    "drizzle-orm": "npm:drizzle-orm@^0.45.1",
+    "hono": "jsr:@hono/hono@^4.11.9",
+    "pg": "npm:pg@^8.18.0"
   },
   "tasks": {
-    "start": "deno run --allow-net --allow-read --allow-env main.ts"
+    "dev": "deno run --env-file=.env --allow-net --allow-read --allow-env --watch main.ts",
+    "start": "deno run --env-file=.env --allow-net --allow-read --allow-env main.ts",
+    "db:generate": "deno run --env-file=.env --allow-all --node-modules-dir=auto npm:drizzle-kit generate",
+    "db:migrate": "deno run --env-file=.env --allow-all --node-modules-dir=auto npm:drizzle-kit migrate",
+    "db:push": "deno run --env-file=.env --allow-all --node-modules-dir=auto npm:drizzle-kit push"
   },
   "compilerOptions": {
     "jsx": "precompile",
