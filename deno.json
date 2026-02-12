@@ -4,11 +4,14 @@
     "@types/pg": "npm:@types/pg@^8.16.0",
     "drizzle-kit": "npm:drizzle-kit@^0.31.9",
     "drizzle-orm": "npm:drizzle-orm@^0.45.1",
+    "drizzle-zod": "npm:drizzle-zod@^0.8.3",
     "hono": "jsr:@hono/hono@^4.11.9",
-    "pg": "npm:pg@^8.18.0"
+    "pg": "npm:pg@^8.18.0",
+    "zod": "npm:zod@^4.3.6"
   },
   "tasks": {
     "dev": "deno run --env-file=.env --allow-net --allow-read --allow-env --watch main.ts",
+    "compile": "deno compile --allow-all --env-file=.env main.ts",
     "start": "deno run --env-file=.env --allow-net --allow-read --allow-env main.ts",
     "db:generate": "deno run --env-file=.env --allow-all --node-modules-dir=auto npm:drizzle-kit generate",
     "db:migrate": "deno run --env-file=.env --allow-all --node-modules-dir=auto npm:drizzle-kit migrate",
