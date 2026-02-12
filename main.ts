@@ -1,13 +1,12 @@
 import { Hono } from "hono";
 import { closeConnection, testConnection } from "./src/db/connect.ts";
+import { v1Routes } from "./src/api/v1/index.ts";
 
 const app = new Hono();
-
+const api = new Hono().basePath("/api");
 // Routes
-app.get("/", (c) => {
-  return c.html("<h1>Hello World from deno</h1>");
-});
-
+api.route("/", v1Routes);
+app.route("/", api);
 // Start server
 const serverPort = parseInt(Deno.env.get("PORT") || "8000");
 
@@ -15,7 +14,7 @@ async function startServer() {
   try {
     const result = await testConnection();
     if (!result) {
-      console.log("Failed to connect to database");
+      console.log("Failed to start application");
       Deno.exit(1);
     }
     Deno.serve(
