@@ -9,7 +9,12 @@ import {
 } from "../../../db/v1/schemas/organizations.ts";
 import { parseUUID } from "../../../db/utils/apiIndetity.ts";
 import { db } from "../../../db/connect.ts";
-import { type ApiPaginationResponse } from "../../../db/utils/apiGeneralTypes.ts";
+import {
+  type ApiPaginationResponse,
+  type ApiResponse,
+} from "../../../db/utils/apiGeneralTypes.ts";
+
+type SelectOrganization = Pick<Organization, "id" | "name" | "code">;
 
 const router = new Hono().basePath("organizations");
 
@@ -20,39 +25,42 @@ const systematiceColumns = {
   updatedAt: true,
   deleted: true,
 } as const;
+
+const selectColumns = {
+  id: organizations.id,
+  name: organizations.name,
+  code: organizations.code,
+};
+
+function getSelectCondition({ search }: { search?: string }) {
+  let condition: SQL<unknown> | undefined = eq(organizations.deleted, false);
+  if (search) {
+    condition = and(
+      condition,
+      ilike(organizations.name, `%${search}%`),
+    );
+  }
+  return condition;
+}
+
 // get all
 router.get("/", async (c) => {
   const query = c.req.query();
   const { search } = query;
   const { limit, offset } = getPaginationValues(query);
 
-  function getSelectCondition() {
-    let condition: SQL<unknown> | undefined = eq(organizations.deleted, false);
-    if (search) {
-      condition = and(
-        condition,
-        ilike(organizations.name, `%${search}%`),
-      );
-    }
-    return condition;
-  }
-  const selectCodition = getSelectCondition();
-
+  const selectCodition = getSelectCondition({ search });
   const rowCount = await db.$count(
     organizations,
     selectCodition,
   );
-  const orgs = await db.select({
-    id: organizations.id,
-    name: organizations.name,
-    code: organizations.code,
-  }).from(organizations).where(
+  const orgs = await db.select(selectColumns).from(organizations).where(
     selectCodition,
   ).orderBy(
     asc(organizations.createdAt),
   ).limit(limit as number).offset(offset as number);
   const res: ApiPaginationResponse<
-    Pick<Organization, "id" | "name" | "code">[]
+    SelectOrganization[]
   > = {
     data: orgs,
     limit: limit as number,
@@ -65,10 +73,19 @@ router.get("/", async (c) => {
 router.get("/:id", async (c) => {
   const id = c.req.param("id");
   parseUUID(id);
+  const selectCodition = getSelectCondition({ search: undefined });
   try {
-    const res = await db.select().from(organizations).where(
-      eq(organizations.id, id),
+    const org = await db.select(selectColumns).from(organizations).where(
+      and(
+        eq(organizations.id, id),
+        selectCodition,
+      ),
     );
+    const res: ApiResponse<
+      SelectOrganization[]
+    > = {
+      data: org,
+    };
     return c.json(res);
   } catch {
     throw new NotFoundError("Organization not found");
