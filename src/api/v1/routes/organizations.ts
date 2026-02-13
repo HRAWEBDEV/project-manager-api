@@ -82,9 +82,9 @@ router.get("/:id", async (c) => {
       ),
     );
     const res: ApiResponse<
-      SelectOrganization[]
+      SelectOrganization
     > = {
-      data: org,
+      data: org[0],
     };
     return c.json(res);
   } catch {
