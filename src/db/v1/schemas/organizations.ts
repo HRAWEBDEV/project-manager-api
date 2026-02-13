@@ -12,7 +12,10 @@ type UpdateOrganization = z.infer<typeof organizationUpdateSchema>;
 
 export const organizations = pgTable("organizations", {
   id: uuid().defaultRandom().primaryKey(),
+  code: varchar({ length: 255 }).notNull(),
   name: varchar({ length: 255 }).notNull(),
+  phoneNumber: varchar("phone_number", { length: 255 }).notNull(),
+  email: varchar({ length: 255 }),
   ...trackChanges,
 });
 

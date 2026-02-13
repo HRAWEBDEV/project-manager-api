@@ -7,6 +7,7 @@ const api = new Hono().basePath("/api");
 // Routes
 api.route("/", v1Routes);
 app.route("/", api);
+
 // Start server
 const serverPort = parseInt(Deno.env.get("PORT") || "8000");
 
