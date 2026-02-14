@@ -35,10 +35,7 @@ const selectColumns = {
 function getSelectCondition({ search }: { search?: string }) {
   let condition: SQL<unknown> | undefined = eq(organizations.deleted, false);
   if (search) {
-    condition = and(
-      condition,
-      ilike(organizations.name, `%${search}%`),
-    );
+    condition = and(condition, ilike(organizations.name, `%${search}%`));
   }
   return condition;
 }
@@ -50,18 +47,15 @@ router.get("/", async (c) => {
   const { limit, offset } = getPaginationValues(query);
 
   const selectCodition = getSelectCondition({ search });
-  const rowCount = await db.$count(
-    organizations,
-    selectCodition,
-  );
-  const orgs = await db.select(selectColumns).from(organizations).where(
-    selectCodition,
-  ).orderBy(
-    asc(organizations.createdAt),
-  ).limit(limit as number).offset(offset as number);
-  const res: ApiPaginationResponse<
-    SelectOrganization[]
-  > = {
+  const rowCount = await db.$count(organizations, selectCodition);
+  const orgs = await db
+    .select(selectColumns)
+    .from(organizations)
+    .where(selectCodition)
+    .orderBy(asc(organizations.createdAt))
+    .limit(limit as number)
+    .offset(offset as number);
+  const res: ApiPaginationResponse<SelectOrganization[]> = {
     data: orgs,
     limit: limit as number,
     offset: offset as number,
@@ -75,15 +69,11 @@ router.get("/:id", async (c) => {
   parseUUID(id);
   const selectCodition = getSelectCondition({ search: undefined });
   try {
-    const org = await db.select(selectColumns).from(organizations).where(
-      and(
-        eq(organizations.id, id),
-        selectCodition,
-      ),
-    );
-    const res: ApiResponse<
-      SelectOrganization
-    > = {
+    const org = await db
+      .select(selectColumns)
+      .from(organizations)
+      .where(and(eq(organizations.id, id), selectCodition));
+    const res: ApiResponse<SelectOrganization> = {
       data: org[0],
     };
     return c.json(res);
@@ -95,15 +85,19 @@ router.get("/:id", async (c) => {
 router.post("/", async (c) => {
   const body = await c.req.json();
   const { name, email, phoneNumber } = organizationInsertSchema
-    .omit(systematiceColumns).parse(body);
-  const res = await db.insert(organizations).values({
-    name,
-    phoneNumber,
-    email,
-    code: "test",
-  }).returning({
-    id: organizations.id,
-  });
+    .omit(systematiceColumns)
+    .parse(body);
+  const res = await db
+    .insert(organizations)
+    .values({
+      name,
+      phoneNumber,
+      email,
+      code: "test",
+    })
+    .returning({
+      id: organizations.id,
+    });
   return c.json(res);
 });
 // update
@@ -112,11 +106,13 @@ router.put("/:id", async (c) => {
   parseUUID(id);
   const body = await c.req.json();
   const { name, email, phoneNumber } = organizationInsertSchema
-    .omit(systematiceColumns).parse(body);
-  const res = await db.update(organizations).set({ name, email, phoneNumber })
-    .where(
-      eq(organizations.id, id),
-    ).returning({
+    .omit(systematiceColumns)
+    .parse(body);
+  const res = await db
+    .update(organizations)
+    .set({ name, email, phoneNumber })
+    .where(eq(organizations.id, id))
+    .returning({
       id: organizations.id,
     });
   return c.json(res);
