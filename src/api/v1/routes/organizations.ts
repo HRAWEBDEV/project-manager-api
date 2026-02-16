@@ -16,7 +16,7 @@ import {
 
 type SelectOrganization = Pick<Organization, "id" | "name" | "code">;
 
-const router = new Hono().basePath("organizations");
+const router = new Hono().basePath("/organizations");
 
 const systematiceColumns = {
   id: true,

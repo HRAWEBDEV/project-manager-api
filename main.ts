@@ -1,9 +1,12 @@
 import { Hono } from "hono";
-import { closeConnection, testConnection } from "./src/db/connect.ts";
-import { v1Routes } from "./src/api/v1/index.ts";
+import { secureHeaders } from "hono/secure-headers";
+import { closeConnection, testConnection } from "@src/db/connect.ts";
+import { v1Routes } from "@src/api/v1/index.ts";
 
 const app = new Hono();
 const api = new Hono().basePath("/api");
+//
+// app.use(secureHeaders());
 // Routes
 api.route("/", v1Routes);
 app.route("/", api);
