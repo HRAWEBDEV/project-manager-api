@@ -5,8 +5,10 @@ import { trackChanges } from "../../utils/trackChanges.ts";
 
 const organizationMembers = pgTable("organization_members", {
   id: uuid().primaryKey().defaultRandom(),
-  organizationId: uuid("organization_id").references(() => organizations.id),
-  userId: uuid("user_id").references(() => users.id),
+  organizationId: uuid("organization_id").notNull().references(() =>
+    organizations.id
+  ),
+  userId: uuid("user_id").notNull().references(() => users.id),
   ...trackChanges,
 });
 

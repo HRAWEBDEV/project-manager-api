@@ -5,8 +5,8 @@ import { trackChanges } from "../../utils/trackChanges.ts";
 
 const memberRoles = pgTable("member_roles", {
   id: uuid().defaultRandom().primaryKey(),
-  roleId: uuid("role_id").references(() => roles.id),
-  memberId: uuid("member").references(() => organizationMembers.id),
+  roleId: uuid("role_id").notNull().references(() => roles.id),
+  memberId: uuid("member").notNull().references(() => organizationMembers.id),
   ...trackChanges,
 });
 

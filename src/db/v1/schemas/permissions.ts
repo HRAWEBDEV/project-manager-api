@@ -4,7 +4,7 @@ import { trackChanges } from "../../utils/trackChanges.ts";
 
 const permissions = pgTable("permissions", {
   id: uuid("id").primaryKey().defaultRandom(),
-  roleId: uuid("role_id").references(() => roles.id),
+  roleId: uuid("role_id").notNull().references(() => roles.id),
   name: text().notNull(),
   write: boolean().notNull().default(false),
   read: boolean().notNull().default(false),
