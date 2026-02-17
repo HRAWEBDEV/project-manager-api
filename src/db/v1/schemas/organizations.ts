@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { trackChanges } from "../../utils/trackChanges.ts";
 import {
   createInsertSchema,
@@ -12,10 +12,9 @@ type UpdateOrganization = z.infer<typeof organizationUpdateSchema>;
 
 export const organizations = pgTable("organizations", {
   id: uuid().defaultRandom().primaryKey(),
-  code: varchar({ length: 255 }).notNull(),
-  name: varchar({ length: 255 }).notNull(),
-  phoneNumber: varchar("phone_number", { length: 255 }).notNull(),
-  email: varchar({ length: 255 }),
+  name: text().notNull(),
+  email: text(),
+  address: text(),
   ...trackChanges,
 });
 

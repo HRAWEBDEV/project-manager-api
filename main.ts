@@ -7,7 +7,6 @@ import { serveStatic } from "hono/deno";
 
 const app = new Hono();
 const api = new Hono().basePath("/api");
-//
 // Routes
 api.route("/", v1Routes);
 app.route("/", api);
