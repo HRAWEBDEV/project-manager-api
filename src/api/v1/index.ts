@@ -1,12 +1,10 @@
 import { Hono } from "hono";
-import { router as organizationsRouter } from "./routes/organizations.ts";
 import { NotFoundError } from "../../db/utils/NotFound.ts";
 import { ZodError } from "zod";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../db/utils/apiGeneralTypes.ts";
 
 const v1Routes = new Hono().basePath("/v1");
-v1Routes.route("/", organizationsRouter);
 
 v1Routes.onError((err, c) => {
   if (err instanceof ZodError) {

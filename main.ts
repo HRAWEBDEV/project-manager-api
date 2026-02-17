@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { closeConnection, testConnection } from "@src/db/connect.ts";
 import { v1Routes } from "@src/api/v1/index.ts";
 import { serveStatic } from "hono/deno";
+import { logger } from "hono/logger";
 
 const app = new Hono();
 const api = new Hono().basePath("/api");
@@ -11,6 +12,8 @@ const api = new Hono().basePath("/api");
 api.route("/", v1Routes);
 app.route("/", api);
 
+// logger
+app.use(logger());
 // set secure header
 app.use(secureHeaders());
 // set cors setup
