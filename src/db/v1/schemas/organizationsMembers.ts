@@ -1,7 +1,7 @@
 import { pgTable, uuid } from "drizzle-orm/pg-core";
 import { organizations } from "./organizations.ts";
 import { users } from "./users.ts";
-import { trackChanges } from "@src/db/utils/trackChanges.ts";
+import { trackChanges } from "../../utils/trackChanges.ts";
 
 const organizationMembers = pgTable("organization_members", {
   id: uuid().primaryKey().defaultRandom(),
