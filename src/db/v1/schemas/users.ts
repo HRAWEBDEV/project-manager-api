@@ -7,6 +7,7 @@ const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   phoneNumber: text("phone_number").notNull(),
   email: text("email"),
+  hashedPassword: text("hashed_password").notNull(),
   ...trackChanges,
 });
 
