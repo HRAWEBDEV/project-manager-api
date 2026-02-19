@@ -6,4 +6,5 @@ export default defineConfig({
   dbCredentials: {
     url: Deno.env.get("DATABASE_URL")!,
   },
+  schemaFilter: ["public"],
 });
