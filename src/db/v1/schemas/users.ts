@@ -15,8 +15,8 @@ const users = pgTable("users", {
   id: uuid().primaryKey().defaultRandom(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
-  phoneNumber: text("phone_number").notNull(),
-  email: text("email"),
+  phoneNumber: text("phone_number").notNull().unique(),
+  email: text("email").notNull().unique(),
   hashedPassword: text("hashed_password").notNull(),
   ...trackChanges,
 });
