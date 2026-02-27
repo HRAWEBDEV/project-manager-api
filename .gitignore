@@ -1,3 +1,4 @@
+*.exe
 *.env
 drizzle
 node_modules
