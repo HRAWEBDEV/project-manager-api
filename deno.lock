@@ -5,6 +5,7 @@
     "jsr:@std/dotenv@~0.225.6": "0.225.6",
     "npm:@types/pg@^8.16.0": "8.16.0",
     "npm:argon2@0.44": "0.44.0",
+    "npm:crypto@^1.0.1": "1.0.1",
     "npm:drizzle-kit@*": "0.31.9_esbuild@0.25.12",
     "npm:drizzle-kit@~0.31.9": "0.31.9_esbuild@0.25.12",
     "npm:drizzle-orm@~0.45.1": "0.45.1_@types+pg@8.16.0_pg@8.18.0",
@@ -330,6 +331,10 @@
         "which"
       ]
     },
+    "crypto@1.0.1": {
+      "integrity": "sha512-VxBKmeNcqQdiUQUW2Tzq0t377b54N2bMtXO/qiLa+6eRRmmC4qT3D4OnTGoT/U6O9aklQ/jTwbOtRMTTY8G0Ig==",
+      "deprecated": true
+    },
     "debug@4.4.3": {
       "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==",
       "dependencies": [
@@ -568,6 +573,7 @@
       "jsr:@std/dotenv@~0.225.6",
       "npm:@types/pg@^8.16.0",
       "npm:argon2@0.44",
+      "npm:crypto@^1.0.1",
       "npm:drizzle-kit@~0.31.9",
       "npm:drizzle-orm@~0.45.1",
       "npm:drizzle-zod@~0.8.3",
