@@ -3,8 +3,10 @@ import { NotFoundError } from "../../db/utils/NotFound.ts";
 import { ZodError } from "zod";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../db/utils/apiGeneralTypes.ts";
+import { authRoutes } from "./routes/auth/auto.ts";
 
 const v1Routes = new Hono().basePath("/v1");
+v1Routes.route("/", authRoutes);
 
 v1Routes.onError((err, c) => {
   if (err instanceof ZodError) {
