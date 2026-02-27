@@ -2,8 +2,15 @@ import { db } from "@src/db/connect.ts";
 import { eq, or, SQL } from "drizzle-orm";
 import { type Session, sessions } from "@src/db/v1/schemas/sessions.ts";
 import { generateToken, hashToken } from "./token.ts";
-import { type User, type UserInsert, users } from "@src/db/v1/schemas/users.ts";
+import {
+  constraintUser,
+  selectUserSchema,
+  type User,
+  type UserInsert,
+  users,
+} from "@src/db/v1/schemas/users.ts";
 import * as argon2 from "argon2";
+import z from "zod";
 
 const SESSION_EXPIRE_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 const USER_EXISTS = "USER_EXISTS";
@@ -24,6 +31,18 @@ class AuthService {
         "ipAddress" | "userAgent"
       >,
   ) {
+    selectUserSchema.pick({
+      firstName: true,
+      lastName: true,
+      email: true,
+      phoneNumber: true,
+    }).superRefine(constraintUser).parse({
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+    });
+
     const existedUser = await db.select().from(users).where(
       or(eq(users.email, email), eq(users.phoneNumber, phoneNumber)),
     ).limit(1);
@@ -64,13 +83,27 @@ class AuthService {
         "ipAddress" | "userAgent"
       >,
   ) {
-    let where: null | SQL<unknown> = null;
-    if ("phoneNumber" in credentials) {
+    let where: null | SQL<unknown> = eq(users.phoneNumber, "never");
+    z.string().min(1).parse(credentials.password);
+    z.object({
+      email: z.string().optional(),
+      phoneNumber: z.string().optional(),
+    }).superRefine((data, ctx) => {
+      if (!data.email && !data.phoneNumber) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Email or phone number is required",
+        });
+      }
+    }).parse(credentials);
+
+    if ("phoneNumber" in credentials && credentials.phoneNumber) {
       where = eq(users.phoneNumber, credentials.phoneNumber);
-    } else {
+    } else if ("email" in credentials && credentials.email) {
       where = eq(users.email, credentials.email);
     }
-    const foundUser = await db.select().from(users).where(where).limit(1);
+
+    const foundUser = await db.select().from(users).where(where!).limit(1);
     if (!foundUser.length) throw new Error(INVALID_CREDENTIALS);
     const validPassword = await argon2.verify(
       foundUser[0].hashedPassword,
