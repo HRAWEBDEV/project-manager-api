@@ -11,7 +11,7 @@ function hashPassword(password: string) {
 }
 
 function verifyPassword(password: string, compareWith: string) {
-  return argon2.verify(password, compareWith);
+  return argon2.verify(compareWith, password);
 }
 
 function checkMyPassword(password: string) {

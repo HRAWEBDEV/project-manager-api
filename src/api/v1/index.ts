@@ -30,7 +30,7 @@ v1Routes.onError((err, c) => {
       getApiErrorShape({
         status: "failed",
         code: StatusCodes.NOT_FOUND,
-        message: ReasonPhrases.NOT_FOUND,
+        message: err.message || ReasonPhrases.NOT_FOUND,
       }),
       StatusCodes.NOT_FOUND,
     );
