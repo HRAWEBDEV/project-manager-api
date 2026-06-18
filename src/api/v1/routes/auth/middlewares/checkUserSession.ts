@@ -1,15 +1,23 @@
 import { createMiddleware } from "hono/factory";
-import { getCookie } from "Hono/cookie";
+import { getCookie } from "hono/cookie";
 import { db } from "../../../../../db/v1/connect";
-import { sessions } from "../../../../../db/v1/schemas/sessions";
-import { users } from "../../../../../db/v1/schemas/users";
+import { sessions, type Session } from "../../../../../db/v1/schemas/sessions";
+import { users, type User } from "../../../../../db/v1/schemas/users";
 import { eq, and, gt } from "drizzle-orm";
 import { hashToken } from "../utils/sessionManager";
 import { SESSION_NAME } from "../utils/sessionManager";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import { getApiErrorShape } from "../../../../../db/v1/utils/apiGeneralTypes";
+import {
+  USER,
+  SESSION,
+  type WithSessionVariables,
+} from "../utils/contextSessionVaraibles";
+import type { MiddlewareHandler } from "hono";
 
-const checkUserSession = createMiddleware(async (c, next) => {
+const checkUserSession: MiddlewareHandler<{
+  Variables: WithSessionVariables["Variables"];
+}> = createMiddleware(async (c, next) => {
   const userSession = getCookie(c, SESSION_NAME);
   if (!userSession)
     return c.json(
@@ -38,8 +46,8 @@ const checkUserSession = createMiddleware(async (c, next) => {
       StatusCodes.UNAUTHORIZED,
     );
   }
-  c.set("session", session[0].sessions);
-  c.set("user", session[0].users);
+  c.set(SESSION, session[0].sessions);
+  c.set(USER, session[0].users);
   await next();
 });
 

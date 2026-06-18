@@ -1,5 +1,5 @@
-import { Hono } from "hono";
-import { setCookie } from "Hono/cookie";
+import { Hono, type Handler } from "hono";
+import { setCookie } from "hono/cookie";
 import {
   type Organization,
   organizationInsertSchema,
@@ -22,11 +22,14 @@ import {
   generateToken,
   hashToken,
 } from "../auth/utils/sessionManager";
+import { type WithSessionVariables } from "../auth/utils/contextSessionVaraibles";
 
 const accountRoutes = new Hono().basePath("/account");
 
 // for create a new account we get user and organization informatin and then a new user and a new organization will be created
-accountRoutes.post("/create", async (c) => {
+const handleCreateAccount: Handler<{
+  Variables: WithSessionVariables["Variables"];
+}> = async (c) => {
   const { user, organization } = (await c.req.json()) as {
     user?: Pick<User, "firstName" | "lastName" | "email" | "phoneNumber"> & {
       password: string;
@@ -64,35 +67,39 @@ accountRoutes.post("/create", async (c) => {
   const token = generateToken();
   const hashedToken = await hashToken(token);
   const [createdSession] = await db.transaction(async (tx) => {
-    const [[createdOg], [createdUser]] = await Promise.all([
-      tx.insert(organizations).values(organization).returning(),
-      tx
-        .insert(users)
-        .values({ ...user, hashedPassword: hashedPassword })
-        .returning(),
-    ]);
+    const [createdUser] = await tx
+      .insert(users)
+      .values({ ...user, hashedPassword: hashedPassword })
+      .returning();
+
+    const [createdOg] = await tx
+      .insert(organizations)
+      .values(organization)
+      .returning();
+
     if (undefined === createdOg) {
       throw new Error("Failed to create organization");
     }
     if (undefined === createdUser) {
       throw new Error("Failed to create user");
     }
-    const [[createdMember], [createdSession]] = await Promise.all([
-      tx
-        .insert(organizationMembers)
-        .values({ userId: createdUser.id, organizationId: createdOg.id })
-        .returning(),
-      tx
-        .insert(sessions)
-        .values({
-          userId: createdUser.id,
-          userAgent,
-          ipAddress,
-          token: hashedToken,
-          expiresAt: new Date(Date.now() + SESSION_EXPIRE_MS),
-        })
-        .returning(),
-    ]);
+
+    const [createdMember] = await tx
+      .insert(organizationMembers)
+      .values({ userId: createdUser.id, organizationId: createdOg.id })
+      .returning();
+
+    const [createdSession] = await tx
+      .insert(sessions)
+      .values({
+        userId: createdUser.id,
+        userAgent,
+        ipAddress,
+        token: hashedToken,
+        expiresAt: new Date(Date.now() + SESSION_EXPIRE_MS),
+      })
+      .returning();
+
     if (undefined === createdMember) {
       throw new Error("Failed to create member");
     }
@@ -106,6 +113,8 @@ accountRoutes.post("/create", async (c) => {
     path: "/",
   });
   return c.json({ message: "ACCOUNT CREATED" });
-});
+};
+
+accountRoutes.post("/create", handleCreateAccount);
 
 export { accountRoutes };
