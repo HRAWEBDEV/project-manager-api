@@ -10,7 +10,6 @@ import {
   SESSION_EXPIRE_MS,
   SESSION_NAME,
   generateToken,
-  hashToken,
 } from "./utils/sessionManager";
 import { hashToken } from "./utils/sessionManager";
 
