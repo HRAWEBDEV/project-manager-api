@@ -1,35 +1,37 @@
 import { z } from "zod";
 import { type HonoRequest } from "hono";
 
-const limitQueryName = "limit";
-const offsetQueryName = "offset";
+const pageSizeQueryName = "page-size";
+const pageQueryName = "page";
 
 type Pagination = z.infer<typeof paginationSchema>;
 type PaginationResShape = {
   rowCount: number;
+  page: number;
+  pageSize: number;
 } & Pagination;
 
 const paginationSchema = z.object({
-  [limitQueryName]: z.coerce.number().min(1),
-  [offsetQueryName]: z.coerce.number().min(0),
+  [pageSizeQueryName]: z.coerce.number().min(1),
+  [pageQueryName]: z.coerce.number().min(0),
 });
 
 const paginationDefaults = {
-  [limitQueryName]: 10,
-  [offsetQueryName]: 0,
+  [pageSizeQueryName]: 10,
+  [pageQueryName]: 0,
 };
 
 function getPaginationValues(query: ReturnType<HonoRequest["query"]>) {
   const pagination: Pagination = {
     ...paginationDefaults,
   };
-  const limitQuery = query[limitQueryName];
-  const offsetQuery = query[offsetQueryName];
-  if (paginationSchema.shape[limitQueryName].safeParse(limitQuery).success) {
-    pagination[limitQueryName] = Number(limitQuery);
+  const limitQuery = query[pageSizeQueryName];
+  const offsetQuery = query[pageQueryName];
+  if (paginationSchema.shape[pageSizeQueryName].safeParse(limitQuery).success) {
+    pagination[pageSizeQueryName] = Number(limitQuery);
   }
-  if (paginationSchema.shape[offsetQueryName].safeParse(offsetQuery).success) {
-    pagination[offsetQueryName] = Number(offsetQuery);
+  if (paginationSchema.shape[pageQueryName].safeParse(offsetQuery).success) {
+    pagination[pageQueryName] = Number(offsetQuery);
   }
   return pagination;
 }
@@ -37,8 +39,8 @@ function getPaginationValues(query: ReturnType<HonoRequest["query"]>) {
 export type { PaginationResShape };
 export {
   getPaginationValues,
-  limitQueryName,
-  offsetQueryName,
+  pageSizeQueryName,
+  pageQueryName,
   paginationDefaults,
   paginationSchema,
 };
