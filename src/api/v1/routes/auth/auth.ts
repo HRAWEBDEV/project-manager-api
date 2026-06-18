@@ -12,6 +12,7 @@ import {
   generateToken,
 } from "./utils/sessionManager";
 import { hashToken } from "./utils/sessionManager";
+import { cookieOptions } from "../../utils/cookieOptions";
 
 const authRoutes = new Hono().basePath("/auth");
 
@@ -53,7 +54,7 @@ authRoutes.post("/sign-in", async (c) => {
   }
   setCookie(c, SESSION_NAME, token, {
     expires: createdSession.expiresAt,
-    path: "/",
+    ...cookieOptions,
   });
   return c.json({ message: "sign in successful" });
 });
@@ -64,8 +65,8 @@ authRoutes.post("/logout", async (c) => {
   if (!token) {
     return c.json(successRes);
   }
-  const hashedToken = await hashToken(token);
-  await db.delete(sessions).where(eq(sessions.token, hashedToken));
+  // const hashedToken = await hashToken(token);
+  // await db.delete(sessions).where(eq(sessions.token, hashedToken));
   deleteCookie(c, SESSION_NAME);
   return c.json(successRes);
 });

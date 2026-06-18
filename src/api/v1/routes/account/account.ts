@@ -23,6 +23,7 @@ import {
   hashToken,
 } from "../auth/utils/sessionManager";
 import { type WithSessionVariables } from "../auth/utils/contextSessionVaraibles";
+import { cookieOptions } from "../../utils/cookieOptions";
 
 const accountRoutes = new Hono().basePath("/account");
 
@@ -110,7 +111,7 @@ const handleCreateAccount: Handler<{
   });
   setCookie(c, SESSION_NAME, token, {
     expires: createdSession.expiresAt,
-    path: "/",
+    ...cookieOptions,
   });
   return c.json({ message: "ACCOUNT CREATED" });
 };

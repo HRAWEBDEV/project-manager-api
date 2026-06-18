@@ -1,8 +1,8 @@
 import { createMiddleware } from "hono/factory";
 import { getCookie } from "hono/cookie";
 import { db } from "../../../../../db/v1/connect";
-import { sessions, type Session } from "../../../../../db/v1/schemas/sessions";
-import { users, type User } from "../../../../../db/v1/schemas/users";
+import { sessions } from "../../../../../db/v1/schemas/sessions";
+import { users } from "../../../../../db/v1/schemas/users";
 import { eq, and, gt } from "drizzle-orm";
 import { hashToken } from "../utils/sessionManager";
 import { SESSION_NAME } from "../utils/sessionManager";
@@ -14,6 +14,7 @@ import {
   type WithSessionVariables,
 } from "../utils/contextSessionVaraibles";
 import type { MiddlewareHandler } from "hono";
+import { cookieOptions } from "../../../utils/cookieOptions";
 
 const checkUserSession: MiddlewareHandler<{
   Variables: WithSessionVariables["Variables"];
