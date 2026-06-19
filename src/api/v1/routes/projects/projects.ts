@@ -138,11 +138,12 @@ const handleUpdateProject: Handler<{
   const id = c.req.param("id");
   updateProjectsSchema
     .pick({
+      id: true,
       name: true,
       color: true,
       isArchived: true,
     })
-    .parse({ name, color, isArchived });
+    .parse({ name, color, isArchived, id });
 
   const [updatedProject] = await db
     .update(projects)
