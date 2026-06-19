@@ -13,6 +13,7 @@ import {
 import { eq, and, exists, sql } from "drizzle-orm";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
+import { NotFoundError } from "../../../../db/v1/utils/NotFound";
 
 const workspacesRoutes = new Hono().basePath("/workspaces");
 const organizationIdQueryName = "organization-id";
@@ -125,7 +126,7 @@ const handleUpdateWorkspace: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
   const user = c.get(USER);
-  const { name, slug, isPrivate } = await c.req.json();
+  const { name, isPrivate } = await c.req.json();
   const id = c.req.param("id");
   updateWorkspaceSchema
     .pick({
@@ -138,7 +139,7 @@ const handleUpdateWorkspace: Handler<{
       name,
       isPrivate,
     });
-  const res = await db
+  const [updatedWorkspace] = await db
     .update(workspaces)
     .set({
       name,
@@ -147,40 +148,42 @@ const handleUpdateWorkspace: Handler<{
     .where(
       and(
         eq(workspaces.id, id!),
+        eq(workspaces.deleted, false),
         exists(checkUserWorkspaceMember(id!, user.id)),
       ),
     )
     .returning({
       id: workspaces.id,
     });
+  if (!updatedWorkspace) throw new NotFoundError("Workspace not found");
   return c.json({
-    data: res[0],
+    data: updatedWorkspace,
   });
 };
 workspacesRoutes.patch("/:id", handleUpdateWorkspace);
 
-const handleDeleteWorkspace: Handler<{
-  Variables: WithSessionVariables["Variables"];
-}> = async (c) => {
-  const user = c.get(USER);
-  const id = c.req.param("id");
-  const res = await db
-    .update(workspaces)
-    .set({ deleted: true })
-    .where(
-      and(
-        eq(workspaces.id, id!),
-        exists(checkUserWorkspaceMember(id!, user.id)),
-      ),
-    )
-    .returning({
-      id: workspaces.id,
-    });
-  return c.json({
-    data: res[0],
-  });
-};
-
-workspacesRoutes.delete("/:id", handleDeleteWorkspace);
+// TODO check workspace projects
+// const handleDeleteWorkspace: Handler<{
+//   Variables: WithSessionVariables["Variables"];
+// }> = async (c) => {
+//   const user = c.get(USER);
+//   const id = c.req.param("id");
+//   const res = await db
+//     .update(workspaces)
+//     .set({ deleted: true })
+//     .where(
+//       and(
+//         eq(workspaces.id, id!),
+//         exists(checkUserWorkspaceMember(id!, user.id)),
+//       ),
+//     )
+//     .returning({
+//       id: workspaces.id,
+//     });
+//   return c.json({
+//     data: res[0],
+//   });
+// };
+// workspacesRoutes.delete("/:id", handleDeleteWorkspace);
 
 export { workspacesRoutes };
