@@ -33,17 +33,22 @@ const handleGetWorkspaces: Handler<{
     .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id));
   const userWorkspaceEq = eq(workspaceMembers.userId, user.id);
   const notDeleted = eq(workspaces.deleted, false);
+  const resultOrderBy = workspaces.createdAt;
   if (organizationId) {
-    const res = await baseQuery.where(
-      and(
-        eq(workspaces.organizationId, organizationId),
-        userWorkspaceEq,
-        notDeleted,
-      ),
-    );
+    const res = await baseQuery
+      .where(
+        and(
+          eq(workspaces.organizationId, organizationId),
+          userWorkspaceEq,
+          notDeleted,
+        ),
+      )
+      .orderBy(resultOrderBy);
     return c.json({ data: res });
   } else {
-    const res = await baseQuery.where(and(userWorkspaceEq, notDeleted));
+    const res = await baseQuery
+      .where(and(userWorkspaceEq, notDeleted))
+      .orderBy(resultOrderBy);
     return c.json({ data: res });
   }
 };
@@ -53,7 +58,7 @@ const handleCreateWorkspace: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
   const user = c.get(USER);
-  const { organizationId, name, isPrivate = false } = await c.req.json();
+  const { organizationId, name, isPrivate } = await c.req.json();
   insertWorkspaceSchema
     .pick({
       organizationId: true,

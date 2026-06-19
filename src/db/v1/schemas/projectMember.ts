@@ -8,8 +8,10 @@ const projectMembers = pgTable(
   "project_members",
   {
     id: uuid().primaryKey().defaultRandom(),
-    projectId: uuid().references(() => projects.id, { onDelete: "cascade" }),
-    userId: uuid().references(() => users.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").references(() => projects.id, {
+      onDelete: "cascade",
+    }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   },
   (table) => [
     unique("projectId_userId_unique").on(table.projectId, table.userId),

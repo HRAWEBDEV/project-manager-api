@@ -20,5 +20,6 @@ export function getUserOrganizations(userId: string) {
         eq(organizationMembers.userId, userId),
         eq(organizations.deleted, false),
       ),
-    );
+    )
+    .orderBy(organizations.createdAt);
 }
