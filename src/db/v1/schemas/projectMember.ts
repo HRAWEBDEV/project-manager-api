@@ -12,7 +12,7 @@ const projectMembers = pgTable(
     userId: uuid().references(() => users.id, { onDelete: "cascade" }),
   },
   (table) => [
-    unique("workspaceId_userId_unique").on(table.projectId, table.userId),
+    unique("projectId_userId_unique").on(table.projectId, table.userId),
   ],
 );
 
