@@ -13,7 +13,6 @@ const boards = pgTable("boards", {
       onDelete: "cascade",
     }),
   name: text("name").notNull().unique(),
-  description: text("description"),
   position: integer("position").notNull().default(0),
   ...trackChanges,
 });
