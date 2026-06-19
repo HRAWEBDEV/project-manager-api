@@ -43,6 +43,20 @@
       "when": 1781769313451,
       "tag": "0005_illegal_supernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781849470442,
+      "tag": "0006_even_talisman",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781850700594,
+      "tag": "0007_married_dragon_man",
+      "breakpoints": true
     }
   ]
 }

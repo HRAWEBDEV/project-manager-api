@@ -7,9 +7,11 @@ type Board = typeof boards.$inferSelect;
 
 const boards = pgTable("boards", {
   id: uuid("id").primaryKey().defaultRandom(),
-  projectId: uuid("projectId").references(() => projects.id, {
-    onDelete: "cascade",
-  }),
+  projectId: uuid("projectId")
+    .notNull()
+    .references(() => projects.id, {
+      onDelete: "cascade",
+    }),
   name: text("name").notNull().unique(),
   description: text("description"),
   position: integer("position").notNull().default(0),

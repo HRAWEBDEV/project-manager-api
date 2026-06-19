@@ -24,6 +24,7 @@ import {
 } from "../auth/utils/sessionManager";
 import { type WithSessionVariables } from "../auth/utils/contextSessionVaraibles";
 import { cookieOptions } from "../../utils/cookieOptions";
+import { USER_AGENT, IP_ADDRESS } from "../../utils/apiHeaders";
 
 const accountRoutes = new Hono().basePath("/account");
 
@@ -62,8 +63,8 @@ const handleCreateAccount: Handler<{
       email: true,
     })
     .parse(organization);
-  const userAgent = c.req.header("User-Agent") || null;
-  const ipAddress = c.req.header("x-forwarded-for") || null;
+  const userAgent = c.req.header(USER_AGENT) || null;
+  const ipAddress = c.req.header(IP_ADDRESS) || null;
   const hashedPassword = await checkAndHashPassword(user.password);
   const token = generateToken();
   const hashedToken = await hashToken(token);

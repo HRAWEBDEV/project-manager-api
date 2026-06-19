@@ -1,6 +1,8 @@
 import { pgTable, uuid, text, boolean, unique } from "drizzle-orm/pg-core";
 import { organizations } from "./organizations";
 import { trackChanges } from "../utils/trackChanges";
+import { users } from "./users";
+import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 
 type Workspace = typeof workspaces.$inferSelect;
 
@@ -8,6 +10,9 @@ const workspaces = pgTable(
   "workspaces",
   {
     id: uuid().defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
     organizationId: uuid("organization_id")
       .notNull()
       .references(() => organizations.id, {
@@ -23,5 +28,8 @@ const workspaces = pgTable(
   ],
 );
 
+const insertWorkspaceSchema = createInsertSchema(workspaces);
+const updateWorkspaceSchema = createUpdateSchema(workspaces);
+
 export type { Workspace };
-export { workspaces };
+export { workspaces, insertWorkspaceSchema, updateWorkspaceSchema };

@@ -24,7 +24,9 @@
     "drizzle-zod": "^0.8.3",
     "hono": "^4.12.25",
     "http-status-codes": "^2.3.0",
+    "nanoid": "^5.1.14",
     "pg": "^8.21.0",
+    "slugify": "^1.6.9",
     "zod": "^4.4.3"
   }
 }

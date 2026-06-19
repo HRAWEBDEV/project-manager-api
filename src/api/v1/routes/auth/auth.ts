@@ -13,6 +13,7 @@ import {
 } from "./utils/sessionManager";
 import { hashToken } from "./utils/sessionManager";
 import { cookieOptions } from "../../utils/cookieOptions";
+import { USER_AGENT, IP_ADDRESS } from "../../utils/apiHeaders";
 
 const authRoutes = new Hono().basePath("/auth");
 
@@ -35,8 +36,8 @@ authRoutes.post("/sign-in", async (c) => {
     c.status(StatusCodes.BAD_REQUEST);
     return c.json({ message: "sign in data is incorrect" });
   }
-  const userAgent = c.req.header("User-Agent") || null;
-  const ipAddress = c.req.header("x-forwarded-for") || null;
+  const userAgent = c.req.header(USER_AGENT) || null;
+  const ipAddress = c.req.header(IP_ADDRESS) || null;
   const token = generateToken();
   const hashedToken = await hashToken(token);
   const [createdSession] = await db
