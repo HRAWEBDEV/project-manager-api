@@ -4,7 +4,7 @@ import { verifyPassword, checkMyPassword } from "./utils/passwordManager";
 import { db } from "../../../../db/v1/connect";
 import { users, insertUsersSchema } from "../../../../db/v1/schemas/users";
 import { sessions } from "../../../../db/v1/schemas/sessions";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
 import {
   SESSION_EXPIRE_MS,
@@ -27,7 +27,7 @@ authRoutes.post("/sign-in", async (c) => {
   const [user] = await db
     .select()
     .from(users)
-    .where(eq(users.phoneNumber, phoneNumber));
+    .where(and(eq(users.phoneNumber, phoneNumber), eq(users.deleted, false)));
   if (!user) {
     c.status(StatusCodes.BAD_REQUEST);
     return c.json({ message: "sign in data is incorrect" });

@@ -32,13 +32,18 @@ const handleGetWorkspaces: Handler<{
     .from(workspaceMembers)
     .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id));
   const userWorkspaceEq = eq(workspaceMembers.userId, user.id);
+  const notDeleted = eq(workspaces.deleted, false);
   if (organizationId) {
     const res = await baseQuery.where(
-      and(eq(workspaces.organizationId, organizationId), userWorkspaceEq),
+      and(
+        eq(workspaces.organizationId, organizationId),
+        userWorkspaceEq,
+        notDeleted,
+      ),
     );
     return c.json({ data: res });
   } else {
-    const res = await baseQuery.where(userWorkspaceEq);
+    const res = await baseQuery.where(and(userWorkspaceEq, notDeleted));
     return c.json({ data: res });
   }
 };
@@ -121,20 +126,17 @@ const handleUpdateWorkspace: Handler<{
     .pick({
       organizationId: true,
       name: true,
-      slug: true,
       isPrivate: true,
     })
     .parse({
       organizationId: id,
       name,
-      slug,
       isPrivate,
     });
   const res = await db
     .update(workspaces)
     .set({
       name,
-      slug,
       isPrivate,
     })
     .where(
@@ -158,7 +160,8 @@ const handleDeleteWorkspace: Handler<{
   const user = c.get(USER);
   const id = c.req.param("id");
   const res = await db
-    .delete(workspaces)
+    .update(workspaces)
+    .set({ deleted: true })
     .where(
       and(
         eq(workspaces.id, id!),

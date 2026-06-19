@@ -35,7 +35,11 @@ const checkUserSession: MiddlewareHandler<{
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .where(
-      and(eq(sessions.token, hashedToken), gt(sessions.expiresAt, new Date())),
+      and(
+        eq(sessions.token, hashedToken),
+        gt(sessions.expiresAt, new Date()),
+        eq(users.deleted, false),
+      ),
     );
   if (!session || !session[0]) {
     return c.json(

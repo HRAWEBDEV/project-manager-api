@@ -1,7 +1,7 @@
 import { db } from "../../../../../db/v1/connect";
 import { organizationMembers } from "../../../../../db/v1/schemas/organizationMembers";
 import { organizations } from "../../../../../db/v1/schemas/organizations";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export function getUserOrganizations(userId: string) {
   return db
@@ -15,5 +15,10 @@ export function getUserOrganizations(userId: string) {
       organizations,
       eq(organizationMembers.organizationId, organizations.id),
     )
-    .where(eq(organizationMembers.userId, userId));
+    .where(
+      and(
+        eq(organizationMembers.userId, userId),
+        eq(organizations.deleted, false),
+      ),
+    );
 }
