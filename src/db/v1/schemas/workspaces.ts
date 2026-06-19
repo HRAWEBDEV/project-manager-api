@@ -1,7 +1,6 @@
 import { pgTable, uuid, text, boolean, unique } from "drizzle-orm/pg-core";
 import { organizations } from "./organizations";
 import { trackChanges } from "../utils/trackChanges";
-import { users } from "./users";
 import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 
 type Workspace = typeof workspaces.$inferSelect;

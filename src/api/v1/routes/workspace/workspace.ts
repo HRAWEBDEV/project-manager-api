@@ -3,13 +3,14 @@ import {
   USER,
   type WithSessionVariables,
 } from "../auth/utils/contextSessionVaraibles";
+import { workspaceMembers } from "../../../../db/v1/schemas/workspace_members";
 import { db } from "../../../../db/v1/connect";
 import {
   workspaces,
   insertWorkspaceSchema,
   updateWorkspaceSchema,
 } from "../../../../db/v1/schemas/workspaces";
-import { eq, and } from "drizzle-orm";
+import { eq, and, exists, sql } from "drizzle-orm";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
 
@@ -27,22 +28,18 @@ const handleGetWorkspaces: Handler<{
       name: workspaces.name,
       slug: workspaces.slug,
       isPrivate: workspaces.isPrivate,
-      organizationId: workspaces.organizationId,
-      createdAt: workspaces.createdAt,
     })
-    .from(workspaces);
+    .from(workspaceMembers)
+    .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id));
+  const userWorkspaceEq = eq(workspaceMembers.userId, user.id);
   if (organizationId) {
-    const result = await baseQuery.where(
-      and(eq(workspaces.organizationId, organizationId)),
+    const res = await baseQuery.where(
+      and(eq(workspaces.organizationId, organizationId), userWorkspaceEq),
     );
-    return c.json({
-      data: result,
-    });
+    return c.json({ data: res });
   } else {
-    const result = await baseQuery;
-    return c.json({
-      data: result,
-    });
+    const res = await baseQuery.where(userWorkspaceEq);
+    return c.json({ data: res });
   }
 };
 workspacesRoutes.get("/", handleGetWorkspaces);
@@ -68,21 +65,51 @@ const handleCreateWorkspace: Handler<{
     strict: true,
     trim: true,
   })}-${nanoid(8)}`;
-  const res = await db
-    .insert(workspaces)
-    .values({
-      name,
-      organizationId,
-      slug,
-    })
-    .returning({
-      id: workspaces.id,
-    });
+
+  const [createdWorkspace] = await db.transaction(async (tx) => {
+    const [createdWorkspace] = await tx
+      .insert(workspaces)
+      .values({
+        name,
+        organizationId,
+        slug,
+      })
+      .returning({
+        id: workspaces.id,
+      });
+    if (!createdWorkspace) throw new Error("Failed to create workspace");
+    const [createMember] = await tx
+      .insert(workspaceMembers)
+      .values({
+        userId: user.id,
+        workspaceId: createdWorkspace.id,
+      })
+      .returning({
+        id: workspaceMembers.id,
+      });
+    if (!createMember) throw new Error("Failed to create workspace member");
+    return [createdWorkspace];
+  });
   return c.json({
-    data: res[0],
+    data: createdWorkspace,
   });
 };
 workspacesRoutes.post("/", handleCreateWorkspace);
+
+function checkUserWorkspaceMember(workspaceId: string, userId: string) {
+  return db
+    .select({
+      one: sql<number>`1`,
+    })
+    .from(workspaceMembers)
+    .where(
+      and(
+        eq(workspaceMembers.workspaceId, workspaceId),
+        eq(workspaceMembers.userId, userId),
+      ),
+    )
+    .limit(1);
+}
 
 const handleUpdateWorkspace: Handler<{
   Variables: WithSessionVariables["Variables"];
@@ -110,7 +137,12 @@ const handleUpdateWorkspace: Handler<{
       slug,
       isPrivate,
     })
-    .where(and(eq(workspaces.id, id!)))
+    .where(
+      and(
+        eq(workspaces.id, id!),
+        exists(checkUserWorkspaceMember(id!, user.id)),
+      ),
+    )
     .returning({
       id: workspaces.id,
     });
@@ -127,7 +159,12 @@ const handleDeleteWorkspace: Handler<{
   const id = c.req.param("id");
   const res = await db
     .delete(workspaces)
-    .where(and(eq(workspaces.id, id!)))
+    .where(
+      and(
+        eq(workspaces.id, id!),
+        exists(checkUserWorkspaceMember(id!, user.id)),
+      ),
+    )
     .returning({
       id: workspaces.id,
     });
