@@ -5,7 +5,8 @@ import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../db/v1/utils/apiGeneralTypes.ts";
 import { authRoutes } from "./routes/auth/auth.ts";
 import { accountRoutes } from "./routes/account/account.ts";
-import { workspacesRoutes } from "./routes/workspace/workspace.ts";
+import { workspacesRoutes } from "./routes/workspace/workspaces.ts";
+import { boardsRoutes } from "./routes/board/boards.ts";
 import { projectsRoutes } from "./routes/projects/projects.ts";
 import { organizationRoutes } from "./routes/organization/organizations.ts";
 import { DrizzleQueryError } from "drizzle-orm";
@@ -19,6 +20,7 @@ v1Routes.route("/", accountRoutes);
 v1Routes.route("/", organizationRoutes);
 v1Routes.route("/", workspacesRoutes);
 v1Routes.route("/", projectsRoutes);
+v1Routes.route("/", boardsRoutes);
 
 v1Routes.onError((err, c) => {
   if (err instanceof ZodError) {

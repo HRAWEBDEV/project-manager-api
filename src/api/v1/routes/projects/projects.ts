@@ -11,10 +11,14 @@ import {
   type WithSessionVariables,
   USER,
 } from "../auth/utils/contextSessionVaraibles";
-import { eq, and, inArray, sql, exists } from "drizzle-orm";
+import { eq, and, inArray, exists } from "drizzle-orm";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";
+import { checkProjectMember } from "./utils/checkProjectMember";
+import { checkWorkspaceMember } from "../workspace/utils/checkWorkspaceMember";
+import { StatusCodes } from "http-status-codes";
+import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
 
 const projectsRoutes = new Hono().basePath("/projects");
 
@@ -88,6 +92,17 @@ const handleCreateProject: Handler<{
     strict: true,
     trim: true,
   })}-${nanoid(8)}`;
+  const isMember = await checkWorkspaceMember(workspaceId, user.id);
+  if (isMember.length === 0) {
+    c.status(StatusCodes.FORBIDDEN);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.FORBIDDEN,
+        message: "You are not a member of this workspace",
+      }),
+    );
+  }
   const [createProject] = await db.transaction(async (tx) => {
     const [createdProject] = await tx
       .insert(projects)
@@ -115,21 +130,6 @@ const handleCreateProject: Handler<{
 };
 projectsRoutes.post("/", handleCreateProject);
 
-function checkUserProjectMember(projectId: string, userId: string) {
-  return db
-    .select({
-      one: sql<number>`1`,
-    })
-    .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.projectId, projectId),
-        eq(projectMembers.userId, userId),
-      ),
-    )
-    .limit(1);
-}
-
 const handleUpdateProject: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
@@ -152,7 +152,7 @@ const handleUpdateProject: Handler<{
       and(
         eq(projects.id, id!),
         eq(projects.deleted, false),
-        exists(checkUserProjectMember(id!, user.id)),
+        exists(checkProjectMember(id!, user.id)),
       ),
     )
     .returning({ id: projects.id });

@@ -10,10 +10,14 @@ import {
   insertWorkspaceSchema,
   updateWorkspaceSchema,
 } from "../../../../db/v1/schemas/workspaces";
-import { eq, and, exists, sql } from "drizzle-orm";
+import { eq, and, exists } from "drizzle-orm";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";
+import { checkWorkspaceMember } from "./utils/checkWorkspaceMember";
+import { checkOrganizationMember } from "../organization/utils/checkOrganizationMember";
+import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
+import { StatusCodes } from "http-status-codes";
 
 const workspacesRoutes = new Hono().basePath("/workspaces");
 const organizationIdQueryName = "organization-id";
@@ -76,7 +80,17 @@ const handleCreateWorkspace: Handler<{
     strict: true,
     trim: true,
   })}-${nanoid(8)}`;
-
+  const isMember = await checkOrganizationMember(organizationId, user.id);
+  if (isMember.length === 0) {
+    c.status(StatusCodes.FORBIDDEN);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.FORBIDDEN,
+        message: "You are not a member of this organization",
+      }),
+    );
+  }
   const [createdWorkspace] = await db.transaction(async (tx) => {
     const [createdWorkspace] = await tx
       .insert(workspaces)
@@ -107,21 +121,6 @@ const handleCreateWorkspace: Handler<{
 };
 workspacesRoutes.post("/", handleCreateWorkspace);
 
-function checkUserWorkspaceMember(workspaceId: string, userId: string) {
-  return db
-    .select({
-      one: sql<number>`1`,
-    })
-    .from(workspaceMembers)
-    .where(
-      and(
-        eq(workspaceMembers.workspaceId, workspaceId),
-        eq(workspaceMembers.userId, userId),
-      ),
-    )
-    .limit(1);
-}
-
 const handleUpdateWorkspace: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
@@ -149,7 +148,7 @@ const handleUpdateWorkspace: Handler<{
       and(
         eq(workspaces.id, id!),
         eq(workspaces.deleted, false),
-        exists(checkUserWorkspaceMember(id!, user.id)),
+        exists(checkWorkspaceMember(id!, user.id)),
       ),
     )
     .returning({
