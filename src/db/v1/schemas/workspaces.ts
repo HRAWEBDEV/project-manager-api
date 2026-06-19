@@ -10,9 +10,6 @@ const workspaces = pgTable(
   "workspaces",
   {
     id: uuid().defaultRandom().primaryKey(),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id),
     organizationId: uuid("organization_id")
       .notNull()
       .references(() => organizations.id, {

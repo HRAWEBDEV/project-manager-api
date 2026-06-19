@@ -57,6 +57,13 @@
       "when": 1781850700594,
       "tag": "0007_married_dragon_man",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781858032240,
+      "tag": "0008_colossal_star_brand",
+      "breakpoints": true
     }
   ]
 }

@@ -8,6 +8,7 @@ import {
   foreignKey,
 } from "drizzle-orm/pg-core";
 import { boards } from "./boards";
+import { users } from "./users";
 import { projects } from "./projects";
 import { trackChanges } from "../utils/trackChanges";
 import { createSelectSchema } from "drizzle-zod";
@@ -23,6 +24,9 @@ const tasks = pgTable(
     }),
     projectId: uuid("project_id").references(() => projects.id, {
       onDelete: "cascade",
+    }),
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "set null",
     }),
     parentTaskId: uuid("parent_task_id"),
     title: text("title").notNull(),

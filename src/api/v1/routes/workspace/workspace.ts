@@ -31,16 +31,15 @@ const handleGetWorkspaces: Handler<{
       createdAt: workspaces.createdAt,
     })
     .from(workspaces);
-  const userWorkSpaceEq = eq(workspaces.userId, user.id);
   if (organizationId) {
     const result = await baseQuery.where(
-      and(eq(workspaces.organizationId, organizationId), userWorkSpaceEq),
+      and(eq(workspaces.organizationId, organizationId)),
     );
     return c.json({
       data: result,
     });
   } else {
-    const result = await baseQuery.where(userWorkSpaceEq);
+    const result = await baseQuery;
     return c.json({
       data: result,
     });
@@ -72,7 +71,6 @@ const handleCreateWorkspace: Handler<{
   const res = await db
     .insert(workspaces)
     .values({
-      userId: user.id,
       name,
       organizationId,
       slug,
@@ -112,7 +110,7 @@ const handleUpdateWorkspace: Handler<{
       slug,
       isPrivate,
     })
-    .where(and(eq(workspaces.id, id!), eq(workspaces.userId, user.id)))
+    .where(and(eq(workspaces.id, id!)))
     .returning({
       id: workspaces.id,
     });
@@ -129,7 +127,7 @@ const handleDeleteWorkspace: Handler<{
   const id = c.req.param("id");
   const res = await db
     .delete(workspaces)
-    .where(and(eq(workspaces.id, id!), eq(workspaces.userId, user.id)))
+    .where(and(eq(workspaces.id, id!)))
     .returning({
       id: workspaces.id,
     });
