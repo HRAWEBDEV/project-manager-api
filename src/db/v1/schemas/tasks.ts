@@ -10,6 +10,8 @@ import {
 import { boards } from "./boards";
 import { users } from "./users";
 import { projects } from "./projects";
+import { statuses } from "./statuses";
+import { priorities } from "./priorities";
 import { trackChanges } from "../utils/trackChanges";
 import { createSelectSchema } from "drizzle-zod";
 
@@ -26,6 +28,12 @@ const tasks = pgTable(
       onDelete: "cascade",
     }),
     createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    statusId: uuid("status_id").references(() => statuses.id, {
+      onDelete: "set null",
+    }),
+    priorityId: uuid("priority_id").references(() => priorities.id, {
       onDelete: "set null",
     }),
     parentTaskId: uuid("parent_task_id"),

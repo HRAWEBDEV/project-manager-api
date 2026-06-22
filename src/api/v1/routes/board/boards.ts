@@ -146,7 +146,7 @@ const handleUpdateBoard: Handler<{
     )
     .returning({ id: projects.id });
 
-  if (!updatedBoard) throw new NotFoundError("Project not found");
+  if (!updatedBoard) throw new NotFoundError("board not found");
   return c.json({
     data: updatedBoard,
   });
