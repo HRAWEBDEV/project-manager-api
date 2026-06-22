@@ -160,7 +160,6 @@ const handleUpdateProject: Handler<{
   if (!updatedProject) throw new NotFoundError("Project not found");
   return c.json({ data: updatedProject });
 };
-
 projectsRoutes.patch("/:id", handleUpdateProject);
 
 export { projectsRoutes };

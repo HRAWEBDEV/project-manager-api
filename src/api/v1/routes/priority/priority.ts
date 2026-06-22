@@ -2,12 +2,12 @@ import { Hono, type Handler } from "hono";
 import { checkWorkspaceMember } from "../workspace/utils/checkWorkspaceMember";
 import { db } from "../../../../db/v1/connect";
 import { workspaces } from "../../../../db/v1/schemas/workspaces";
-import {
-  statuses,
-  insertStatusSchema,
-  updateStatusSchema,
-} from "../../../../db/v1/schemas/statuses";
 import { eq, and, inArray, exists } from "drizzle-orm";
+import {
+  priorities,
+  insertPrioritySchema,
+  updatePrioritySchema,
+} from "../../../../db/v1/schemas/priorities";
 import {
   type WithSessionVariables,
   USER,
@@ -16,30 +16,30 @@ import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";
 
-const statusesRoutes = new Hono().basePath("/statuses");
+const prioritiesRoutes = new Hono().basePath("/priorities");
 
-const handleGetStatuses: Handler<{
+const handleGetPriorities: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
   const workspace = c.req.query("workspace");
-  const resultOrderBy = statuses.createdAt;
+  const resultOrderBy = priorities.createdAt;
   const baseQuery = db
     .select({
-      id: statuses.id,
-      title: statuses.title,
-      createdAt: statuses.createdAt,
+      id: priorities.id,
+      title: priorities.title,
+      createdAt: priorities.createdAt,
       workspaceId: workspaces.id,
       workspaceName: workspaces.name,
     })
-    .from(statuses)
-    .innerJoin(workspaces, eq(workspaces.id, statuses.workspaceId));
+    .from(priorities)
+    .innerJoin(workspaces, eq(workspaces.id, priorities.workspaceId));
   if (workspace) {
     const workspaceIdSubQuery = db
       .select({ workspaceId: workspaces.id })
       .from(workspaces)
       .where(eq(workspaces.name, workspace));
     const result = await baseQuery
-      .where(inArray(statuses.workspaceId, workspaceIdSubQuery))
+      .where(inArray(priorities.workspaceId, workspaceIdSubQuery))
       .orderBy(resultOrderBy);
     return c.json({ data: result });
   } else {
@@ -47,9 +47,9 @@ const handleGetStatuses: Handler<{
     return c.json({ data: result });
   }
 };
-statusesRoutes.get("/", handleGetStatuses);
+prioritiesRoutes.get("/", handleGetPriorities);
 
-const handleCreateStatus: Handler<{
+const handleCreatePrioriy: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
   const user = c.get(USER);
@@ -57,7 +57,7 @@ const handleCreateStatus: Handler<{
     workspaceId: string;
     title: string;
   };
-  insertStatusSchema
+  insertPrioritySchema
     .pick({
       workspaceId: true,
       title: true,
@@ -78,16 +78,16 @@ const handleCreateStatus: Handler<{
     );
   }
   const result = await db
-    .insert(statuses)
+    .insert(priorities)
     .values({ workspaceId, title })
     .returning({
-      id: statuses.id,
+      id: priorities.id,
     });
   return c.json({ data: result });
 };
-statusesRoutes.post("/", handleCreateStatus);
+prioritiesRoutes.post("/", handleCreatePrioriy);
 
-const handleUpdateStatus: Handler<{
+const handleUpdatePriority: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
   const user = c.get(USER);
@@ -95,22 +95,22 @@ const handleUpdateStatus: Handler<{
   const { title } = (await c.req.json()) as {
     title: string;
   };
-  updateStatusSchema.pick({ title: true }).parse({ title });
-  const [updatedStatus] = await db
-    .update(statuses)
+  updatePrioritySchema.pick({ title: true }).parse({ title });
+  const [updatedPriority] = await db
+    .update(priorities)
     .set({ title })
     .where(
       and(
-        eq(statuses.id, id!),
-        exists(checkWorkspaceMember(statuses.workspaceId, user.id)),
+        eq(priorities.id, id!),
+        exists(checkWorkspaceMember(priorities.workspaceId, user.id)),
       ),
     )
     .returning({
-      id: statuses.id,
+      id: priorities.id,
     });
-  if (!updatedStatus) throw new NotFoundError("Status not found");
-  return c.json({ data: updatedStatus });
+  if (!updatedPriority) throw new NotFoundError("priority not found");
+  return c.json({ data: updatedPriority });
 };
-statusesRoutes.patch("/:id", handleUpdateStatus);
+prioritiesRoutes.patch("/:id", handleUpdatePriority);
 
-export { statusesRoutes };
+export { prioritiesRoutes };

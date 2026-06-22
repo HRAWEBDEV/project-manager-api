@@ -8,6 +8,7 @@ import { accountRoutes } from "./routes/account/account.ts";
 import { workspacesRoutes } from "./routes/workspace/workspaces.ts";
 import { boardsRoutes } from "./routes/board/boards.ts";
 import { projectsRoutes } from "./routes/projects/projects.ts";
+import { statusesRoutes } from "./routes/status/status.ts";
 import { organizationRoutes } from "./routes/organization/organizations.ts";
 import { DrizzleQueryError } from "drizzle-orm";
 import { checkUserSession } from "./routes/auth/middlewares/checkUserSession.ts";
@@ -21,6 +22,7 @@ v1Routes.route("/", organizationRoutes);
 v1Routes.route("/", workspacesRoutes);
 v1Routes.route("/", projectsRoutes);
 v1Routes.route("/", boardsRoutes);
+v1Routes.route("/", statusesRoutes);
 
 v1Routes.onError((err, c) => {
   if (err instanceof ZodError) {
@@ -69,6 +71,7 @@ v1Routes.onError((err, c) => {
       }
     }
   }
+  console.log(err);
   return c.json(
     getApiErrorShape({
       status: "failed",

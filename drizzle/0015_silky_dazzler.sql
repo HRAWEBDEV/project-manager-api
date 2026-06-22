@@ -1,0 +1,1 @@
+ALTER TABLE "priorities" ADD COLUMN "created_at" timestamp with time zone DEFAULT now();
