@@ -14,6 +14,8 @@ import {
 import { checkWorkspaceMember } from "../workspace/utils/checkWorkspaceMember";
 import { checkProjectMember } from "../projects/utils/checkProjectMember";
 import { z } from "zod";
+import { StatusCodes } from "http-status-codes";
+import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
 
 const tasksRoutes = new Hono().basePath("/tasks");
 
@@ -65,10 +67,10 @@ const handleGetTasks: Handler<{
     })
     .from(tasks)
     .innerJoin(workspaces, eq(tasks.workspaceId, workspaces.id))
-    .innerJoin(projects, eq(tasks.projectId, projects.id))
-    .innerJoin(boards, eq(tasks.boardId, boards.id))
-    .innerJoin(priorities, eq(tasks.priorityId, priorities.id))
-    .innerJoin(statuses, eq(tasks.statusId, statuses.id));
+    .leftJoin(projects, eq(tasks.projectId, projects.id))
+    .leftJoin(boards, eq(tasks.boardId, boards.id))
+    .leftJoin(priorities, eq(tasks.priorityId, priorities.id))
+    .leftJoin(statuses, eq(tasks.statusId, statuses.id));
   const result = await baseQuery
     .where(and(...filterTasksConditions))
     .limit(pageSize)
@@ -125,6 +127,56 @@ const handleCreateTask: Handler<{
       dueDate,
       parentTaskId,
     });
+  const isMember = await checkProjectMember(parsedTask.projectId, user.id);
+  if (isMember.length === 0) {
+    c.status(StatusCodes.FORBIDDEN);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.FORBIDDEN,
+        message: "You are not a member of this project",
+      }),
+    );
+  }
+  const projectWorkspace = await db
+    .select({
+      workspaceId: workspaces.id,
+      workspaceName: workspaces.name,
+    })
+    .from(projects)
+    .innerJoin(workspaces, eq(projects.workspaceId, workspaces.id))
+    .where(eq(projects.deleted, false))
+    .limit(1);
+  if (projectWorkspace.length === 0) {
+    c.status(StatusCodes.BAD_REQUEST);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.BAD_REQUEST,
+        message: "Workspace not found",
+      }),
+    );
+  }
+  const [createdTask] = await db
+    .insert(tasks)
+    .values({
+      projectId: parsedTask.projectId,
+      workspaceId: projectWorkspace[0]?.workspaceId!,
+      title: parsedTask.title,
+      description: parsedTask.description,
+      position: parsedTask.position,
+      startDate: parsedTask.startDate,
+      dueDate: parsedTask.dueDate,
+      parentTaskId: parsedTask.parentTaskId,
+      statusId: parsedTask.statusId,
+      priorityId: parsedTask.priorityId,
+      boardId: parsedTask.boardId,
+      isArchived: false,
+    })
+    .returning({
+      id: tasks.id,
+    });
+  return c.json(createdTask);
 };
 
 tasksRoutes.post("/", handleCreateTask);
