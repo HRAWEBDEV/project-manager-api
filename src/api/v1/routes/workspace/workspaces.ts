@@ -36,26 +36,20 @@ const handleGetWorkspaces: Handler<{
     })
     .from(workspaceMembers)
     .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id));
-  const userWorkspaceEq = eq(workspaceMembers.userId, user.id);
-  const notDeleted = eq(workspaces.deleted, false);
+  const filterWorkspacesConditions = [
+    eq(workspaceMembers.userId, user.id),
+    eq(workspaces.deleted, false),
+  ];
   const resultOrderBy = workspaces.createdAt;
   if (organizationId) {
-    const res = await baseQuery
-      .where(
-        and(
-          eq(workspaces.organizationId, organizationId),
-          userWorkspaceEq,
-          notDeleted,
-        ),
-      )
-      .orderBy(resultOrderBy);
-    return c.json({ data: res });
-  } else {
-    const res = await baseQuery
-      .where(and(userWorkspaceEq, notDeleted))
-      .orderBy(resultOrderBy);
-    return c.json({ data: res });
+    filterWorkspacesConditions.push(
+      eq(workspaces.organizationId, organizationId),
+    );
   }
+  const res = await baseQuery
+    .where(and(...filterWorkspacesConditions))
+    .orderBy(resultOrderBy);
+  return c.json({ data: res });
 };
 workspacesRoutes.get("/", handleGetWorkspaces);
 
@@ -160,29 +154,5 @@ const handleUpdateWorkspace: Handler<{
   });
 };
 workspacesRoutes.patch("/:id", handleUpdateWorkspace);
-
-// TODO check workspace projects
-// const handleDeleteWorkspace: Handler<{
-//   Variables: WithSessionVariables["Variables"];
-// }> = async (c) => {
-//   const user = c.get(USER);
-//   const id = c.req.param("id");
-//   const res = await db
-//     .update(workspaces)
-//     .set({ deleted: true })
-//     .where(
-//       and(
-//         eq(workspaces.id, id!),
-//         exists(checkUserWorkspaceMember(id!, user.id)),
-//       ),
-//     )
-//     .returning({
-//       id: workspaces.id,
-//     });
-//   return c.json({
-//     data: res[0],
-//   });
-// };
-// workspacesRoutes.delete("/:id", handleDeleteWorkspace);
 
 export { workspacesRoutes };

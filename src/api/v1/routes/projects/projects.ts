@@ -42,30 +42,24 @@ const handleGetProjects: Handler<{
     .from(projectMembers)
     .innerJoin(projects, eq(projectMembers.projectId, projects.id))
     .innerJoin(workspaces, eq(projects.workspaceId, workspaces.id));
-  const userIdEq = eq(projectMembers.userId, user.id);
-  const projectNotDeleted = eq(projects.deleted, false);
+  const filterProjectsConditions = [
+    eq(projectMembers.userId, user.id),
+    eq(projects.deleted, false),
+  ];
   const resultOrderBy = projects.createdAt;
   if (workspace) {
     const workspaceIdSubQuery = db
       .select({ workspaceId: workspaces.id })
       .from(workspaces)
       .where(eq(workspaces.name, workspace));
-    const result = await baseQuery
-      .where(
-        and(
-          userIdEq,
-          projectNotDeleted,
-          inArray(projects.workspaceId, workspaceIdSubQuery),
-        ),
-      )
-      .orderBy(resultOrderBy);
-    return c.json({ data: result });
-  } else {
-    const result = await baseQuery
-      .where(and(userIdEq, projectNotDeleted))
-      .orderBy(resultOrderBy);
-    return c.json({ data: result });
+    filterProjectsConditions.push(
+      inArray(projects.workspaceId, workspaceIdSubQuery),
+    );
   }
+  const result = await baseQuery
+    .where(and(...filterProjectsConditions))
+    .orderBy(resultOrderBy);
+  return c.json({ data: result });
 };
 projectsRoutes.get("/", handleGetProjects);
 

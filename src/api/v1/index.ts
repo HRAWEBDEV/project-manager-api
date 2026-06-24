@@ -10,6 +10,7 @@ import { boardsRoutes } from "./routes/board/boards.ts";
 import { projectsRoutes } from "./routes/projects/projects.ts";
 import { statusesRoutes } from "./routes/status/status.ts";
 import { prioritiesRoutes } from "./routes/priority/priority.ts";
+import { tasksRoutes } from "./routes/tasks/tasks.ts";
 import { organizationRoutes } from "./routes/organization/organizations.ts";
 import { DrizzleQueryError } from "drizzle-orm";
 import { checkUserSession } from "./routes/auth/middlewares/checkUserSession.ts";
@@ -25,6 +26,7 @@ v1Routes.route("/", projectsRoutes);
 v1Routes.route("/", boardsRoutes);
 v1Routes.route("/", statusesRoutes);
 v1Routes.route("/", prioritiesRoutes);
+v1Routes.route("/", tasksRoutes);
 
 v1Routes.onError((err, c) => {
   if (err instanceof ZodError) {
