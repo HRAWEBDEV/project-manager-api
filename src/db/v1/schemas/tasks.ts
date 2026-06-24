@@ -22,11 +22,13 @@ const tasks = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     boardId: uuid("board_id").references(() => boards.id, {
-      onDelete: "cascade",
+      onDelete: "set null",
     }),
-    projectId: uuid("project_id").references(() => projects.id, {
-      onDelete: "cascade",
-    }),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, {
+        onDelete: "cascade",
+      }),
     createdBy: uuid("created_by").references(() => users.id, {
       onDelete: "set null",
     }),
