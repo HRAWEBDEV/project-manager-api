@@ -10,6 +10,7 @@ import {
 import { boards } from "./boards";
 import { users } from "./users";
 import { projects } from "./projects";
+import { workspaces } from "./workspaces";
 import { statuses } from "./statuses";
 import { priorities } from "./priorities";
 import { trackChanges } from "../utils/trackChanges";
@@ -24,6 +25,11 @@ const tasks = pgTable(
     boardId: uuid("board_id").references(() => boards.id, {
       onDelete: "set null",
     }),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {
+        onDelete: "cascade",
+      }),
     projectId: uuid("project_id")
       .notNull()
       .references(() => projects.id, {

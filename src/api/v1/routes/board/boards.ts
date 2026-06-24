@@ -59,7 +59,7 @@ const handleGetBoards: Handler<{
     )
     .orderBy(boards.createdAt);
   return c.json({
-    data: res,
+    boards: res,
   });
 };
 
@@ -96,7 +96,7 @@ const handleCreateBoard: Handler<{
       }),
     );
   }
-  const res = await db
+  const [createdBoard] = await db
     .insert(boards)
     .values({
       projectId,
@@ -106,9 +106,7 @@ const handleCreateBoard: Handler<{
     .returning({
       id: boards.id,
     });
-  return c.json({
-    data: res,
-  });
+  return c.json(createdBoard);
 };
 
 boardsRoutes.post("/", handleCreateBoard);
@@ -147,9 +145,7 @@ const handleUpdateBoard: Handler<{
     .returning({ id: projects.id });
 
   if (!updatedBoard) throw new NotFoundError("board not found");
-  return c.json({
-    data: updatedBoard,
-  });
+  return c.json(updatedBoard);
 };
 
 boardsRoutes.patch("/:id", handleUpdateBoard);

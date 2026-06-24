@@ -12,7 +12,7 @@ const handleGetOrganizations: Handler<{
 }> = async (c) => {
   const user = c.get(USER);
   const orgs = await getUserOrganizations(user.id);
-  return c.json({ data: orgs });
+  return c.json({ organizations: orgs });
 };
 organizationRoutes.get("/", handleGetOrganizations);
 

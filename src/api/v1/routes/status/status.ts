@@ -83,7 +83,7 @@ const handleCreateStatus: Handler<{
     .returning({
       id: statuses.id,
     });
-  return c.json({ data: result });
+  return c.json(result);
 };
 statusesRoutes.post("/", handleCreateStatus);
 
@@ -109,7 +109,7 @@ const handleUpdateStatus: Handler<{
       id: statuses.id,
     });
   if (!updatedStatus) throw new NotFoundError("Status not found");
-  return c.json({ data: updatedStatus });
+  return c.json(updatedStatus);
 };
 statusesRoutes.patch("/:id", handleUpdateStatus);
 

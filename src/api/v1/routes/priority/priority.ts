@@ -44,7 +44,7 @@ const handleGetPriorities: Handler<{
     return c.json({ data: result });
   } else {
     const result = await baseQuery.orderBy(resultOrderBy);
-    return c.json({ data: result });
+    return c.json(result);
   }
 };
 prioritiesRoutes.get("/", handleGetPriorities);
@@ -77,13 +77,13 @@ const handleCreatePrioriy: Handler<{
       }),
     );
   }
-  const result = await db
+  const [createdPrioriy] = await db
     .insert(priorities)
     .values({ workspaceId, title })
     .returning({
       id: priorities.id,
     });
-  return c.json({ data: result });
+  return c.json(createdPrioriy);
 };
 prioritiesRoutes.post("/", handleCreatePrioriy);
 
@@ -109,7 +109,7 @@ const handleUpdatePriority: Handler<{
       id: priorities.id,
     });
   if (!updatedPriority) throw new NotFoundError("priority not found");
-  return c.json({ data: updatedPriority });
+  return c.json(updatedPriority);
 };
 prioritiesRoutes.patch("/:id", handleUpdatePriority);
 

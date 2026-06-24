@@ -49,7 +49,7 @@ const handleGetWorkspaces: Handler<{
   const res = await baseQuery
     .where(and(...filterWorkspacesConditions))
     .orderBy(resultOrderBy);
-  return c.json({ data: res });
+  return c.json({ workspaces: res });
 };
 workspacesRoutes.get("/", handleGetWorkspaces);
 
@@ -109,9 +109,7 @@ const handleCreateWorkspace: Handler<{
     if (!createMember) throw new Error("Failed to create workspace member");
     return [createdWorkspace];
   });
-  return c.json({
-    data: createdWorkspace,
-  });
+  return c.json(createdWorkspace);
 };
 workspacesRoutes.post("/", handleCreateWorkspace);
 
@@ -149,9 +147,7 @@ const handleUpdateWorkspace: Handler<{
       id: workspaces.id,
     });
   if (!updatedWorkspace) throw new NotFoundError("Workspace not found");
-  return c.json({
-    data: updatedWorkspace,
-  });
+  return c.json(updatedWorkspace);
 };
 workspacesRoutes.patch("/:id", handleUpdateWorkspace);
 

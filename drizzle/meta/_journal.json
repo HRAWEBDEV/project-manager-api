@@ -120,6 +120,13 @@
       "when": 1782313865002,
       "tag": "0016_salty_stone_men",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1782318094546,
+      "tag": "0017_damp_loners",
+      "breakpoints": true
     }
   ]
 }

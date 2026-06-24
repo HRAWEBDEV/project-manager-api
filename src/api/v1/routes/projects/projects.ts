@@ -59,7 +59,7 @@ const handleGetProjects: Handler<{
   const result = await baseQuery
     .where(and(...filterProjectsConditions))
     .orderBy(resultOrderBy);
-  return c.json({ data: result });
+  return c.json({ projects: result });
 };
 projectsRoutes.get("/", handleGetProjects);
 
@@ -97,7 +97,7 @@ const handleCreateProject: Handler<{
       }),
     );
   }
-  const [createProject] = await db.transaction(async (tx) => {
+  const [createdProject] = await db.transaction(async (tx) => {
     const [createdProject] = await tx
       .insert(projects)
       .values({
@@ -120,7 +120,7 @@ const handleCreateProject: Handler<{
     if (!createdMember) throw new Error("Failed to create project member");
     return [createdProject];
   });
-  return c.json({ data: createProject });
+  return c.json(createdProject);
 };
 projectsRoutes.post("/", handleCreateProject);
 
@@ -152,7 +152,7 @@ const handleUpdateProject: Handler<{
     .returning({ id: projects.id });
 
   if (!updatedProject) throw new NotFoundError("Project not found");
-  return c.json({ data: updatedProject });
+  return c.json(updatedProject);
 };
 projectsRoutes.patch("/:id", handleUpdateProject);
 
