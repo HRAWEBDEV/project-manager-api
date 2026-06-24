@@ -1,8 +1,6 @@
 import { Hono, type Handler } from "hono";
-import { tasks } from "../../../../db/v1/schemas/tasks";
+import { tasks, insertTaskSchema } from "../../../../db/v1/schemas/tasks";
 import { workspaces } from "../../../../db/v1/schemas/workspaces";
-import { workspaceMembers } from "../../../../db/v1/schemas/workspace_members";
-import { projectMembers } from "../../../../db/v1/schemas/projectMember";
 import { projects } from "../../../../db/v1/schemas/projects";
 import { boards } from "../../../../db/v1/schemas/boards";
 import { statuses } from "../../../../db/v1/schemas/statuses";
@@ -45,7 +43,26 @@ const handleGetTasks: Handler<{
   ];
   const orderByConditions = [workspaces.name, projects.name, tasks.createdAt];
   const baseQuery = db
-    .select({})
+    .select({
+      id: tasks.id,
+      workspaceId: tasks.workspaceId,
+      workspace: workspaces.name,
+      projectId: tasks.projectId,
+      project: projects.name,
+      boardId: tasks.boardId,
+      board: boards.name,
+      priorityId: tasks.priorityId,
+      priority: priorities.title,
+      statusId: tasks.statusId,
+      status: statuses.title,
+      title: tasks.title,
+      description: tasks.description,
+      position: tasks.position,
+      startDate: tasks.startDate,
+      dueDate: tasks.dueDate,
+      completedAt: tasks.completedAt,
+      isArchived: tasks.isArchived,
+    })
     .from(tasks)
     .innerJoin(workspaces, eq(tasks.workspaceId, workspaces.id))
     .innerJoin(projects, eq(tasks.projectId, projects.id))
@@ -66,5 +83,50 @@ const handleGetTasks: Handler<{
 };
 
 tasksRoutes.get("/", handleGetTasks);
+
+const handleCreateTask: Handler<{
+  Variables: WithSessionVariables["Variables"];
+}> = async (c) => {
+  const user = c.get(USER);
+  const {
+    projectId,
+    boardId,
+    priorityId,
+    statusId,
+    title,
+    description,
+    position,
+    startDate,
+    dueDate,
+    parentTaskId,
+  } = await c.req.json();
+  const parsedTask = insertTaskSchema
+    .pick({
+      priorityId: true,
+      boardId: true,
+      projectId: true,
+      statusId: true,
+      title: true,
+      description: true,
+      position: true,
+      startDate: true,
+      dueDate: true,
+      parentTaskId: true,
+    })
+    .parse({
+      priorityId,
+      boardId,
+      projectId,
+      statusId,
+      title,
+      description,
+      position,
+      startDate,
+      dueDate,
+      parentTaskId,
+    });
+};
+
+tasksRoutes.post("/", handleCreateTask);
 
 export { tasksRoutes };

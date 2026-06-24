@@ -58,7 +58,7 @@ const handleCreateWorkspace: Handler<{
 }> = async (c) => {
   const user = c.get(USER);
   const { organizationId, name, isPrivate } = await c.req.json();
-  insertWorkspaceSchema
+  const parsedWorkspace = insertWorkspaceSchema
     .pick({
       organizationId: true,
       name: true,
@@ -74,7 +74,10 @@ const handleCreateWorkspace: Handler<{
     strict: true,
     trim: true,
   })}-${nanoid(8)}`;
-  const isMember = await checkOrganizationMember(organizationId, user.id);
+  const isMember = await checkOrganizationMember(
+    parsedWorkspace.organizationId,
+    user.id,
+  );
   if (isMember.length === 0) {
     c.status(StatusCodes.FORBIDDEN);
     return c.json(
@@ -89,8 +92,8 @@ const handleCreateWorkspace: Handler<{
     const [createdWorkspace] = await tx
       .insert(workspaces)
       .values({
-        name,
-        organizationId,
+        name: parsedWorkspace.name,
+        organizationId: parsedWorkspace.organizationId,
         slug,
       })
       .returning({
@@ -119,7 +122,7 @@ const handleUpdateWorkspace: Handler<{
   const user = c.get(USER);
   const { name, isPrivate } = await c.req.json();
   const id = c.req.param("id");
-  updateWorkspaceSchema
+  const parsedWorkspace = updateWorkspaceSchema
     .pick({
       organizationId: true,
       name: true,
@@ -133,8 +136,8 @@ const handleUpdateWorkspace: Handler<{
   const [updatedWorkspace] = await db
     .update(workspaces)
     .set({
-      name,
-      isPrivate,
+      name: parsedWorkspace.name,
+      isPrivate: parsedWorkspace.isPrivate,
     })
     .where(
       and(
