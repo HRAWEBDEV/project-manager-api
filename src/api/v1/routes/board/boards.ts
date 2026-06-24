@@ -74,7 +74,7 @@ const handleCreateBoard: Handler<{
     name: string;
     position: number;
   };
-  insertBoardSchema
+  const parsedBoard = insertBoardSchema
     .pick({
       projectId: true,
       name: true,
@@ -85,7 +85,7 @@ const handleCreateBoard: Handler<{
       name,
       position,
     });
-  const isMember = await checkProjectMember(projectId, user.id);
+  const isMember = await checkProjectMember(parsedBoard.projectId, user.id);
   if (isMember.length === 0) {
     c.status(StatusCodes.FORBIDDEN);
     return c.json(
@@ -99,9 +99,9 @@ const handleCreateBoard: Handler<{
   const [createdBoard] = await db
     .insert(boards)
     .values({
-      projectId,
-      name,
-      position,
+      projectId: parsedBoard.projectId,
+      name: parsedBoard.name,
+      position: parsedBoard.position,
     })
     .returning({
       id: boards.id,
@@ -120,7 +120,7 @@ const handleUpdateBoard: Handler<{
     name: string;
     position: number;
   };
-  updateBoardSchema
+  const parsedBoard = updateBoardSchema
     .pick({
       id: true,
       name: true,
@@ -134,7 +134,7 @@ const handleUpdateBoard: Handler<{
 
   const [updatedBoard] = await db
     .update(boards)
-    .set({ name, position })
+    .set({ name: parsedBoard.name, position: parsedBoard.position })
     .where(
       and(
         eq(boards.id, id!),

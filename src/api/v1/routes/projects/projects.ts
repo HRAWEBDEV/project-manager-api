@@ -68,7 +68,7 @@ const handleCreateProject: Handler<{
 }> = async (c) => {
   const user = c.get(USER);
   const { workspaceId, name, color, isArchived } = await c.req.json();
-  insertProjectsSchema
+  const parsedProject = insertProjectsSchema
     .pick({
       workspaceId: true,
       name: true,
@@ -86,7 +86,10 @@ const handleCreateProject: Handler<{
     strict: true,
     trim: true,
   })}-${nanoid(8)}`;
-  const isMember = await checkWorkspaceMember(workspaceId, user.id);
+  const isMember = await checkWorkspaceMember(
+    parsedProject.workspaceId,
+    user.id,
+  );
   if (isMember.length === 0) {
     c.status(StatusCodes.FORBIDDEN);
     return c.json(
@@ -101,11 +104,11 @@ const handleCreateProject: Handler<{
     const [createdProject] = await tx
       .insert(projects)
       .values({
-        workspaceId,
-        name,
+        workspaceId: parsedProject.workspaceId,
+        name: parsedProject.name,
         slug,
-        color,
-        isArchived,
+        color: parsedProject.color,
+        isArchived: parsedProject.isArchived,
         createdBy: user.id,
       })
       .returning({ id: projects.id });
@@ -130,7 +133,7 @@ const handleUpdateProject: Handler<{
   const user = c.get(USER);
   const { name, color, isArchived } = await c.req.json();
   const id = c.req.param("id");
-  updateProjectsSchema
+  const parsedProject = updateProjectsSchema
     .pick({
       id: true,
       name: true,
@@ -141,7 +144,11 @@ const handleUpdateProject: Handler<{
 
   const [updatedProject] = await db
     .update(projects)
-    .set({ name, color, isArchived })
+    .set({
+      name: parsedProject.name,
+      color: parsedProject.color,
+      isArchived: parsedProject.isArchived,
+    })
     .where(
       and(
         eq(projects.id, id!),

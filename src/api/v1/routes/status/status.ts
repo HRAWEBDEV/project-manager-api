@@ -57,7 +57,7 @@ const handleCreateStatus: Handler<{
     workspaceId: string;
     title: string;
   };
-  insertStatusSchema
+  const parsedStatus = insertStatusSchema
     .pick({
       workspaceId: true,
       title: true,
@@ -66,16 +66,21 @@ const handleCreateStatus: Handler<{
       workspaceId,
       title,
     });
-  const isMember = await checkWorkspaceMember(workspaceId, user.id);
-  if (isMember.length === 0) {
-    c.status(StatusCodes.FORBIDDEN);
-    return c.json(
-      getApiErrorShape({
-        status: "failed",
-        code: StatusCodes.FORBIDDEN,
-        message: "You are not a member of this workspace",
-      }),
+  if (parsedStatus.workspaceId) {
+    const isMember = await checkWorkspaceMember(
+      parsedStatus.workspaceId,
+      user.id,
     );
+    if (isMember.length === 0) {
+      c.status(StatusCodes.FORBIDDEN);
+      return c.json(
+        getApiErrorShape({
+          status: "failed",
+          code: StatusCodes.FORBIDDEN,
+          message: "You are not a member of this workspace",
+        }),
+      );
+    }
   }
   const result = await db
     .insert(statuses)
@@ -95,10 +100,12 @@ const handleUpdateStatus: Handler<{
   const { title } = (await c.req.json()) as {
     title: string;
   };
-  updateStatusSchema.pick({ title: true }).parse({ title });
+  const parsedStatus = updateStatusSchema
+    .pick({ title: true })
+    .parse({ title });
   const [updatedStatus] = await db
     .update(statuses)
-    .set({ title })
+    .set({ title: parsedStatus.title })
     .where(
       and(
         eq(statuses.id, id!),

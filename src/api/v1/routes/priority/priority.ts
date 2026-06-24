@@ -57,7 +57,7 @@ const handleCreatePrioriy: Handler<{
     workspaceId: string;
     title: string;
   };
-  insertPrioritySchema
+  const parsedPriority = insertPrioritySchema
     .pick({
       workspaceId: true,
       title: true,
@@ -66,20 +66,28 @@ const handleCreatePrioriy: Handler<{
       workspaceId,
       title,
     });
-  const isMember = await checkWorkspaceMember(workspaceId, user.id);
-  if (isMember.length === 0) {
-    c.status(StatusCodes.FORBIDDEN);
-    return c.json(
-      getApiErrorShape({
-        status: "failed",
-        code: StatusCodes.FORBIDDEN,
-        message: "You are not a member of this workspace",
-      }),
+  if (parsedPriority.workspaceId) {
+    const isMember = await checkWorkspaceMember(
+      parsedPriority.workspaceId,
+      user.id,
     );
+    if (isMember.length === 0) {
+      c.status(StatusCodes.FORBIDDEN);
+      return c.json(
+        getApiErrorShape({
+          status: "failed",
+          code: StatusCodes.FORBIDDEN,
+          message: "You are not a member of this workspace",
+        }),
+      );
+    }
   }
   const [createdPrioriy] = await db
     .insert(priorities)
-    .values({ workspaceId, title })
+    .values({
+      workspaceId: parsedPriority.workspaceId,
+      title: parsedPriority.title,
+    })
     .returning({
       id: priorities.id,
     });
@@ -95,10 +103,12 @@ const handleUpdatePriority: Handler<{
   const { title } = (await c.req.json()) as {
     title: string;
   };
-  updatePrioritySchema.pick({ title: true }).parse({ title });
+  const parsedPriority = updatePrioritySchema
+    .pick({ title: true })
+    .parse({ title });
   const [updatedPriority] = await db
     .update(priorities)
-    .set({ title })
+    .set({ title: parsedPriority.title })
     .where(
       and(
         eq(priorities.id, id!),
