@@ -18,5 +18,20 @@ const statuses = pgTable("statuses", {
 const insertStatusSchema = createInsertSchema(statuses);
 const updateStatusSchema = createUpdateSchema(statuses);
 
+const systemStatuses = [
+  {
+    key: "TODO",
+    title: "todo",
+  },
+  {
+    key: "IN_PROGRESS",
+    title: "in progress",
+  },
+  {
+    key: "DONE",
+    title: "done",
+  },
+];
+
 export type { Status };
-export { statuses, insertStatusSchema, updateStatusSchema };
+export { statuses, insertStatusSchema, updateStatusSchema, systemStatuses };

@@ -9,6 +9,7 @@
     "start": "NODE_ENV=production bun run --watch ./index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:seed": "bun ./src/db/v1/seed.ts",
     "open:studio": "npx drizzle-kit studio"
   },
   "devDependencies": {

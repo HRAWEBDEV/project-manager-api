@@ -23,10 +23,18 @@ const selectPrioritySchema = createSelectSchema(priorities);
 const insertPrioritySchema = createInsertSchema(priorities);
 const updatePrioritySchema = createUpdateSchema(priorities);
 
+const systemPriorities = [
+  { key: "LOW", title: "low" },
+  { key: "MEDIUM", title: "medium" },
+  { key: "HIGH", title: "high" },
+  { key: "CRITICAL", title: "critical" },
+];
+
 export type { Priority };
 export {
   priorities,
   selectPrioritySchema,
   insertPrioritySchema,
   updatePrioritySchema,
+  systemPriorities,
 };
