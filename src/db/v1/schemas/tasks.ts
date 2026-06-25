@@ -6,6 +6,7 @@ import {
   boolean,
   timestamp,
   foreignKey,
+  serial,
 } from "drizzle-orm/pg-core";
 import { boards } from "./boards";
 import { users } from "./users";
@@ -42,10 +43,10 @@ const tasks = pgTable(
     createdBy: uuid("created_by").references(() => users.id, {
       onDelete: "set null",
     }),
-    statusId: uuid("status_id").references(() => statuses.id, {
+    statusId: serial("status_id").references(() => statuses.id, {
       onDelete: "set null",
     }),
-    priorityId: uuid("priority_id").references(() => priorities.id, {
+    priorityId: serial("priority_id").references(() => priorities.id, {
       onDelete: "set null",
     }),
     parentTaskId: uuid("parent_task_id"),

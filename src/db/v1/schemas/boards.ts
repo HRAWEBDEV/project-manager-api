@@ -11,7 +11,7 @@ type Board = typeof boards.$inferSelect;
 
 const boards = pgTable("boards", {
   id: uuid("id").primaryKey().defaultRandom(),
-  projectId: uuid("projectId")
+  projectId: uuid("project_id")
     .notNull()
     .references(() => projects.id, {
       onDelete: "cascade",

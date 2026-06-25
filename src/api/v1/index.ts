@@ -16,10 +16,10 @@ import { DrizzleQueryError } from "drizzle-orm";
 import { checkUserSession } from "./routes/auth/middlewares/checkUserSession.ts";
 
 const v1Routes = new Hono().basePath("/v1");
+v1Routes.route("/", accountRoutes);
 v1Routes.route("/", authRoutes);
 // protected routes
 v1Routes.use(checkUserSession);
-v1Routes.route("/", accountRoutes);
 v1Routes.route("/", organizationRoutes);
 v1Routes.route("/", workspacesRoutes);
 v1Routes.route("/", projectsRoutes);
