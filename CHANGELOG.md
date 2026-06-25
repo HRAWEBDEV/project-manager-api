@@ -1,7 +1,9 @@
 ## 0.5.2
 ### FEATURES
 - add key column to priorities and statuses tables (hra-done)
-- add seed script to populate database with system statuses and priorities
+- add seed script to populate database with system statuses and priorities (hra-done)
+### BUG FIXES
+- update status and priority joins - inner join to left join (hra-done)
 
 ## 0.5.0
 ### FEATURES
