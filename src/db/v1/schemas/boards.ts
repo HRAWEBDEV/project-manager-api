@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, integer } from "drizzle-orm/pg-core";
+import { pgTable, uuid, integer, varchar } from "drizzle-orm/pg-core";
 import { trackChanges } from "../utils/trackChanges";
 import { projects } from "./projects";
 import {
@@ -16,7 +16,7 @@ const boards = pgTable("boards", {
     .references(() => projects.id, {
       onDelete: "cascade",
     }),
-  name: text("name").notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
   position: integer("position").notNull().default(0),
   ...trackChanges,
 });

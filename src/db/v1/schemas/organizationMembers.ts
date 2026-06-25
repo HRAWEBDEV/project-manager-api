@@ -8,7 +8,6 @@ type OrganizationMembers = typeof organizationMembers.$inferSelect;
 const organizationMembers = pgTable(
   "organization_members",
   {
-    id: uuid().defaultRandom().primaryKey(),
     organizationId: uuid("organization_id")
       .notNull()
       .references(() => organizations.id, {

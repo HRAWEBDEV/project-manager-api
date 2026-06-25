@@ -1,4 +1,4 @@
-import { pgTable, uuid, text } from "drizzle-orm/pg-core";
+import { pgTable, uuid, serial, varchar } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 import { trackChanges } from "../utils/trackChanges";
 import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
@@ -6,8 +6,8 @@ import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 type Status = typeof statuses.$inferSelect;
 
 const statuses = pgTable("statuses", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title: text("name").notNull(),
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
   workspaceId: uuid("workspace_id").references(() => workspaces.id, {
     onDelete: "cascade",
   }),

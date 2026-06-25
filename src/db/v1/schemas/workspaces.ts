@@ -1,4 +1,11 @@
-import { pgTable, uuid, text, boolean, unique } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  uuid,
+  text,
+  boolean,
+  unique,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { organizations } from "./organizations";
 import { trackChanges } from "../utils/trackChanges";
 import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
@@ -14,8 +21,8 @@ const workspaces = pgTable(
       .references(() => organizations.id, {
         onDelete: "cascade",
       }),
-    name: text().notNull(),
-    slug: text().notNull(),
+    name: varchar("name", { length: 200 }).notNull(),
+    slug: varchar("name", { length: 250 }).notNull(),
     isPrivate: boolean("is_private").notNull().default(false),
     ...trackChanges,
   },

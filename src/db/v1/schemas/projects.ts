@@ -1,11 +1,4 @@
-import {
-  pgTable,
-  text,
-  uuid,
-  boolean,
-  varchar,
-  unique,
-} from "drizzle-orm/pg-core";
+import { pgTable, uuid, boolean, varchar, unique } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 import { users } from "./users";
 import { trackChanges } from "../utils/trackChanges";
@@ -26,8 +19,8 @@ const projects = pgTable(
       .references(() => workspaces.id, {
         onDelete: "cascade",
       }),
-    name: text("name").notNull(),
-    slug: text("slug").notNull(),
+    name: varchar("name", { length: 200 }).notNull(),
+    slug: varchar("slug", { length: 255 }).notNull(),
     color: varchar("color", { length: 20 }),
     isArchived: boolean("is_archived").default(false),
     createdBy: uuid("created_by").references(() => users.id, {

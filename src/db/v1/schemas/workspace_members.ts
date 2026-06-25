@@ -7,7 +7,6 @@ type WorkspaceMember = typeof workspaceMembers.$inferSelect;
 const workspaceMembers = pgTable(
   "workspace_members",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, {

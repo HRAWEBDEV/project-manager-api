@@ -107,7 +107,8 @@ const handleCreateWorkspace: Handler<{
         workspaceId: createdWorkspace.id,
       })
       .returning({
-        id: workspaceMembers.id,
+        workspaceId: workspaceMembers.workspaceId,
+        userId: workspaceMembers.userId,
       });
     if (!createMember) throw new Error("Failed to create workspace member");
     return [createdWorkspace];

@@ -111,7 +111,7 @@ const handleUpdatePriority: Handler<{
     .set({ title: parsedPriority.title })
     .where(
       and(
-        eq(priorities.id, id!),
+        eq(priorities.id, Number(id!)),
         exists(checkWorkspaceMember(priorities.workspaceId, user.id)),
       ),
     )

@@ -108,7 +108,7 @@ const handleUpdateStatus: Handler<{
     .set({ title: parsedStatus.title })
     .where(
       and(
-        eq(statuses.id, id!),
+        eq(statuses.id, Number(id!)),
         exists(checkWorkspaceMember(statuses.workspaceId, user.id)),
       ),
     )

@@ -1,4 +1,4 @@
-import { pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, uuid } from "drizzle-orm/pg-core";
 import { trackChanges } from "../utils/trackChanges";
 import { createSelectSchema, createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -8,8 +8,8 @@ type Organization = typeof organizations.$inferSelect;
 // first step we will create the organization with a free plan (no subscription)
 const organizations = pgTable("organizations", {
   id: uuid().defaultRandom().primaryKey(),
-  name: text().notNull().unique(),
-  email: text().notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
   address: text(),
   ...trackChanges,
 });

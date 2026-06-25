@@ -119,7 +119,10 @@ const handleCreateProject: Handler<{
         projectId: createdProject.id,
         userId: user.id,
       })
-      .returning({ id: projectMembers.id });
+      .returning({
+        projectId: projectMembers.projectId,
+        userId: projectMembers.userId,
+      });
     if (!createdMember) throw new Error("Failed to create project member");
     return [createdProject];
   });
