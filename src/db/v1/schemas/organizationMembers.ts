@@ -19,7 +19,6 @@ const organizationMembers = pgTable(
         onDelete: "cascade",
       }),
     createdAt: trackChanges.createdAt,
-    updatedAt: trackChanges.updatedAt,
   },
   (table) => [
     unique("organization_memebers_unique").on(

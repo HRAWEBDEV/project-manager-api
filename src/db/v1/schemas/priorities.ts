@@ -11,7 +11,8 @@ type Priority = typeof priorities.$inferSelect;
 
 const priorities = pgTable("priorities", {
   id: serial("id").primaryKey(),
-  title: varchar("title", { length: 255 }).notNull(),
+  key: varchar("key", { length: 255 }).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
   workspaceId: uuid("workspace_id").references(() => workspaces.id, {
     onDelete: "cascade",
   }),
