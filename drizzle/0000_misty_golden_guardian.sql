@@ -33,7 +33,9 @@ CREATE TABLE "priorities" (
 	"key" varchar(255) NOT NULL,
 	"title" varchar(200) NOT NULL,
 	"workspace_id" uuid,
-	"created_at" timestamp with time zone DEFAULT now()
+	"created_at" timestamp with time zone DEFAULT now(),
+	CONSTRAINT "priorities_key_unique" UNIQUE("key"),
+	CONSTRAINT "priorities_title_unique" UNIQUE("title")
 );
 --> statement-breakpoint
 CREATE TABLE "project_members" (
@@ -71,7 +73,9 @@ CREATE TABLE "statuses" (
 	"key" varchar(255) NOT NULL,
 	"title" varchar(200) NOT NULL,
 	"workspace_id" uuid,
-	"created_at" timestamp with time zone DEFAULT now()
+	"created_at" timestamp with time zone DEFAULT now(),
+	CONSTRAINT "statuses_key_unique" UNIQUE("key"),
+	CONSTRAINT "statuses_title_unique" UNIQUE("title")
 );
 --> statement-breakpoint
 CREATE TABLE "tasks" (

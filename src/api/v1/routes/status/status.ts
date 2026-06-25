@@ -29,17 +29,18 @@ const handleGetStatuses: Handler<{
       workspace: z.string().min(1),
     })
     .parse({ workspace: workspaceQuery });
-  const resultOrderBy = statuses.createdAt;
+  const resultOrderBy = [statuses.createdAt, statuses.id];
   const baseQuery = db
     .select({
       id: statuses.id,
       title: statuses.title,
+      key: statuses.key,
       createdAt: statuses.createdAt,
       workspaceId: workspaces.id,
       workspaceName: workspaces.name,
     })
     .from(statuses)
-    .innerJoin(workspaces, eq(workspaces.id, statuses.workspaceId));
+    .leftJoin(workspaces, eq(workspaces.id, statuses.workspaceId));
   const workspaceIdSubQuery = db
     .select({ workspaceId: workspaces.id })
     .from(workspaces)
@@ -51,7 +52,7 @@ const handleGetStatuses: Handler<{
         isNull(statuses.workspaceId),
       ),
     )
-    .orderBy(resultOrderBy);
+    .orderBy(...resultOrderBy);
   return c.json(result);
 };
 statusesRoutes.get("/", handleGetStatuses);
@@ -98,13 +99,13 @@ const handleCreateStatus: Handler<{
     );
   }
   const key = slugify(title, { lower: true, strict: true });
-  const result = await db
+  const [createdStatus] = await db
     .insert(statuses)
     .values({ workspaceId, title, key })
     .returning({
       id: statuses.id,
     });
-  return c.json(result);
+  return c.json(createdStatus);
 };
 statusesRoutes.post("/", handleCreateStatus);
 

@@ -29,17 +29,18 @@ const handleGetPriorities: Handler<{
       workspace: z.string().min(1),
     })
     .parse({ workspace: workspaceQuery });
-  const resultOrderBy = priorities.createdAt;
+  const resultOrderBy = [priorities.createdAt, priorities.id];
   const baseQuery = db
     .select({
       id: priorities.id,
       title: priorities.title,
+      key: priorities.key,
       createdAt: priorities.createdAt,
       workspaceId: workspaces.id,
       workspaceName: workspaces.name,
     })
     .from(priorities)
-    .innerJoin(workspaces, eq(workspaces.id, priorities.workspaceId));
+    .leftJoin(workspaces, eq(workspaces.id, priorities.workspaceId));
   const workspaceIdSubQuery = db
     .select({ workspaceId: workspaces.id })
     .from(workspaces)
@@ -51,7 +52,7 @@ const handleGetPriorities: Handler<{
         isNull(priorities.workspaceId),
       ),
     )
-    .orderBy(resultOrderBy);
+    .orderBy(...resultOrderBy);
   return c.json({ data: result });
 };
 prioritiesRoutes.get("/", handleGetPriorities);
