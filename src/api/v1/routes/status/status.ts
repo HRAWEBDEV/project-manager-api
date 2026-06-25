@@ -41,10 +41,10 @@ const handleGetStatuses: Handler<{
     const result = await baseQuery
       .where(inArray(statuses.workspaceId, workspaceIdSubQuery))
       .orderBy(resultOrderBy);
-    return c.json({ data: result });
+    return c.json(result);
   } else {
     const result = await baseQuery.orderBy(resultOrderBy);
-    return c.json({ data: result });
+    return c.json(result);
   }
 };
 statusesRoutes.get("/", handleGetStatuses);

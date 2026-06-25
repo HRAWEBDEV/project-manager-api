@@ -22,7 +22,7 @@ const workspaces = pgTable(
         onDelete: "cascade",
       }),
     name: varchar("name", { length: 200 }).notNull(),
-    slug: varchar("name", { length: 250 }).notNull(),
+    slug: varchar("slug", { length: 250 }).notNull(),
     isPrivate: boolean("is_private").notNull().default(false),
     ...trackChanges,
   },
