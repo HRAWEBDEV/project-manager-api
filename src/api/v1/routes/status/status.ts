@@ -7,7 +7,7 @@ import {
   insertStatusSchema,
   updateStatusSchema,
 } from "../../../../db/v1/schemas/statuses";
-import { eq, and, inArray, exists } from "drizzle-orm";
+import { eq, and, inArray, exists, or, isNull } from "drizzle-orm";
 import {
   type WithSessionVariables,
   USER,
@@ -15,13 +15,20 @@ import {
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";
+import slugify from "slugify";
+import z from "zod";
 
 const statusesRoutes = new Hono().basePath("/statuses");
 
 const handleGetStatuses: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const workspace = c.req.query("workspace");
+  const workspaceQuery = c.req.query("workspace");
+  const { workspace } = z
+    .object({
+      workspace: z.string().min(1),
+    })
+    .parse({ workspace: workspaceQuery });
   const resultOrderBy = statuses.createdAt;
   const baseQuery = db
     .select({
@@ -33,19 +40,19 @@ const handleGetStatuses: Handler<{
     })
     .from(statuses)
     .innerJoin(workspaces, eq(workspaces.id, statuses.workspaceId));
-  if (workspace) {
-    const workspaceIdSubQuery = db
-      .select({ workspaceId: workspaces.id })
-      .from(workspaces)
-      .where(eq(workspaces.name, workspace));
-    const result = await baseQuery
-      .where(inArray(statuses.workspaceId, workspaceIdSubQuery))
-      .orderBy(resultOrderBy);
-    return c.json(result);
-  } else {
-    const result = await baseQuery.orderBy(resultOrderBy);
-    return c.json(result);
-  }
+  const workspaceIdSubQuery = db
+    .select({ workspaceId: workspaces.id })
+    .from(workspaces)
+    .where(eq(workspaces.name, workspace));
+  const result = await baseQuery
+    .where(
+      or(
+        inArray(statuses.workspaceId, workspaceIdSubQuery),
+        isNull(statuses.workspaceId),
+      ),
+    )
+    .orderBy(resultOrderBy);
+  return c.json(result);
 };
 statusesRoutes.get("/", handleGetStatuses);
 
@@ -57,6 +64,16 @@ const handleCreateStatus: Handler<{
     workspaceId: string;
     title: string;
   };
+  if (!workspaceId) {
+    c.status(StatusCodes.BAD_REQUEST);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.BAD_REQUEST,
+        message: "Workspace ID is required",
+      }),
+    );
+  }
   const parsedStatus = insertStatusSchema
     .pick({
       workspaceId: true,
@@ -66,25 +83,24 @@ const handleCreateStatus: Handler<{
       workspaceId,
       title,
     });
-  if (parsedStatus.workspaceId) {
-    const isMember = await checkWorkspaceMember(
-      parsedStatus.workspaceId,
-      user.id,
+  const isMember = await checkWorkspaceMember(
+    parsedStatus.workspaceId!,
+    user.id,
+  );
+  if (isMember.length === 0) {
+    c.status(StatusCodes.FORBIDDEN);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.FORBIDDEN,
+        message: "You are not a member of this workspace",
+      }),
     );
-    if (isMember.length === 0) {
-      c.status(StatusCodes.FORBIDDEN);
-      return c.json(
-        getApiErrorShape({
-          status: "failed",
-          code: StatusCodes.FORBIDDEN,
-          message: "You are not a member of this workspace",
-        }),
-      );
-    }
   }
+  const key = slugify(title, { lower: true, strict: true });
   const result = await db
     .insert(statuses)
-    .values({ workspaceId, title })
+    .values({ workspaceId, title, key })
     .returning({
       id: statuses.id,
     });

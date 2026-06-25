@@ -2,7 +2,7 @@ import { Hono, type Handler } from "hono";
 import { checkWorkspaceMember } from "../workspace/utils/checkWorkspaceMember";
 import { db } from "../../../../db/v1/connect";
 import { workspaces } from "../../../../db/v1/schemas/workspaces";
-import { eq, and, inArray, exists } from "drizzle-orm";
+import { eq, and, inArray, exists, or, isNull } from "drizzle-orm";
 import {
   priorities,
   insertPrioritySchema,
@@ -15,13 +15,20 @@ import {
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";
+import { z } from "zod";
+import slugify from "slugify";
 
 const prioritiesRoutes = new Hono().basePath("/priorities");
 
 const handleGetPriorities: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const workspace = c.req.query("workspace");
+  const workspaceQuery = c.req.query("workspace");
+  const { workspace } = z
+    .object({
+      workspace: z.string().min(1),
+    })
+    .parse({ workspace: workspaceQuery });
   const resultOrderBy = priorities.createdAt;
   const baseQuery = db
     .select({
@@ -33,19 +40,19 @@ const handleGetPriorities: Handler<{
     })
     .from(priorities)
     .innerJoin(workspaces, eq(workspaces.id, priorities.workspaceId));
-  if (workspace) {
-    const workspaceIdSubQuery = db
-      .select({ workspaceId: workspaces.id })
-      .from(workspaces)
-      .where(eq(workspaces.name, workspace));
-    const result = await baseQuery
-      .where(inArray(priorities.workspaceId, workspaceIdSubQuery))
-      .orderBy(resultOrderBy);
-    return c.json({ data: result });
-  } else {
-    const result = await baseQuery.orderBy(resultOrderBy);
-    return c.json(result);
-  }
+  const workspaceIdSubQuery = db
+    .select({ workspaceId: workspaces.id })
+    .from(workspaces)
+    .where(eq(workspaces.name, workspace));
+  const result = await baseQuery
+    .where(
+      or(
+        inArray(priorities.workspaceId, workspaceIdSubQuery),
+        isNull(priorities.workspaceId),
+      ),
+    )
+    .orderBy(resultOrderBy);
+  return c.json({ data: result });
 };
 prioritiesRoutes.get("/", handleGetPriorities);
 
@@ -57,6 +64,16 @@ const handleCreatePrioriy: Handler<{
     workspaceId: string;
     title: string;
   };
+  if (!workspaceId) {
+    c.status(StatusCodes.BAD_REQUEST);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.BAD_REQUEST,
+        message: "workspaceId is required",
+      }),
+    );
+  }
   const parsedPriority = insertPrioritySchema
     .pick({
       workspaceId: true,
@@ -66,27 +83,27 @@ const handleCreatePrioriy: Handler<{
       workspaceId,
       title,
     });
-  if (parsedPriority.workspaceId) {
-    const isMember = await checkWorkspaceMember(
-      parsedPriority.workspaceId,
-      user.id,
+  const isMember = await checkWorkspaceMember(
+    parsedPriority.workspaceId!,
+    user.id,
+  );
+  if (isMember.length === 0) {
+    c.status(StatusCodes.FORBIDDEN);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.FORBIDDEN,
+        message: "You are not a member of this workspace",
+      }),
     );
-    if (isMember.length === 0) {
-      c.status(StatusCodes.FORBIDDEN);
-      return c.json(
-        getApiErrorShape({
-          status: "failed",
-          code: StatusCodes.FORBIDDEN,
-          message: "You are not a member of this workspace",
-        }),
-      );
-    }
   }
+  const key = slugify(title, { lower: true, strict: true });
   const [createdPrioriy] = await db
     .insert(priorities)
     .values({
       workspaceId: parsedPriority.workspaceId,
       title: parsedPriority.title,
+      key,
     })
     .returning({
       id: priorities.id,
