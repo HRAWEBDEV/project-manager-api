@@ -1,5 +1,9 @@
 import { Hono, type Handler } from "hono";
-import { tasks, insertTaskSchema } from "../../../../db/v1/schemas/tasks";
+import {
+  tasks,
+  insertTaskSchema,
+  updateTaskSchema,
+} from "../../../../db/v1/schemas/tasks";
 import { workspaces } from "../../../../db/v1/schemas/workspaces";
 import { projects } from "../../../../db/v1/schemas/projects";
 import { boards } from "../../../../db/v1/schemas/boards";
@@ -83,7 +87,6 @@ const handleGetTasks: Handler<{
     pageSize: Number(pageSize),
   });
 };
-
 tasksRoutes.get("/", handleGetTasks);
 
 const handleCreateTask: Handler<{
@@ -178,7 +181,79 @@ const handleCreateTask: Handler<{
     });
   return c.json(createdTask);
 };
-
 tasksRoutes.post("/", handleCreateTask);
+
+const handleUpdateTask: Handler<{
+  Variables: WithSessionVariables["Variables"];
+}> = async (c) => {
+  const user = c.get(USER);
+  const id = c.req.param("id");
+  const {
+    boardId,
+    priorityId,
+    statusId,
+    title,
+    description,
+    position,
+    startDate,
+    dueDate,
+  } = await c.req.json();
+  const parsedTask = updateTaskSchema
+    .pick({
+      priorityId: true,
+      boardId: true,
+      statusId: true,
+      title: true,
+      description: true,
+      position: true,
+      startDate: true,
+      dueDate: true,
+    })
+    .parse({
+      priorityId,
+      boardId,
+      statusId,
+      title,
+      description,
+      position,
+      startDate,
+      dueDate,
+    });
+
+  const [updatedTask] = await db
+    .update(tasks)
+    .set({
+      priorityId: parsedTask.priorityId,
+      boardId: parsedTask.boardId,
+      statusId: parsedTask.statusId,
+      title: parsedTask.title,
+      description: parsedTask.description,
+      position: parsedTask.position,
+      startDate: parsedTask.startDate,
+      dueDate: parsedTask.dueDate,
+    })
+    .where(
+      and(
+        eq(tasks.id, id!),
+        eq(tasks.deleted, false),
+        exists(checkProjectMember(tasks.projectId, user.id)),
+      ),
+    )
+    .returning({
+      id: tasks.id,
+    });
+  if (!updatedTask) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Task not found",
+      }),
+    );
+  }
+  return c.json(updatedTask);
+};
+tasksRoutes.patch("/:id", handleUpdateTask);
 
 export { tasksRoutes };
