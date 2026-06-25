@@ -2,6 +2,7 @@
   "name": "project-manager",
   "module": "index.ts",
   "type": "module",
+  "version": "0.5.0",
   "private": true,
   "scripts": {
     "dev": "NODE_ENV=development bun run --watch ./index.ts",
