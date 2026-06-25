@@ -1,6 +1,6 @@
 ## 0.5.2
 ### FEATURES
-- 
+- add key column to priorities and statuses tables (hra-done)
 
 ## 0.5.0
 ### FEATURES
