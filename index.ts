@@ -9,9 +9,6 @@ import { v1Routes } from "./src/api/v1/index.ts";
 const app = new Hono();
 const api = new Hono().basePath("/api");
 
-api.route("/", v1Routes);
-app.route("/", api);
-
 // logger
 app.use(logger());
 // secure headers
@@ -23,7 +20,9 @@ app.use(
     credentials: true,
   }),
 );
-
+// attach api
+api.route("/", v1Routes);
+app.route("/", api);
 // serve static files
 app.use("static/*", serveStatic({ root: "./" }));
 // test health
