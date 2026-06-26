@@ -89,8 +89,12 @@ const handleCreateAccount: Handler<{
     // create member
     const [createdMember] = await tx
       .insert(organizationMembers)
-      .values({ userId: createdUser.id, organizationId: createdOg.id })
-      .returning({ id: organizationMembers.id });
+      .values({
+        userId: createdUser.id,
+        organizationId: createdOg.id,
+        role: "owner",
+      })
+      .returning({ organizaionId: organizationMembers.organizationId });
     if (undefined === createdMember) {
       throw new Error("Failed to create member");
     }

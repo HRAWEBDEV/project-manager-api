@@ -4,7 +4,7 @@ import { users } from "./users";
 
 type WorkspaceMember = typeof workspaceMembers.$inferSelect;
 
-const roleEnum = pgEnum("role", ["owner", "admin", "member"]);
+const roleEnum = pgEnum("role", ["admin", "member"]);
 
 const workspaceMembers = pgTable(
   "workspace_members",
