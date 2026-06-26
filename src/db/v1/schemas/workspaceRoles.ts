@@ -5,6 +5,8 @@ import { trackChanges } from "../utils/trackChanges";
 
 type WorkspaceRole = typeof workspaceRoles.$inferSelect;
 
+const roleEnum = pgEnum("role", ["owner", "admin", "member"]);
+
 const workspaceRoles = pgTable("workspace_roles", {
   id: serial("id").primaryKey(),
   userId: uuid("user_id")
@@ -17,10 +19,10 @@ const workspaceRoles = pgTable("workspace_roles", {
     .references(() => workspaces.id, {
       onDelete: "cascade",
     }),
-  role: pgEnum("role", ["owner", "admin", "member"])().notNull(),
+  role: roleEnum().notNull(),
   createdAt: trackChanges["createdAt"],
   updatedAt: trackChanges["updatedAt"],
 });
 
 export type { WorkspaceRole };
-export { workspaceRoles };
+export { workspaceRoles, roleEnum };
