@@ -105,6 +105,7 @@ const handleCreateWorkspace: Handler<{
       .values({
         userId: user.id,
         workspaceId: createdWorkspace.id,
+        role: "admin",
       })
       .returning({
         workspaceId: workspaceMembers.workspaceId,
