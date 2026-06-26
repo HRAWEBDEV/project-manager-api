@@ -1,8 +1,10 @@
-import { pgTable, unique, uuid } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, unique, uuid } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 import { users } from "./users";
 
 type WorkspaceMember = typeof workspaceMembers.$inferSelect;
+
+const roleEnum = pgEnum("role", ["owner", "admin", "member"]);
 
 const workspaceMembers = pgTable(
   "workspace_members",
@@ -17,6 +19,7 @@ const workspaceMembers = pgTable(
       .references(() => users.id, {
         onDelete: "cascade",
       }),
+    role: roleEnum("role").notNull(),
   },
   (table) => [
     unique("workspaceId_userId_unique").on(table.workspaceId, table.userId),
@@ -24,4 +27,4 @@ const workspaceMembers = pgTable(
 );
 
 export type { WorkspaceMember };
-export { workspaceMembers };
+export { workspaceMembers, roleEnum };

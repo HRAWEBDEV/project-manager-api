@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1782463386322,
-      "tag": "0000_steady_warpath",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1782463420040,
-      "tag": "0001_odd_tombstone",
+      "when": 1782464408513,
+      "tag": "0000_careful_joseph",
       "breakpoints": true
     }
   ]

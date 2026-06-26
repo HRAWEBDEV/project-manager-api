@@ -3,7 +3,7 @@ import {
   USER,
   type WithSessionVariables,
 } from "../auth/utils/contextSessionVaraibles";
-import { workspaceMembers } from "../../../../db/v1/schemas/workspace_members";
+import { workspaceMembers } from "../../../../db/v1/schemas/workspaceMembers";
 import { db } from "../../../../db/v1/connect";
 import {
   workspaces,

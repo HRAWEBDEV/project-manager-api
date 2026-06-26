@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "../../../../../db/v1/connect";
-import { workspaceMembers } from "../../../../../db/v1/schemas/workspace_members";
+import { workspaceMembers } from "../../../../../db/v1/schemas/workspaceMembers";
 import { statuses } from "../../../../../db/v1/schemas/statuses";
 import { priorities } from "../../../../../db/v1/schemas/priorities";
 import { tasks } from "../../../../../db/v1/schemas/tasks";

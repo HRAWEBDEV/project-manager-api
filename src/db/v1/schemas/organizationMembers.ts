@@ -1,9 +1,11 @@
-import { pgTable, uuid, unique } from "drizzle-orm/pg-core";
+import { pgTable, uuid, unique, pgEnum } from "drizzle-orm/pg-core";
 import { organizations } from "./organizations";
 import { users } from "./users";
 import { trackChanges } from "../utils/trackChanges";
 
 type OrganizationMembers = typeof organizationMembers.$inferSelect;
+
+const roleEnum = pgEnum("role", ["owner", "admin", "member"]);
 
 const organizationMembers = pgTable(
   "organization_members",
@@ -18,6 +20,7 @@ const organizationMembers = pgTable(
       .references(() => users.id, {
         onDelete: "cascade",
       }),
+    role: roleEnum("role").notNull(),
     createdAt: trackChanges.createdAt,
   },
   (table) => [
@@ -29,4 +32,4 @@ const organizationMembers = pgTable(
 );
 
 export type { OrganizationMembers };
-export { organizationMembers };
+export { organizationMembers, roleEnum };

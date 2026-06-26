@@ -25,6 +25,7 @@ import {
 import { type WithSessionVariables } from "../auth/utils/contextSessionVaraibles";
 import { cookieOptions } from "../../utils/cookieOptions";
 import { USER_AGENT, IP_ADDRESS } from "../../utils/apiHeaders";
+import { id } from "zod/locales";
 
 const accountRoutes = new Hono().basePath("/account");
 
@@ -69,28 +70,31 @@ const handleCreateAccount: Handler<{
   const token = generateToken();
   const hashedToken = await hashToken(token);
   const [createdSession] = await db.transaction(async (tx) => {
+    // create user
     const [createdUser] = await tx
       .insert(users)
       .values({ ...user, hashedPassword: hashedPassword })
-      .returning();
-
-    const [createdOg] = await tx
-      .insert(organizations)
-      .values(organization)
-      .returning();
-
-    if (undefined === createdOg) {
-      throw new Error("Failed to create organization");
-    }
+      .returning({ id: users.id });
     if (undefined === createdUser) {
       throw new Error("Failed to create user");
     }
-
+    // create organization
+    const [createdOg] = await tx
+      .insert(organizations)
+      .values(organization)
+      .returning({ id: organizations.id });
+    if (undefined === createdOg) {
+      throw new Error("Failed to create organization");
+    }
+    // create member
     const [createdMember] = await tx
       .insert(organizationMembers)
       .values({ userId: createdUser.id, organizationId: createdOg.id })
-      .returning();
-
+      .returning({ id: organizationMembers.id });
+    if (undefined === createdMember) {
+      throw new Error("Failed to create member");
+    }
+    // create session
     const [createdSession] = await tx
       .insert(sessions)
       .values({
@@ -101,10 +105,6 @@ const handleCreateAccount: Handler<{
         expiresAt: new Date(Date.now() + SESSION_EXPIRE_MS),
       })
       .returning();
-
-    if (undefined === createdMember) {
-      throw new Error("Failed to create member");
-    }
     if (undefined === createdSession) {
       throw new Error("Failed to create session");
     }
