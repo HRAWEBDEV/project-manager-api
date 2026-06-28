@@ -9,9 +9,9 @@ import { SESSION_NAME } from "../utils/sessionManager";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import { getApiErrorShape } from "../../../../../db/v1/utils/apiGeneralTypes";
 import {
-  USER,
-  SESSION,
   type WithSessionVariables,
+  setSession,
+  setUser,
 } from "../utils/contextSessionVariables";
 import type { MiddlewareHandler } from "hono";
 import { cookieOptions } from "../../../utils/cookieOptions";
@@ -51,8 +51,8 @@ const checkUserSession: MiddlewareHandler<{
       StatusCodes.UNAUTHORIZED,
     );
   }
-  c.set(SESSION, session[0].sessions);
-  c.set(USER, session[0].users);
+  setSession(c, session[0].sessions);
+  setUser(c, session[0].users);
   await next();
 });
 

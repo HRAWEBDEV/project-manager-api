@@ -11,7 +11,7 @@ import { db } from "../../../../db/v1/connect";
 import { eq, and, inArray, exists } from "drizzle-orm";
 import {
   type WithSessionVariables,
-  USER,
+  getUser,
 } from "../auth/utils/contextSessionVariables";
 import { z } from "zod";
 import { StatusCodes } from "http-status-codes";
@@ -24,7 +24,7 @@ const boardsRoutes = new Hono().basePath("/boards");
 const handleGetBoards: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const project = c.req.query("project");
   z.object({
     project: z.string(),
@@ -68,7 +68,7 @@ boardsRoutes.get("/", handleGetBoards);
 const handleCreateBoard: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const { projectId, name, position } = (await c.req.json()) as {
     projectId: string;
     name: string;
@@ -114,7 +114,7 @@ boardsRoutes.post("/", handleCreateBoard);
 const handleUpdateBoard: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const id = c.req.param("id");
   const { name, position } = (await c.req.json()) as {
     name: string;

@@ -9,7 +9,7 @@ import { workspaces } from "../../../../db/v1/schemas/workspaces";
 import { db } from "../../../../db/v1/connect";
 import {
   type WithSessionVariables,
-  USER,
+  getUser,
 } from "../auth/utils/contextSessionVariables";
 import { eq, and, inArray, exists } from "drizzle-orm";
 import slugify from "slugify";
@@ -25,7 +25,7 @@ const projectsRoutes = new Hono().basePath("/projects");
 const handleGetProjects: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const workspace = c.req.query("workspace");
   const baseQuery = db
     .select({
@@ -66,7 +66,7 @@ projectsRoutes.get("/", handleGetProjects);
 const handleCreateProject: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const { workspaceId, name, color, isArchived } = await c.req.json();
   const parsedProject = insertProjectsSchema
     .pick({
@@ -133,7 +133,7 @@ projectsRoutes.post("/", handleCreateProject);
 const handleUpdateProject: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const { name, color, isArchived } = await c.req.json();
   const id = c.req.param("id");
   const parsedProject = updateProjectsSchema

@@ -10,7 +10,7 @@ import {
 import { eq, and, inArray, exists, or, isNull } from "drizzle-orm";
 import {
   type WithSessionVariables,
-  USER,
+  getUser,
 } from "../auth/utils/contextSessionVariables";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
@@ -60,7 +60,7 @@ statusesRoutes.get("/", handleGetStatuses);
 const handleCreateStatus: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const { workspaceId, title } = (await c.req.json()) as {
     workspaceId: string;
     title: string;
@@ -112,7 +112,7 @@ statusesRoutes.post("/", handleCreateStatus);
 const handleUpdateStatus: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const id = c.req.param("id");
   const { title } = (await c.req.json()) as {
     title: string;

@@ -1,7 +1,7 @@
 import { Hono, type Handler } from "hono";
 import {
-  USER,
   type WithSessionVariables,
+  getUser,
 } from "../auth/utils/contextSessionVariables";
 import { workspaceMembers } from "../../../../db/v1/schemas/workspaceMembers";
 import { db } from "../../../../db/v1/connect";
@@ -25,7 +25,7 @@ const organizationIdQueryName = "organization-id";
 const handleGetWorkspaces: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const organizationId = c.req.query(organizationIdQueryName);
   const baseQuery = db
     .select({
@@ -56,7 +56,7 @@ workspacesRoutes.get("/", handleGetWorkspaces);
 const handleCreateWorkspace: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const { organizationId, name, isPrivate } = await c.req.json();
   const parsedWorkspace = insertWorkspaceSchema
     .pick({
@@ -121,7 +121,7 @@ workspacesRoutes.post("/", handleCreateWorkspace);
 const handleUpdateWorkspace: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const { name, isPrivate } = await c.req.json();
   const id = c.req.param("id");
   const parsedWorkspace = updateWorkspaceSchema

@@ -10,7 +10,7 @@ import {
 } from "../../../../db/v1/schemas/priorities";
 import {
   type WithSessionVariables,
-  USER,
+  getUser,
 } from "../auth/utils/contextSessionVariables";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
@@ -60,7 +60,7 @@ prioritiesRoutes.get("/", handleGetPriorities);
 const handleCreatePrioriy: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const { workspaceId, title } = (await c.req.json()) as {
     workspaceId: string;
     title: string;
@@ -116,7 +116,7 @@ prioritiesRoutes.post("/", handleCreatePrioriy);
 const handleUpdatePriority: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = c.get(USER);
+  const user = getUser(c);
   const id = c.req.param("id");
   const { title } = (await c.req.json()) as {
     title: string;
