@@ -5,7 +5,7 @@ import { trackChanges } from "../utils/trackChanges";
 
 type OrganizationMembers = typeof organizationMembers.$inferSelect;
 
-const roleEnum = pgEnum("role", ["owner", "admin", "member"]);
+const roleEnum = pgEnum("organization_roles", ["owner", "admin", "member"]);
 
 const organizationMembers = pgTable(
   "organization_members",

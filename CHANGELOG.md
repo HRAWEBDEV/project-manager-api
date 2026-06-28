@@ -4,6 +4,9 @@
 - add seed script to populate database with system statuses and priorities (hra-done)
 - add workspace member role col (hra-done)
 - add organization member role col (hra-done)
+- add a create account service
+- add create session utility
+- update account route make it cleaner using utilities
 
 
 ### BUG FIXES

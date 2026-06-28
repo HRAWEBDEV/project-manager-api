@@ -2,7 +2,7 @@ import { Hono, type Handler } from "hono";
 import {
   USER,
   type WithSessionVariables,
-} from "../auth/utils/contextSessionVaraibles";
+} from "../auth/utils/contextSessionVariables";
 import { workspaceMembers } from "../../../../db/v1/schemas/workspaceMembers";
 import { db } from "../../../../db/v1/connect";
 import {

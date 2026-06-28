@@ -10,7 +10,7 @@ import { db } from "../../../../db/v1/connect";
 import {
   type WithSessionVariables,
   USER,
-} from "../auth/utils/contextSessionVaraibles";
+} from "../auth/utils/contextSessionVariables";
 import { eq, and, inArray, exists } from "drizzle-orm";
 import slugify from "slugify";
 import { nanoid } from "nanoid";

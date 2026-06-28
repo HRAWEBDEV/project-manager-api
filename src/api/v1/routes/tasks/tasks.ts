@@ -14,7 +14,7 @@ import { db } from "../../../../db/v1/connect";
 import {
   type WithSessionVariables,
   USER,
-} from "../auth/utils/contextSessionVaraibles";
+} from "../auth/utils/contextSessionVariables";
 import { checkWorkspaceMember } from "../workspace/utils/checkWorkspaceMember";
 import { checkProjectMember } from "../projects/utils/checkProjectMember";
 import { z } from "zod";

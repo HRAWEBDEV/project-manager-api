@@ -22,7 +22,7 @@ import {
   generateToken,
   hashToken,
 } from "../auth/utils/sessionManager";
-import { type WithSessionVariables } from "../auth/utils/contextSessionVaraibles";
+import { type WithSessionVariables } from "../auth/utils/contextSessionVariables";
 import { cookieOptions } from "../../utils/cookieOptions";
 import { USER_AGENT, IP_ADDRESS } from "../../utils/apiHeaders";
 import { id } from "zod/locales";
@@ -87,17 +87,11 @@ const handleCreateAccount: Handler<{
       throw new Error("Failed to create organization");
     }
     // create member
-    const [createdMember] = await tx
-      .insert(organizationMembers)
-      .values({
-        userId: createdUser.id,
-        organizationId: createdOg.id,
-        role: "owner",
-      })
-      .returning({ organizaionId: organizationMembers.organizationId });
-    if (undefined === createdMember) {
-      throw new Error("Failed to create member");
-    }
+    await tx.insert(organizationMembers).values({
+      userId: createdUser.id,
+      organizationId: createdOg.id,
+      role: "owner",
+    });
     // create session
     const [createdSession] = await tx
       .insert(sessions)

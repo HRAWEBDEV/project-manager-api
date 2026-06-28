@@ -1,4 +1,5 @@
-CREATE TYPE "public"."role" AS ENUM('owner', 'admin', 'member');--> statement-breakpoint
+CREATE TYPE "public"."organization_roles" AS ENUM('owner', 'admin', 'member');--> statement-breakpoint
+CREATE TYPE "public"."workspace_roles" AS ENUM('admin', 'member');--> statement-breakpoint
 CREATE TABLE "boards" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_id" uuid NOT NULL,
@@ -13,7 +14,7 @@ CREATE TABLE "boards" (
 CREATE TABLE "organization_members" (
 	"organization_id" uuid NOT NULL,
 	"user_id" uuid NOT NULL,
-	"role" "role" NOT NULL,
+	"role" "organization_roles" NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now(),
 	CONSTRAINT "organization_memebers_unique" UNIQUE("organization_id","user_id")
 );
@@ -119,7 +120,7 @@ CREATE TABLE "users" (
 CREATE TABLE "workspace_members" (
 	"workspace_id" uuid NOT NULL,
 	"user_id" uuid NOT NULL,
-	"role" "role" NOT NULL,
+	"role" "workspace_roles" NOT NULL,
 	CONSTRAINT "workspaceId_userId_unique" UNIQUE("workspace_id","user_id")
 );
 --> statement-breakpoint

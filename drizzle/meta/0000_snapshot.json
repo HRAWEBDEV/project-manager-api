@@ -1,5 +1,5 @@
 {
-  "id": "4f984245-e6d5-494d-b9ef-b8cc847f26b6",
+  "id": "2c978e2c-4624-4752-a163-8bc24e0f9b1a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -104,7 +104,7 @@
         },
         "role": {
           "name": "role",
-          "type": "role",
+          "type": "organization_roles",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -957,7 +957,7 @@
         },
         "role": {
           "name": "role",
-          "type": "role",
+          "type": "workspace_roles",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -1098,11 +1098,19 @@
     }
   },
   "enums": {
-    "public.role": {
-      "name": "role",
+    "public.organization_roles": {
+      "name": "organization_roles",
       "schema": "public",
       "values": [
         "owner",
+        "admin",
+        "member"
+      ]
+    },
+    "public.workspace_roles": {
+      "name": "workspace_roles",
+      "schema": "public",
+      "values": [
         "admin",
         "member"
       ]

@@ -11,7 +11,7 @@ import { eq, and, inArray, exists, or, isNull } from "drizzle-orm";
 import {
   type WithSessionVariables,
   USER,
-} from "../auth/utils/contextSessionVaraibles";
+} from "../auth/utils/contextSessionVariables";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";

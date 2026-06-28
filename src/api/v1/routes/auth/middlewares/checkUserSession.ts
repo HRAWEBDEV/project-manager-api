@@ -12,7 +12,7 @@ import {
   USER,
   SESSION,
   type WithSessionVariables,
-} from "../utils/contextSessionVaraibles";
+} from "../utils/contextSessionVariables";
 import type { MiddlewareHandler } from "hono";
 import { cookieOptions } from "../../../utils/cookieOptions";
 

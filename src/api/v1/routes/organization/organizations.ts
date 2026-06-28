@@ -1,11 +1,13 @@
 import { Hono, type Handler } from "hono";
+import { organizationMembers } from "./member/organizationMembers";
 import { getUserOrganizations } from "./utils/getUserOrganizations";
 import {
   type WithSessionVariables,
   USER,
-} from "../auth/utils/contextSessionVaraibles";
+} from "../auth/utils/contextSessionVariables";
 
 const organizationRoutes = new Hono().basePath("/organizations");
+organizationRoutes.route("/", organizationMembers);
 
 const handleGetOrganizations: Handler<{
   Variables: WithSessionVariables["Variables"];
