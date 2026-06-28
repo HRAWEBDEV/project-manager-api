@@ -9,6 +9,7 @@ export function getUserOrganizations(userId: string) {
       id: organizations.id,
       name: organizations.name,
       address: organizations.address,
+      role: organizationMembers.role,
     })
     .from(organizations)
     .innerJoin(
