@@ -15,6 +15,7 @@ import { organizationRoutes } from "./routes/organization/organizations.ts";
 import { DrizzleQueryError } from "drizzle-orm";
 import { checkUserSession } from "./routes/auth/middlewares/checkUserSession.ts";
 import { checkUserOrganizationRole } from "./routes/organization/member/middlewares/checkUserOrganizationRole.ts";
+import { checkUserWorkspaceRole } from "./routes/workspace/member/middlewares/checkUserWorkspaceRole.ts";
 
 const v1Routes = new Hono().basePath("/v1");
 v1Routes.route("/", accountRoutes);
@@ -25,6 +26,8 @@ v1Routes.route("/", organizationRoutes);
 // active organization
 v1Routes.use(checkUserOrganizationRole);
 v1Routes.route("/", workspacesRoutes);
+// active workspace
+v1Routes.use(checkUserWorkspaceRole);
 v1Routes.route("/", projectsRoutes);
 v1Routes.route("/", boardsRoutes);
 v1Routes.route("/", statusesRoutes);

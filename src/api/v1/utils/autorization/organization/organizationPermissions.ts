@@ -5,12 +5,18 @@ type OrganizationRolePermissions =
 
 const organizationPermissions = {
   owner: [
-    "organization:update",
-    "organization:delete",
     "workspace:read",
     "workspace:create",
     "workspace:update",
     "workspace:delete",
+    "project:read",
+    "project:create",
+    "project:update",
+    "project:delete",
+    "task:read",
+    "task:create",
+    "task:update",
+    "task:delete",
   ],
   admin: [
     "workspace:read",
@@ -18,7 +24,7 @@ const organizationPermissions = {
     "workspace:update",
     "workspace:delete",
   ],
-  member: [],
+  member: ["workspace:read"],
 } as const;
 
 function hasPermission(
