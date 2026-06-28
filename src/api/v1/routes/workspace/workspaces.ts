@@ -18,6 +18,8 @@ import { checkWorkspaceMember } from "./utils/checkWorkspaceMember";
 import { checkOrganizationMember } from "../organization/utils/checkOrganizationMember";
 import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
 import { StatusCodes } from "http-status-codes";
+import { getHeaderOrganizationID } from "../organization/member/utils/headerOrgCredentials";
+import { checkUserPermission } from "../../middlewares/checkUserPermission";
 
 const workspacesRoutes = new Hono().basePath("/workspaces");
 const organizationIdQueryName = "organization-id";
@@ -34,8 +36,11 @@ const handleGetWorkspaces: Handler<{
       slug: workspaces.slug,
       isPrivate: workspaces.isPrivate,
     })
-    .from(workspaceMembers)
-    .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id));
+    .from(workspaces)
+    .leftJoin(
+      workspaceMembers,
+      eq(workspaceMembers.workspaceId, workspaces.id),
+    );
   const filterWorkspacesConditions = [
     eq(workspaceMembers.userId, user.id),
     eq(workspaces.deleted, false),
@@ -51,13 +56,21 @@ const handleGetWorkspaces: Handler<{
     .orderBy(resultOrderBy);
   return c.json({ workspaces: res });
 };
-workspacesRoutes.get("/", handleGetWorkspaces);
+workspacesRoutes.get(
+  "/",
+  checkUserPermission({
+    type: "organization",
+    rolePermission: "workspace:read",
+  }),
+  handleGetWorkspaces,
+);
 
 const handleCreateWorkspace: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
   const user = getUser(c);
-  const { organizationId, name, isPrivate } = await c.req.json();
+  const { name, isPrivate } = await c.req.json();
+  const organizationId = getHeaderOrganizationID(c);
   const parsedWorkspace = insertWorkspaceSchema
     .pick({
       organizationId: true,
@@ -116,7 +129,14 @@ const handleCreateWorkspace: Handler<{
   });
   return c.json(createdWorkspace);
 };
-workspacesRoutes.post("/", handleCreateWorkspace);
+workspacesRoutes.post(
+  "/",
+  checkUserPermission({
+    type: "organization",
+    rolePermission: "workspace:create",
+  }),
+  handleCreateWorkspace,
+);
 
 const handleUpdateWorkspace: Handler<{
   Variables: WithSessionVariables["Variables"];
@@ -154,6 +174,13 @@ const handleUpdateWorkspace: Handler<{
   if (!updatedWorkspace) throw new NotFoundError("Workspace not found");
   return c.json(updatedWorkspace);
 };
-workspacesRoutes.patch("/:id", handleUpdateWorkspace);
+workspacesRoutes.patch(
+  "/:id",
+  checkUserPermission({
+    type: "organization",
+    rolePermission: "workspace:update",
+  }),
+  handleUpdateWorkspace,
+);
 
 export { workspacesRoutes };

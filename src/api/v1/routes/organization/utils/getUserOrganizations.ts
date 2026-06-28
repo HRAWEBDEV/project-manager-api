@@ -10,9 +10,9 @@ export function getUserOrganizations(userId: string) {
       name: organizations.name,
       address: organizations.address,
     })
-    .from(organizationMembers)
+    .from(organizations)
     .innerJoin(
-      organizations,
+      organizationMembers,
       eq(organizationMembers.organizationId, organizations.id),
     )
     .where(

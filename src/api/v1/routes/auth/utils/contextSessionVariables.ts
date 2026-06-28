@@ -12,15 +12,27 @@ type WithSessionVariables = {
   };
 };
 
-function getUser(c: Context) {
-  return c.get(USER);
+function getUser(
+  c: Context<{
+    Variables: WithSessionVariables["Variables"];
+  }>,
+) {
+  const user = c.get(USER);
+  if (!user) throw new Error("User not set");
+  return user;
 }
 function setUser(c: Context, user: User) {
   c.set(USER, user);
 }
 
-function getSession(c: Context) {
-  return c.get(SESSION);
+function getSession(
+  c: Context<{
+    Variables: WithSessionVariables["Variables"];
+  }>,
+) {
+  const session = c.get(SESSION);
+  if (!session) throw new Error("Session not set");
+  return session;
 }
 function setSession(c: Context, session: Session) {
   c.set(SESSION, session);

@@ -1,25 +1,32 @@
 type OrganizationPermissions = typeof organizationPermissions;
 type OrganizationRole = keyof OrganizationPermissions;
-type OrganizationRolePermissions<T extends OrganizationRole> =
-  OrganizationPermissions[T][number];
+type OrganizationRolePermissions =
+  OrganizationPermissions[keyof OrganizationPermissions][number];
 
 const organizationPermissions = {
   owner: [
     "organization:update",
     "organization:delete",
+    "workspace:read",
     "workspace:create",
-    "task:create",
+    "workspace:update",
+    "workspace:delete",
   ],
-  admin: ["workspace:create", "task:create"],
-  member: ["task:create"],
+  admin: [
+    "workspace:read",
+    "workspace:create",
+    "workspace:update",
+    "workspace:delete",
+  ],
+  member: [],
 } as const;
 
-function hasPermission<T extends OrganizationRole>(
-  role: T,
-  permission: OrganizationRolePermissions<T>,
+function hasPermission(
+  role: OrganizationRole,
+  permission: OrganizationRolePermissions,
 ): boolean {
   return (
-    organizationPermissions[role] as readonly OrganizationRolePermissions<T>[]
+    organizationPermissions[role] as readonly OrganizationRolePermissions[]
   ).includes(permission);
 }
 
