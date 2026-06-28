@@ -4,20 +4,19 @@ import {
   getUser,
 } from "../auth/utils/contextSessionVariables";
 import { workspaceMembers } from "../../../../db/v1/schemas/workspaceMembers";
+import { organizations } from "../../../../db/v1/schemas/organizations";
 import { db } from "../../../../db/v1/connect";
 import {
   workspaces,
   insertWorkspaceSchema,
   updateWorkspaceSchema,
 } from "../../../../db/v1/schemas/workspaces";
-import { eq, and, exists } from "drizzle-orm";
+import { eq, and, exists, or } from "drizzle-orm";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";
 import { checkWorkspaceMember } from "./utils/checkWorkspaceMember";
-import { checkOrganizationMember } from "../organization/utils/checkOrganizationMember";
-import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
-import { StatusCodes } from "http-status-codes";
+import { checkOrganizationOwner } from "../organization/utils/checkOrganizationOwner";
 import { getHeaderOrganizationID } from "../organization/member/utils/headerOrgCredentials";
 import { checkUserPermission } from "../../middlewares/checkUserPermission";
 
@@ -33,16 +32,20 @@ const handleGetWorkspaces: Handler<{
     .select({
       id: workspaces.id,
       name: workspaces.name,
+      organizationId: workspaces.organizationId,
+      organizationName: organizations.name,
+      role: workspaceMembers.role,
       slug: workspaces.slug,
       isPrivate: workspaces.isPrivate,
     })
     .from(workspaces)
-    .leftJoin(
-      workspaceMembers,
-      eq(workspaceMembers.workspaceId, workspaces.id),
-    );
+    .leftJoin(workspaceMembers, eq(workspaceMembers.workspaceId, workspaces.id))
+    .leftJoin(organizations, eq(organizations.id, workspaces.organizationId));
   const filterWorkspacesConditions = [
-    eq(workspaceMembers.userId, user.id),
+    or(
+      eq(workspaceMembers.userId, user.id),
+      exists(checkOrganizationOwner(workspaces.organizationId, user.id)),
+    ),
     eq(workspaces.deleted, false),
   ];
   const resultOrderBy = workspaces.createdAt;
@@ -87,20 +90,6 @@ const handleCreateWorkspace: Handler<{
     strict: true,
     trim: true,
   })}-${nanoid(8)}`;
-  const isMember = await checkOrganizationMember(
-    parsedWorkspace.organizationId,
-    user.id,
-  );
-  if (isMember.length === 0) {
-    c.status(StatusCodes.FORBIDDEN);
-    return c.json(
-      getApiErrorShape({
-        status: "failed",
-        code: StatusCodes.FORBIDDEN,
-        message: "You are not a member of this organization",
-      }),
-    );
-  }
   const [createdWorkspace] = await db.transaction(async (tx) => {
     const [createdWorkspace] = await tx
       .insert(workspaces)
@@ -165,7 +154,10 @@ const handleUpdateWorkspace: Handler<{
       and(
         eq(workspaces.id, id!),
         eq(workspaces.deleted, false),
-        exists(checkWorkspaceMember(id!, user.id)),
+        or(
+          exists(checkWorkspaceMember(id!, user.id)),
+          exists(checkOrganizationOwner(workspaces.organizationId, user.id)),
+        ),
       ),
     )
     .returning({
