@@ -11,14 +11,15 @@ import {
   type WithSessionVariables,
   getUser,
 } from "../auth/utils/contextSessionVariables";
-import { eq, and, inArray, exists } from "drizzle-orm";
+import { eq, and, inArray, exists, isNotNull, or } from "drizzle-orm";
+import { checkOrganizationOwner } from "../organization/utils/checkOrganizationOwner";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";
+import { checkWorkspaceOrganizationOwner } from "../workspace/utils/checkWorkspaceOrganizationOwner";
 import { checkProjectMember } from "./utils/checkProjectMember";
-import { checkWorkspaceMember } from "../workspace/utils/checkWorkspaceMember";
-import { StatusCodes } from "http-status-codes";
-import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
+import { checkUserPermission } from "../../middlewares/checkUserPermission";
+import { getHeaderWorkspaceID } from "../workspace/member/utils/headerWorkspaceCredentials";
 
 const projectsRoutes = new Hono().basePath("/projects");
 
@@ -39,11 +40,20 @@ const handleGetProjects: Handler<{
       workspaceId: workspaces.id,
       workspaceName: workspaces.name,
     })
-    .from(projectMembers)
-    .innerJoin(projects, eq(projectMembers.projectId, projects.id))
-    .innerJoin(workspaces, eq(projects.workspaceId, workspaces.id));
+    .from(projects)
+    .leftJoin(
+      projectMembers,
+      and(
+        eq(projectMembers.projectId, projects.id),
+        eq(projectMembers.userId, user.id),
+      ),
+    )
+    .leftJoin(workspaces, eq(projects.workspaceId, workspaces.id));
   const filterProjectsConditions = [
-    eq(projectMembers.userId, user.id),
+    or(
+      isNotNull(projectMembers.userId),
+      exists(checkOrganizationOwner(workspaces.organizationId, user.id)),
+    ),
     eq(projects.deleted, false),
   ];
   const resultOrderBy = projects.createdAt;
@@ -61,13 +71,18 @@ const handleGetProjects: Handler<{
     .orderBy(resultOrderBy);
   return c.json({ projects: result });
 };
-projectsRoutes.get("/", handleGetProjects);
+projectsRoutes.get(
+  "/",
+  checkUserPermission({ type: "workspace", rolePermission: "project:read" }),
+  handleGetProjects,
+);
 
 const handleCreateProject: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
   const user = getUser(c);
-  const { workspaceId, name, color, isArchived } = await c.req.json();
+  const { name, color, isArchived } = await c.req.json();
+  const workspaceId = getHeaderWorkspaceID(c);
   const parsedProject = insertProjectsSchema
     .pick({
       workspaceId: true,
@@ -86,20 +101,6 @@ const handleCreateProject: Handler<{
     strict: true,
     trim: true,
   })}-${nanoid(8)}`;
-  const isMember = await checkWorkspaceMember(
-    parsedProject.workspaceId,
-    user.id,
-  );
-  if (isMember.length === 0) {
-    c.status(StatusCodes.FORBIDDEN);
-    return c.json(
-      getApiErrorShape({
-        status: "failed",
-        code: StatusCodes.FORBIDDEN,
-        message: "You are not a member of this workspace",
-      }),
-    );
-  }
   const [createdProject] = await db.transaction(async (tx) => {
     const [createdProject] = await tx
       .insert(projects)
@@ -128,7 +129,11 @@ const handleCreateProject: Handler<{
   });
   return c.json(createdProject);
 };
-projectsRoutes.post("/", handleCreateProject);
+projectsRoutes.post(
+  "/",
+  checkUserPermission({ type: "workspace", rolePermission: "project:create" }),
+  handleCreateProject,
+);
 
 const handleUpdateProject: Handler<{
   Variables: WithSessionVariables["Variables"];
@@ -136,6 +141,7 @@ const handleUpdateProject: Handler<{
   const user = getUser(c);
   const { name, color, isArchived } = await c.req.json();
   const id = c.req.param("id");
+  const workspaceId = getHeaderWorkspaceID(c);
   const parsedProject = updateProjectsSchema
     .pick({
       id: true,
@@ -155,8 +161,12 @@ const handleUpdateProject: Handler<{
     .where(
       and(
         eq(projects.id, id!),
+        eq(projects.workspaceId, workspaceId!),
         eq(projects.deleted, false),
-        exists(checkProjectMember(id!, user.id)),
+        or(
+          exists(checkProjectMember(id!, user.id)),
+          exists(checkWorkspaceOrganizationOwner(workspaceId!, user.id)),
+        ),
       ),
     )
     .returning({ id: projects.id });
@@ -164,6 +174,10 @@ const handleUpdateProject: Handler<{
   if (!updatedProject) throw new NotFoundError("Project not found");
   return c.json(updatedProject);
 };
-projectsRoutes.patch("/:id", handleUpdateProject);
+projectsRoutes.patch(
+  "/:id",
+  checkUserPermission({ type: "workspace", rolePermission: "project:update" }),
+  handleUpdateProject,
+);
 
 export { projectsRoutes };
