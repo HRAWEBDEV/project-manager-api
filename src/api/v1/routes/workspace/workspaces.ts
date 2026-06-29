@@ -11,7 +11,7 @@ import {
   insertWorkspaceSchema,
   updateWorkspaceSchema,
 } from "../../../../db/v1/schemas/workspaces";
-import { eq, and, exists, or } from "drizzle-orm";
+import { eq, and, exists, or, isNotNull } from "drizzle-orm";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";
@@ -39,11 +39,17 @@ const handleGetWorkspaces: Handler<{
       isPrivate: workspaces.isPrivate,
     })
     .from(workspaces)
-    .leftJoin(workspaceMembers, eq(workspaceMembers.workspaceId, workspaces.id))
+    .leftJoin(
+      workspaceMembers,
+      and(
+        eq(workspaceMembers.workspaceId, workspaces.id),
+        eq(workspaceMembers.userId, user.id),
+      ),
+    )
     .leftJoin(organizations, eq(organizations.id, workspaces.organizationId));
   const filterWorkspacesConditions = [
     or(
-      eq(workspaceMembers.userId, user.id),
+      isNotNull(workspaceMembers.userId),
       exists(checkOrganizationOwner(workspaces.organizationId, user.id)),
     ),
     eq(workspaces.deleted, false),
@@ -131,6 +137,7 @@ const handleUpdateWorkspace: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
   const user = getUser(c);
+  const organizationId = getHeaderOrganizationID(c);
   const { name, isPrivate } = await c.req.json();
   const id = c.req.param("id");
   const parsedWorkspace = updateWorkspaceSchema
@@ -153,6 +160,7 @@ const handleUpdateWorkspace: Handler<{
     .where(
       and(
         eq(workspaces.id, id!),
+        eq(workspaces.organizationId, organizationId!),
         eq(workspaces.deleted, false),
         or(
           exists(checkWorkspaceMember(id!, user.id)),
