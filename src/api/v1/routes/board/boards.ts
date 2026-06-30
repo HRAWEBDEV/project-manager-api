@@ -20,6 +20,7 @@ import { z } from "zod";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";
 import { checkBoardMember } from "./utils/checkBoardMember";
 import { checkWorkspaceOrganizationOwner } from "../workspace/utils/checkWorkspaceOrganizationOwner";
+import { checkUserPermission } from "../../middlewares/checkUserPermission";
 
 const boardsRoutes = new Hono().basePath("/boards");
 
@@ -70,7 +71,14 @@ const handleGetBoards: Handler<{
   });
 };
 
-boardsRoutes.get("/", handleGetBoards);
+boardsRoutes.get(
+  "/",
+  checkUserPermission({
+    rolePermission: "board:read",
+    type: "workspace",
+  }),
+  handleGetBoards,
+);
 
 const handleCreateBoard: Handler<{
   Variables: WithSessionVariables["Variables"];
@@ -120,7 +128,14 @@ const handleCreateBoard: Handler<{
   return c.json(createdBoard);
 };
 
-boardsRoutes.post("/", handleCreateBoard);
+boardsRoutes.post(
+  "/",
+  checkUserPermission({
+    rolePermission: "board:create",
+    type: "workspace",
+  }),
+  handleCreateBoard,
+);
 
 const handleUpdateBoard: Handler<{
   Variables: WithSessionVariables["Variables"];
@@ -165,6 +180,13 @@ const handleUpdateBoard: Handler<{
   return c.json(updatedBoard);
 };
 
-boardsRoutes.patch("/:id", handleUpdateBoard);
+boardsRoutes.patch(
+  "/:id",
+  checkUserPermission({
+    rolePermission: "board:update",
+    type: "workspace",
+  }),
+  handleUpdateBoard,
+);
 
 export { boardsRoutes };

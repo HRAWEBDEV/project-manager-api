@@ -2,11 +2,16 @@ import { db } from "../../../../../db/v1/connect";
 import { workspaces } from "../../../../../db/v1/schemas/workspaces";
 import { organizations } from "../../../../../db/v1/schemas/organizations";
 import { projects } from "../../../../../db/v1/schemas/projects";
+import { priorities } from "../../../../../db/v1/schemas/priorities";
 import { organizationMembers } from "../../../../../db/v1/schemas/organizationMembers";
 import { and, eq, sql } from "drizzle-orm";
 
 export function checkWorkspaceOrganizationOwner(
-  workspaceId: typeof workspaces.id | typeof projects.workspaceId | string,
+  workspaceId:
+    | typeof workspaces.id
+    | typeof projects.workspaceId
+    | typeof priorities.workspaceId
+    | string,
   userId: string,
 ) {
   return db
