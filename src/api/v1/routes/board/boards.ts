@@ -1,23 +1,25 @@
 import { Hono, type Handler } from "hono";
 import { projects } from "../../../../db/v1/schemas/projects";
 import { projectMembers } from "../../../../db/v1/schemas/projectMember";
-import { checkProjectMember } from "../projects/utils/checkProjectMember";
+import { getHeaderWorkspaceID } from "../workspace/member/utils/headerWorkspaceCredentials";
+import { checkProjectWorkspace } from "../projects/utils/checkProjectWorkspace";
+import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
+import { StatusCodes } from "http-status-codes";
 import {
   boards,
   insertBoardSchema,
   updateBoardSchema,
 } from "../../../../db/v1/schemas/boards";
 import { db } from "../../../../db/v1/connect";
-import { eq, and, inArray, exists } from "drizzle-orm";
+import { eq, and, inArray, exists, or } from "drizzle-orm";
 import {
   type WithSessionVariables,
   getUser,
 } from "../auth/utils/contextSessionVariables";
 import { z } from "zod";
-import { StatusCodes } from "http-status-codes";
-import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";
 import { checkBoardMember } from "./utils/checkBoardMember";
+import { checkWorkspaceOrganizationOwner } from "../workspace/utils/checkWorkspaceOrganizationOwner";
 
 const boardsRoutes = new Hono().basePath("/boards");
 
@@ -41,7 +43,12 @@ const handleGetBoards: Handler<{
       and(
         eq(projects.deleted, false),
         eq(projects.slug, project!),
-        eq(projectMembers.userId, user.id),
+        or(
+          eq(projectMembers.userId, user.id),
+          exists(
+            checkWorkspaceOrganizationOwner(projects.workspaceId, user.id),
+          ),
+        ),
       ),
     );
   const res = await db
@@ -68,12 +75,12 @@ boardsRoutes.get("/", handleGetBoards);
 const handleCreateBoard: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
-  const user = getUser(c);
   const { projectId, name, position } = (await c.req.json()) as {
     projectId: string;
     name: string;
     position: number;
   };
+  const workspaceId = getHeaderWorkspaceID(c);
   const parsedBoard = insertBoardSchema
     .pick({
       projectId: true,
@@ -85,14 +92,18 @@ const handleCreateBoard: Handler<{
       name,
       position,
     });
-  const isMember = await checkProjectMember(parsedBoard.projectId, user.id);
-  if (isMember.length === 0) {
-    c.status(StatusCodes.FORBIDDEN);
+
+  const [projectWorkspace] = await checkProjectWorkspace(
+    projectId,
+    workspaceId!,
+  );
+  if (!projectWorkspace) {
+    c.status(StatusCodes.NOT_FOUND);
     return c.json(
       getApiErrorShape({
         status: "failed",
-        code: StatusCodes.FORBIDDEN,
-        message: "You are not a member of this project",
+        code: StatusCodes.NOT_FOUND,
+        message: "Project not found",
       }),
     );
   }
@@ -116,6 +127,7 @@ const handleUpdateBoard: Handler<{
 }> = async (c) => {
   const user = getUser(c);
   const id = c.req.param("id");
+  const workspaceId = getHeaderWorkspaceID(c);
   const { name, position } = (await c.req.json()) as {
     name: string;
     position: number;
@@ -131,7 +143,6 @@ const handleUpdateBoard: Handler<{
       name,
       position,
     });
-
   const [updatedBoard] = await db
     .update(boards)
     .set({ name: parsedBoard.name, position: parsedBoard.position })
@@ -139,7 +150,13 @@ const handleUpdateBoard: Handler<{
       and(
         eq(boards.id, id!),
         eq(boards.deleted, false),
-        exists(checkBoardMember(id!, user.id)),
+        or(
+          exists(checkBoardMember(id!, user.id)),
+          and(
+            exists(checkWorkspaceOrganizationOwner(workspaceId!, user.id)),
+            exists(checkProjectWorkspace(boards.projectId!, workspaceId!)),
+          ),
+        ),
       ),
     )
     .returning({ id: projects.id });
