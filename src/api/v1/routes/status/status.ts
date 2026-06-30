@@ -139,12 +139,13 @@ const handleUpdateStatus: Handler<{
   const { title } = (await c.req.json()) as {
     title: string;
   };
+  const key = slugify(title, { lower: true, strict: true, trim: true });
   const parsedStatus = updateStatusSchema
     .pick({ title: true })
     .parse({ title });
   const [updatedStatus] = await db
     .update(statuses)
-    .set({ title: parsedStatus.title })
+    .set({ title: parsedStatus.title, key })
     .where(
       and(
         eq(statuses.id, Number(id!)),
