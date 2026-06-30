@@ -111,7 +111,7 @@ const handleCreatePrioriy: Handler<{
       workspaceId,
       title,
     });
-  const key = slugify(title, { lower: true, strict: true });
+  const key = slugify(title, { lower: true, strict: true, trim: true });
   const [createdPrioriy] = await db
     .insert(priorities)
     .values({
@@ -145,7 +145,7 @@ const handleUpdatePriority: Handler<{
   const parsedPriority = updatePrioritySchema
     .pick({ title: true })
     .parse({ title });
-  const key = slugify(title, { lower: true, strict: true });
+  const key = slugify(title, { lower: true, strict: true, trim: true });
   const [updatedPriority] = await db
     .update(priorities)
     .set({ title: parsedPriority.title, key })

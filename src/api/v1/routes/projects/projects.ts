@@ -150,13 +150,18 @@ const handleUpdateProject: Handler<{
       isArchived: true,
     })
     .parse({ name, color, isArchived, id });
-
+  const slug = `${slugify(name, {
+    lower: true,
+    strict: true,
+    trim: true,
+  })}-${nanoid(8)}`;
   const [updatedProject] = await db
     .update(projects)
     .set({
       name: parsedProject.name,
       color: parsedProject.color,
       isArchived: parsedProject.isArchived,
+      slug,
     })
     .where(
       and(

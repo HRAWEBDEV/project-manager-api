@@ -140,6 +140,11 @@ const handleUpdateWorkspace: Handler<{
   const organizationId = getHeaderOrganizationID(c);
   const { name, isPrivate } = await c.req.json();
   const id = c.req.param("id");
+  const slug = `${slugify(name, {
+    lower: true,
+    strict: true,
+    trim: true,
+  })}-${nanoid(8)}`;
   const parsedWorkspace = updateWorkspaceSchema
     .pick({
       organizationId: true,
@@ -156,6 +161,7 @@ const handleUpdateWorkspace: Handler<{
     .set({
       name: parsedWorkspace.name,
       isPrivate: parsedWorkspace.isPrivate,
+      slug,
     })
     .where(
       and(
