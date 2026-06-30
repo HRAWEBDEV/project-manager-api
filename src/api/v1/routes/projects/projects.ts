@@ -73,7 +73,10 @@ const handleGetProjects: Handler<{
 };
 projectsRoutes.get(
   "/",
-  checkUserPermission({ type: "workspace", rolePermission: "project:read" }),
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "project:read",
+  }),
   handleGetProjects,
 );
 
@@ -131,7 +134,10 @@ const handleCreateProject: Handler<{
 };
 projectsRoutes.post(
   "/",
-  checkUserPermission({ type: "workspace", rolePermission: "project:create" }),
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "project:create",
+  }),
   handleCreateProject,
 );
 
@@ -181,7 +187,10 @@ const handleUpdateProject: Handler<{
 };
 projectsRoutes.patch(
   "/:id",
-  checkUserPermission({ type: "workspace", rolePermission: "project:update" }),
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "project:update",
+  }),
   handleUpdateProject,
 );
 

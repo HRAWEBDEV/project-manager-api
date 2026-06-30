@@ -23,14 +23,24 @@ export const checkUserPermission = ({
   | {
       type: "workspace";
       rolePermission: WorkspaceRolePermissions;
+    }
+  | {
+      type: "organizationAndWorkspace";
+      rolePermission: Extract<
+        OrganizationRolePermissions,
+        WorkspaceRolePermissions
+      >;
     }) => {
   return createMiddleware(async (c, next) => {
     let memeberHasPermission = false;
-    if (type === "organization") {
+    if (type === "organization" || type === "organizationAndWorkspace") {
       const orgRole = getOrgRole(c);
       memeberHasPermission = hasPermission(orgRole, rolePermission);
     }
-    if (type === "workspace") {
+    if (
+      !memeberHasPermission &&
+      (type === "workspace" || type === "organizationAndWorkspace")
+    ) {
       const workspaceRole = getWorkspaceRole(c);
       memeberHasPermission = hasWorkspacePermission(
         workspaceRole,

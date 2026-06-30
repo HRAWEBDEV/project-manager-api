@@ -80,7 +80,7 @@ prioritiesRoutes.get(
   "/",
   checkUserPermission({
     rolePermission: "priority:read",
-    type: "workspace",
+    type: "organizationAndWorkspace",
   }),
   handleGetPriorities,
 );
@@ -128,7 +128,7 @@ prioritiesRoutes.post(
   "/",
   checkUserPermission({
     rolePermission: "priority:read",
-    type: "workspace",
+    type: "organizationAndWorkspace",
   }),
   handleCreatePrioriy,
 );
@@ -171,7 +171,7 @@ prioritiesRoutes.patch(
   "/:id",
   checkUserPermission({
     rolePermission: "priority:update",
-    type: "workspace",
+    type: "organizationAndWorkspace",
   }),
   handleUpdatePriority,
 );

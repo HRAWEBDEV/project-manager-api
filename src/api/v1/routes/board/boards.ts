@@ -75,7 +75,7 @@ boardsRoutes.get(
   "/",
   checkUserPermission({
     rolePermission: "board:read",
-    type: "workspace",
+    type: "organizationAndWorkspace",
   }),
   handleGetBoards,
 );
@@ -132,7 +132,7 @@ boardsRoutes.post(
   "/",
   checkUserPermission({
     rolePermission: "board:create",
-    type: "workspace",
+    type: "organizationAndWorkspace",
   }),
   handleCreateBoard,
 );
@@ -184,7 +184,7 @@ boardsRoutes.patch(
   "/:id",
   checkUserPermission({
     rolePermission: "board:update",
-    type: "workspace",
+    type: "organizationAndWorkspace",
   }),
   handleUpdateBoard,
 );

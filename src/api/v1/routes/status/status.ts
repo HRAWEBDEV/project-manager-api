@@ -48,7 +48,7 @@ const handleGetStatuses: Handler<{
   const workspaceIdSubQuery = db
     .select({ workspaceId: workspaces.id })
     .from(workspaces)
-    .where(eq(workspaces.name, workspace))
+    .where(eq(workspaces.slug, workspace))
     .limit(1);
   const result = await baseQuery
     .where(
@@ -80,7 +80,7 @@ statusesRoutes.get(
   "/",
   checkUserPermission({
     rolePermission: "status:read",
-    type: "workspace",
+    type: "organizationAndWorkspace",
   }),
   handleGetStatuses,
 );
@@ -125,7 +125,7 @@ statusesRoutes.post(
   "/",
   checkUserPermission({
     rolePermission: "status:create",
-    type: "workspace",
+    type: "organizationAndWorkspace",
   }),
   handleCreateStatus,
 );
@@ -166,7 +166,7 @@ statusesRoutes.patch(
   "/:id",
   checkUserPermission({
     rolePermission: "status:update",
-    type: "workspace",
+    type: "organizationAndWorkspace",
   }),
   handleUpdateStatus,
 );
