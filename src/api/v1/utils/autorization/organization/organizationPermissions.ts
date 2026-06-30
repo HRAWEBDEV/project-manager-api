@@ -25,6 +25,10 @@ const organizationPermissions = {
     "priority:create",
     "priority:update",
     "priority:delete",
+    "status:read",
+    "status:create",
+    "status:update",
+    "status:delete",
   ],
   admin: [
     "workspace:read",

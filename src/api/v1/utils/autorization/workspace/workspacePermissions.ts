@@ -22,6 +22,10 @@ const workspacePermissions = {
     "priority:create",
     "priority:update",
     "priority:delete",
+    "status:read",
+    "status:create",
+    "status:update",
+    "status:delete",
   ],
   member: [
     "workspace:read",

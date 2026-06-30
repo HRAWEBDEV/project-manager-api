@@ -1,5 +1,6 @@
 import { Hono, type Handler } from "hono";
 import { checkWorkspaceMember } from "../workspace/utils/checkWorkspaceMember";
+import { checkWorkspaceOrganizationOwner } from "../workspace/utils/checkWorkspaceOrganizationOwner";
 import { db } from "../../../../db/v1/connect";
 import { workspaces } from "../../../../db/v1/schemas/workspaces";
 import {
@@ -15,6 +16,8 @@ import {
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
 import { NotFoundError } from "../../../../db/v1/utils/NotFound";
+import { checkUserPermission } from "../../middlewares/checkUserPermission";
+import { getHeaderWorkspaceID } from "../workspace/member/utils/headerWorkspaceCredentials";
 import slugify from "slugify";
 import z from "zod";
 
@@ -23,6 +26,7 @@ const statusesRoutes = new Hono().basePath("/statuses");
 const handleGetStatuses: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
+  const user = getUser(c);
   const workspaceQuery = c.req.query("workspace");
   const { workspace } = z
     .object({
@@ -44,27 +48,51 @@ const handleGetStatuses: Handler<{
   const workspaceIdSubQuery = db
     .select({ workspaceId: workspaces.id })
     .from(workspaces)
-    .where(eq(workspaces.name, workspace));
+    .where(eq(workspaces.name, workspace))
+    .limit(1);
   const result = await baseQuery
     .where(
       or(
-        inArray(statuses.workspaceId, workspaceIdSubQuery),
         isNull(statuses.workspaceId),
+        and(
+          inArray(statuses.workspaceId, workspaceIdSubQuery),
+          or(
+            exists(
+              checkWorkspaceMember(
+                workspaceIdSubQuery as unknown as typeof workspaces.id,
+                user.id,
+              ),
+            ),
+            exists(
+              checkWorkspaceOrganizationOwner(
+                workspaceIdSubQuery as unknown as typeof workspaces.id,
+                user.id,
+              ),
+            ),
+          ),
+        ),
       ),
     )
     .orderBy(...resultOrderBy);
   return c.json(result);
 };
-statusesRoutes.get("/", handleGetStatuses);
+statusesRoutes.get(
+  "/",
+  checkUserPermission({
+    rolePermission: "status:read",
+    type: "workspace",
+  }),
+  handleGetStatuses,
+);
 
 const handleCreateStatus: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
   const user = getUser(c);
-  const { workspaceId, title } = (await c.req.json()) as {
-    workspaceId: string;
+  const { title } = (await c.req.json()) as {
     title: string;
   };
+  const workspaceId = getHeaderWorkspaceID(c);
   if (!workspaceId) {
     c.status(StatusCodes.BAD_REQUEST);
     return c.json(
@@ -84,21 +112,7 @@ const handleCreateStatus: Handler<{
       workspaceId,
       title,
     });
-  const isMember = await checkWorkspaceMember(
-    parsedStatus.workspaceId!,
-    user.id,
-  );
-  if (isMember.length === 0) {
-    c.status(StatusCodes.FORBIDDEN);
-    return c.json(
-      getApiErrorShape({
-        status: "failed",
-        code: StatusCodes.FORBIDDEN,
-        message: "You are not a member of this workspace",
-      }),
-    );
-  }
-  const key = slugify(title, { lower: true, strict: true });
+  const key = slugify(title, { lower: true, strict: true, trim: true });
   const [createdStatus] = await db
     .insert(statuses)
     .values({ workspaceId, title, key })
@@ -107,13 +121,21 @@ const handleCreateStatus: Handler<{
     });
   return c.json(createdStatus);
 };
-statusesRoutes.post("/", handleCreateStatus);
+statusesRoutes.post(
+  "/",
+  checkUserPermission({
+    rolePermission: "status:create",
+    type: "workspace",
+  }),
+  handleCreateStatus,
+);
 
 const handleUpdateStatus: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
   const user = getUser(c);
   const id = c.req.param("id");
+  const workspaceId = getHeaderWorkspaceID(c);
   const { title } = (await c.req.json()) as {
     title: string;
   };
@@ -126,7 +148,11 @@ const handleUpdateStatus: Handler<{
     .where(
       and(
         eq(statuses.id, Number(id!)),
-        exists(checkWorkspaceMember(statuses.workspaceId, user.id)),
+        eq(statuses.workspaceId, workspaceId!),
+        or(
+          exists(checkWorkspaceMember(statuses.workspaceId, user.id)),
+          exists(checkWorkspaceMember(statuses.workspaceId, workspaceId!)),
+        ),
       ),
     )
     .returning({
@@ -135,6 +161,13 @@ const handleUpdateStatus: Handler<{
   if (!updatedStatus) throw new NotFoundError("Status not found");
   return c.json(updatedStatus);
 };
-statusesRoutes.patch("/:id", handleUpdateStatus);
+statusesRoutes.patch(
+  "/:id",
+  checkUserPermission({
+    rolePermission: "status:update",
+    type: "workspace",
+  }),
+  handleUpdateStatus,
+);
 
 export { statusesRoutes };
