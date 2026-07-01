@@ -9,7 +9,7 @@ import { projects } from "../../../../db/v1/schemas/projects";
 import { boards } from "../../../../db/v1/schemas/boards";
 import { statuses } from "../../../../db/v1/schemas/statuses";
 import { priorities } from "../../../../db/v1/schemas/priorities";
-import { and, eq, exists } from "drizzle-orm";
+import { and, eq, exists, or } from "drizzle-orm";
 import { db } from "../../../../db/v1/connect";
 import {
   type WithSessionVariables,
@@ -20,6 +20,9 @@ import { checkProjectMember } from "../projects/utils/checkProjectMember";
 import { z } from "zod";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../../../db/v1/utils/apiGeneralTypes";
+import { checkUserPermission } from "../../middlewares/checkUserPermission";
+import { checkWorkspaceOrganizationOwner } from "../workspace/utils/checkWorkspaceOrganizationOwner";
+import { getHeaderWorkspaceID } from "../workspace/member/utils/headerWorkspaceCredentials";
 
 const tasksRoutes = new Hono().basePath("/tasks");
 
@@ -44,10 +47,15 @@ const handleGetTasks: Handler<{
   const filterTasksConditions = [
     eq(workspaces.slug, workspace!),
     eq(tasks.deleted, false),
-    exists(checkWorkspaceMember(tasks.workspaceId, user.id)),
-    exists(checkProjectMember(tasks.projectId, user.id)),
+    or(
+      and(
+        exists(checkWorkspaceMember(tasks.workspaceId, user.id)),
+        exists(checkProjectMember(tasks.projectId, user.id)),
+      ),
+      exists(checkWorkspaceOrganizationOwner(tasks.workspaceId, user.id)),
+    ),
   ];
-  const orderByConditions = [workspaces.name, projects.name, tasks.createdAt];
+  const orderByConditions = [tasks.createdAt, workspaces.name, projects.name];
   const baseQuery = db
     .select({
       id: tasks.id,
@@ -71,7 +79,7 @@ const handleGetTasks: Handler<{
     })
     .from(tasks)
     .innerJoin(workspaces, eq(tasks.workspaceId, workspaces.id))
-    .leftJoin(projects, eq(tasks.projectId, projects.id))
+    .innerJoin(projects, eq(tasks.projectId, projects.id))
     .leftJoin(boards, eq(tasks.boardId, boards.id))
     .leftJoin(priorities, eq(tasks.priorityId, priorities.id))
     .leftJoin(statuses, eq(tasks.statusId, statuses.id));
@@ -87,12 +95,20 @@ const handleGetTasks: Handler<{
     pageSize: Number(pageSize),
   });
 };
-tasksRoutes.get("/", handleGetTasks);
+tasksRoutes.get(
+  "/",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task:read",
+  }),
+  handleGetTasks,
+);
 
 const handleCreateTask: Handler<{
   Variables: WithSessionVariables["Variables"];
 }> = async (c) => {
   const user = c.get(USER);
+  const workspaceId = getHeaderWorkspaceID(c);
   const {
     projectId,
     boardId,
@@ -148,7 +164,7 @@ const handleCreateTask: Handler<{
     })
     .from(projects)
     .innerJoin(workspaces, eq(projects.workspaceId, workspaces.id))
-    .where(eq(projects.deleted, false))
+    .where(and(eq(projects.deleted, false), eq(workspaces.id, workspaceId!)))
     .limit(1);
   if (projectWorkspace.length === 0) {
     c.status(StatusCodes.BAD_REQUEST);
@@ -181,7 +197,14 @@ const handleCreateTask: Handler<{
     });
   return c.json(createdTask);
 };
-tasksRoutes.post("/", handleCreateTask);
+tasksRoutes.post(
+  "/",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task:create",
+  }),
+  handleCreateTask,
+);
 
 const handleUpdateTask: Handler<{
   Variables: WithSessionVariables["Variables"];
@@ -236,7 +259,10 @@ const handleUpdateTask: Handler<{
       and(
         eq(tasks.id, id!),
         eq(tasks.deleted, false),
-        exists(checkProjectMember(tasks.projectId, user.id)),
+        or(
+          exists(checkProjectMember(tasks.projectId, user.id)),
+          exists(checkWorkspaceOrganizationOwner(tasks.workspaceId, user.id)),
+        ),
       ),
     )
     .returning({
@@ -254,6 +280,13 @@ const handleUpdateTask: Handler<{
   }
   return c.json(updatedTask);
 };
-tasksRoutes.patch("/:id", handleUpdateTask);
+tasksRoutes.patch(
+  "/:id",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task:update",
+  }),
+  handleUpdateTask,
+);
 
 export { tasksRoutes };

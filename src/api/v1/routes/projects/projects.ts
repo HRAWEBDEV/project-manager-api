@@ -61,7 +61,7 @@ const handleGetProjects: Handler<{
     const workspaceIdSubQuery = db
       .select({ workspaceId: workspaces.id })
       .from(workspaces)
-      .where(eq(workspaces.name, workspace));
+      .where(eq(workspaces.slug, workspace));
     filterProjectsConditions.push(
       inArray(projects.workspaceId, workspaceIdSubQuery),
     );
