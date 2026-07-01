@@ -4,12 +4,13 @@ import {
   insertTaskSchema,
   updateTaskSchema,
 } from "../../../../db/v1/schemas/tasks";
+import { users } from "../../../../db/v1/schemas/users";
 import { workspaces } from "../../../../db/v1/schemas/workspaces";
 import { projects } from "../../../../db/v1/schemas/projects";
 import { boards } from "../../../../db/v1/schemas/boards";
 import { statuses } from "../../../../db/v1/schemas/statuses";
 import { priorities } from "../../../../db/v1/schemas/priorities";
-import { and, eq, exists, or } from "drizzle-orm";
+import { and, eq, exists, or, sql } from "drizzle-orm";
 import { db } from "../../../../db/v1/connect";
 import {
   type WithSessionVariables,
@@ -61,6 +62,13 @@ const handleGetTasks: Handler<{
       id: tasks.id,
       workspaceId: tasks.workspaceId,
       workspace: workspaces.name,
+      createdBy: tasks.createdBy,
+      createdByUser: sql<string | null>`
+        CASE
+          WHEN ${tasks.createdBy} IS NULL THEN NULL
+          ELSE concat_ws(' ', ${users.firstName}, ${users.lastName})
+        END
+      `,
       projectId: tasks.projectId,
       project: projects.name,
       boardId: tasks.boardId,
@@ -80,6 +88,7 @@ const handleGetTasks: Handler<{
     .from(tasks)
     .innerJoin(workspaces, eq(tasks.workspaceId, workspaces.id))
     .innerJoin(projects, eq(tasks.projectId, projects.id))
+    .leftJoin(users, eq(tasks.createdBy, users.id))
     .leftJoin(boards, eq(tasks.boardId, boards.id))
     .leftJoin(priorities, eq(tasks.priorityId, priorities.id))
     .leftJoin(statuses, eq(tasks.statusId, statuses.id));
@@ -190,6 +199,7 @@ const handleCreateTask: Handler<{
       statusId: parsedTask.statusId,
       priorityId: parsedTask.priorityId,
       boardId: parsedTask.boardId,
+      createdBy: user.id,
       isArchived: false,
     })
     .returning({
