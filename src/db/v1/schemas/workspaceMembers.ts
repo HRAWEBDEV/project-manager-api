@@ -9,6 +9,7 @@ const roleEnum = pgEnum("workspace_roles", ["admin", "member"]);
 const workspaceMembers = pgTable(
   "workspace_members",
   {
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, {

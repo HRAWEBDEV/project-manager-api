@@ -7,6 +7,7 @@ type ProjectMembers = typeof projectMembers.$inferInsert;
 const projectMembers = pgTable(
   "project_members",
   {
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
     projectId: uuid("project_id").references(() => projects.id, {
       onDelete: "cascade",
     }),
