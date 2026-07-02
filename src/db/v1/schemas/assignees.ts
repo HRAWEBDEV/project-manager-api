@@ -14,12 +14,16 @@ const assignees = pgTable(
   "assignees",
   {
     id: uuid("id").defaultRandom().primaryKey().notNull(),
-    taskId: uuid("task-id")
+    taskId: uuid("task_id")
       .notNull()
-      .references(() => tasks.id),
+      .references(() => tasks.id, {
+        onDelete: "cascade",
+      }),
     projectMemberId: uuid("project-member-id")
       .notNull()
-      .references(() => projectMembers.id),
+      .references(() => projectMembers.id, {
+        onDelete: "cascade",
+      }),
     createdAt: trackChanges["createdAt"],
   },
   (table) => [unique().on(table.taskId, table.projectMemberId)],

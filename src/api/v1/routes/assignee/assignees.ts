@@ -112,4 +112,18 @@ assigneeRoutes.post(
   handleCreateAssignee,
 );
 
+// how can a user delete a task assignee => 1)be a owner! 2)think about it more ...
+const handleDeleteAssignee: Handler<{
+  Variables: WithSessionVariables["Variables"];
+}> = async (c) => {};
+
+assigneeRoutes.delete(
+  "/:id",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "assignee:delete",
+  }),
+  handleDeleteAssignee,
+);
+
 export { assigneeRoutes };

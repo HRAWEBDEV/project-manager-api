@@ -22,6 +22,27 @@
       "when": 1782995797462,
       "tag": "0002_wise_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782995944120,
+      "tag": "0003_wandering_wendell_vaughn",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782996637790,
+      "tag": "0004_smiling_the_renegades",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782996904370,
+      "tag": "0005_salty_the_captain",
+      "breakpoints": true
     }
   ]
 }
