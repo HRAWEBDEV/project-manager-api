@@ -15,11 +15,7 @@ export function checkProjectWorkspace(
     })
     .from(projects)
     .where(
-      and(
-        eq(projects.deleted, false),
-        eq(projects.workspaceId, workspaceId),
-        eq(projects.id, projectId),
-      ),
+      and(eq(projects.workspaceId, workspaceId), eq(projects.id, projectId)),
     )
     .limit(1);
 }

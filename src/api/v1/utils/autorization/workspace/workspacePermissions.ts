@@ -26,6 +26,9 @@ const workspacePermissions = {
     "status:create",
     "status:update",
     "status:delete",
+    "assignee:read",
+    "assignee:create",
+    "assignee:delete",
   ],
   member: [
     "workspace:read",
@@ -34,6 +37,9 @@ const workspacePermissions = {
     "task:create",
     "task:update",
     "task:delete",
+    "assignee:read",
+    "assignee:create",
+    "assignee:delete",
   ],
 } as const;
 

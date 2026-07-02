@@ -6,6 +6,7 @@ export const trackChanges = {
   }).defaultNow(),
   updatedAt: timestamp("updated_at", {
     withTimezone: true,
-  }).defaultNow().$onUpdateFn(() => new Date()),
-  deleted: boolean("deleted").default(false),
+  })
+    .defaultNow()
+    .$onUpdateFn(() => new Date()),
 };

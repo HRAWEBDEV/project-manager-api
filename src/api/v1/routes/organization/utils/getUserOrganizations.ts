@@ -16,11 +16,6 @@ export function getUserOrganizations(userId: string) {
       organizationMembers,
       eq(organizationMembers.organizationId, organizations.id),
     )
-    .where(
-      and(
-        eq(organizationMembers.userId, userId),
-        eq(organizations.deleted, false),
-      ),
-    )
+    .where(and(eq(organizationMembers.userId, userId)))
     .orderBy(organizations.createdAt);
 }

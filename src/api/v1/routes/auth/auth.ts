@@ -27,7 +27,7 @@ authRoutes.post("/sign-in", async (c) => {
   const [user] = await db
     .select()
     .from(users)
-    .where(and(eq(users.phoneNumber, phoneNumber), eq(users.deleted, false)));
+    .where(and(eq(users.phoneNumber, phoneNumber)));
   if (!user) {
     c.status(StatusCodes.BAD_REQUEST);
     return c.json({ message: "sign in data is incorrect" });

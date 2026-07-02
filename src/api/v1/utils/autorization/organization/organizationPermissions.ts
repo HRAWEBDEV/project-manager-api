@@ -29,6 +29,9 @@ const organizationPermissions = {
     "status:create",
     "status:update",
     "status:delete",
+    "assignee:read",
+    "assignee:create",
+    "assignee:delete",
   ],
   admin: [
     "workspace:read",

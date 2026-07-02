@@ -1,0 +1,1 @@
+ALTER TABLE "assignees" ADD CONSTRAINT "assignees_task-id_project-member-id_unique" UNIQUE("task-id","project-member-id");

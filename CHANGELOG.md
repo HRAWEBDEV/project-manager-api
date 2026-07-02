@@ -9,6 +9,7 @@
 - add seed script to populate database with system statuses and priorities (hra-done)
 - add workspace member role col (hra-done)
 - add organization member role col (hra-done)
+- add assignees (hra-done) 
 
 
 ### BUG FIXES

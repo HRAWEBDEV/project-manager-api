@@ -32,11 +32,13 @@ const handleGetTasks: Handler<{
 }> = async (c) => {
   const user = c.get(USER);
   const workspaceQuery = c.req.query("workspace");
+  const projectQuery = c.req.query("project");
   const pageSizeQuery = c.req.query("page-size");
   const pageQuery = c.req.query("page");
-  const { workspace, pageSize, page } = z
+  const { workspace, pageSize, page, project } = z
     .object({
       workspace: z.string().min(1),
+      project: z.string().optional(),
       pageSize: z.coerce.number().min(1),
       page: z.coerce.number().min(0),
     })
@@ -44,10 +46,10 @@ const handleGetTasks: Handler<{
       workspace: workspaceQuery,
       pageSize: pageSizeQuery,
       page: pageQuery,
+      project: projectQuery,
     });
   const filterTasksConditions = [
     eq(workspaces.slug, workspace!),
-    eq(tasks.deleted, false),
     or(
       and(
         exists(checkWorkspaceMember(tasks.workspaceId, user.id)),
@@ -56,6 +58,9 @@ const handleGetTasks: Handler<{
       exists(checkWorkspaceOrganizationOwner(tasks.workspaceId, user.id)),
     ),
   ];
+  if (project) {
+    filterTasksConditions.push(eq(projects.slug, project!));
+  }
   const orderByConditions = [tasks.createdAt, workspaces.name, projects.name];
   const baseQuery = db
     .select({
@@ -173,7 +178,7 @@ const handleCreateTask: Handler<{
     })
     .from(projects)
     .innerJoin(workspaces, eq(projects.workspaceId, workspaces.id))
-    .where(and(eq(projects.deleted, false), eq(workspaces.id, workspaceId!)))
+    .where(and(eq(workspaces.id, workspaceId!)))
     .limit(1);
   if (projectWorkspace.length === 0) {
     c.status(StatusCodes.BAD_REQUEST);
@@ -268,7 +273,6 @@ const handleUpdateTask: Handler<{
     .where(
       and(
         eq(tasks.id, id!),
-        eq(tasks.deleted, false),
         or(
           exists(checkProjectMember(tasks.projectId, user.id)),
           exists(checkWorkspaceOrganizationOwner(tasks.workspaceId, user.id)),

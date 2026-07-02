@@ -52,7 +52,6 @@ const handleGetWorkspaces: Handler<{
       isNotNull(workspaceMembers.userId),
       exists(checkOrganizationOwner(workspaces.organizationId, user.id)),
     ),
-    eq(workspaces.deleted, false),
   ];
   const resultOrderBy = workspaces.createdAt;
   if (organizationId) {
@@ -167,7 +166,6 @@ const handleUpdateWorkspace: Handler<{
       and(
         eq(workspaces.id, id!),
         eq(workspaces.organizationId, organizationId!),
-        eq(workspaces.deleted, false),
         or(
           exists(checkWorkspaceMember(id!, user.id)),
           exists(checkOrganizationOwner(workspaces.organizationId, user.id)),

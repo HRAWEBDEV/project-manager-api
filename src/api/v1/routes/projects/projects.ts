@@ -54,7 +54,6 @@ const handleGetProjects: Handler<{
       isNotNull(projectMembers.userId),
       exists(checkOrganizationOwner(workspaces.organizationId, user.id)),
     ),
-    eq(projects.deleted, false),
   ];
   const resultOrderBy = projects.createdAt;
   if (workspace) {
@@ -173,7 +172,6 @@ const handleUpdateProject: Handler<{
       and(
         eq(projects.id, id!),
         eq(projects.workspaceId, workspaceId!),
-        eq(projects.deleted, false),
         or(
           exists(checkProjectMember(id!, user.id)),
           exists(checkWorkspaceOrganizationOwner(workspaceId!, user.id)),

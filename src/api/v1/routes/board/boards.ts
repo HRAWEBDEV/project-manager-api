@@ -42,7 +42,6 @@ const handleGetBoards: Handler<{
     .innerJoin(projects, eq(projectMembers.projectId, projects.id))
     .where(
       and(
-        eq(projects.deleted, false),
         eq(projects.slug, project!),
         or(
           eq(projectMembers.userId, user.id),
@@ -62,9 +61,7 @@ const handleGetBoards: Handler<{
     })
     .from(boards)
     .innerJoin(projects, eq(projects.id, boards.projectId))
-    .where(
-      and(eq(boards.deleted, false), inArray(projects.id, userProjectSubQuery)),
-    )
+    .where(and(inArray(projects.id, userProjectSubQuery)))
     .orderBy(boards.createdAt);
   return c.json({
     boards: res,
