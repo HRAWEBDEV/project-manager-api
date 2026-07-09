@@ -35,6 +35,18 @@ app.get("/healthy", (c) => {
   return c.json({ message: "hi :)" });
 });
 
+async function stopApp(exitCode: number = 1) {
+  console.log(`Stopping app...`);
+  try {
+    server.stop();
+    await closeConnection();
+    process.exit(exitCode);
+  } catch (err) {
+    console.log(`Failed to stop app:${err}`);
+    process.exit(exitCode);
+  }
+}
+
 async function startApp() {
   try {
     const connectionIsOK = await connectionOK();
@@ -49,20 +61,7 @@ async function startApp() {
     console.log(`App started on port: ${port}`);
   } catch (err) {
     console.log(`Failed to start app:${err}`);
-    await closeConnection();
-    process.exit(1);
-  }
-}
-
-async function stopApp() {
-  console.log(`Stopping app...`);
-  try {
-    server.stop();
-    await closeConnection();
-    process.exit(0);
-  } catch (err) {
-    console.log(`Failed to stop app:${err}`);
-    process.exit(1);
+    stopApp(1);
   }
 }
 
