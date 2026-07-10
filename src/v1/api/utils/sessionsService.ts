@@ -1,7 +1,9 @@
 import { randomBytes, subtle } from "crypto";
 import { type DBExecuter } from "../../db/connect";
-import { type Session, sessions } from "../../db/schemas/sessions";
+import { type InsertSession, sessions } from "../../db/schemas/sessions";
 import { and, eq, gt, lt } from "drizzle-orm";
+import type { Context } from "hono";
+import { setCookie } from "hono/cookie";
 
 const SESSION_NAME = "user_session";
 
@@ -13,7 +15,7 @@ class SessionsService {
     userAgent,
     deviceName,
     ipAddress,
-  }: Pick<Session, "deviceName" | "ipAddress" | "userAgent" | "userId">) {
+  }: Pick<InsertSession, "deviceName" | "ipAddress" | "userAgent" | "userId">) {
     const token = this.generateToken();
     const hashedToken = await this.hashToken(token);
     const expiresAt = new Date(Date.now() + SessionsService.SESSION_EXPIRE_MS);
@@ -76,4 +78,19 @@ class SessionsService {
   }
 }
 
-export { SESSION_NAME, SessionsService };
+function setSessionCookie({
+  c,
+  token,
+  expiresAt,
+}: {
+  c: Context;
+  token: string;
+  expiresAt: Date;
+}) {
+  setCookie(c, SESSION_NAME, token, {
+    path: "/",
+    expires: expiresAt,
+  });
+}
+
+export { SESSION_NAME, SessionsService, setSessionCookie };

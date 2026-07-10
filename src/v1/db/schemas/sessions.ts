@@ -9,6 +9,7 @@ import {
 import { users } from "./users";
 
 type Session = typeof sessions.$inferSelect;
+type InsertSession = typeof sessions.$inferInsert;
 
 const sessions = pgTable("sessions", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -36,5 +37,5 @@ const sessions = pgTable("sessions", {
     .defaultNow(),
 });
 
-export type { Session };
+export type { Session, InsertSession };
 export { sessions };

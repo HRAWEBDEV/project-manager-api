@@ -21,6 +21,7 @@ v1Routes.onError((err, c) => {
   if (err instanceof DrizzleQueryError) {
     return handleDbError(c, err);
   }
+  console.log(err);
   // internal error
   return handleInternalError(c);
 });

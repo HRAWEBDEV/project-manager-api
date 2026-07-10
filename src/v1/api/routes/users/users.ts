@@ -3,6 +3,12 @@ import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
 import { insertUserSchema } from "../../../db/schemas/users";
 import { insertOrganizationSchema } from "../../../db/schemas/organizations";
+import { OrganizationMembersService } from "../../utils/organizationMembersService";
+import { OrganizationsService } from "../../utils/organizationsService";
+import { UsersService } from "../../utils/usersService";
+import { SessionsService, setSessionCookie } from "../../utils/sessionsService";
+import { getUserAgent, getUserIpAddress } from "../../utils/userHeaderInfo";
+import { db } from "../../../db/connect";
 import z from "zod";
 
 const usersRoutes = new Hono().basePath("/users");
@@ -44,7 +50,36 @@ const handleUserSignup: Handler = async (c) => {
       description: true,
     })
     .parse(organization);
+  const userAgent = getUserAgent(c);
+  const ipAddress = getUserIpAddress(c);
 
+  const createdSession = await db.transaction(async (tx) => {
+    const usersService = new UsersService(tx);
+    const organizationsService = new OrganizationsService(tx);
+    const organizationMembersService = new OrganizationMembersService(tx);
+    const sessionsService = new SessionsService(tx);
+    const createdUser = await usersService.createUser(parsedUser);
+    const createdOrganization =
+      await organizationsService.createOrganization(parsedOrganization);
+    await organizationMembersService.createMember({
+      userId: createdUser!.id,
+      organizationId: createdOrganization!.id,
+      role: "admin",
+    });
+    const createdSession = await sessionsService.createSession({
+      userId: createdUser!.id,
+      ipAddress: ipAddress,
+      userAgent: userAgent,
+    });
+    return createdSession!;
+  });
+
+  setSessionCookie({
+    c,
+    token: createdSession.token,
+    expiresAt: createdSession.expiresAt,
+  });
+  c.status(StatusCodes.CREATED);
   return c.json({ message: "User signed up successfully" });
 };
 
