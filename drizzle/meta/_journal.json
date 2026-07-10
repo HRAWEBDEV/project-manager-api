@@ -15,6 +15,13 @@
       "when": 1783668144631,
       "tag": "0001_wakeful_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783668923627,
+      "tag": "0002_burly_vision",
+      "breakpoints": true
     }
   ]
 }
