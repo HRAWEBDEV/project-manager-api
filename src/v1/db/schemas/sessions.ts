@@ -23,13 +23,17 @@ const sessions = pgTable("sessions", {
   deviceName: varchar("device_name", { length: 100 }),
   expiresAt: timestamp("expires_at", {
     withTimezone: true,
-  }),
+  }).notNull(),
   lastUsedAt: timestamp("last_used_at", {
     withTimezone: true,
-  }).defaultNow(),
+  })
+    .notNull()
+    .defaultNow(),
   createdAt: timestamp("created_at", {
     withTimezone: true,
-  }).defaultNow(),
+  })
+    .notNull()
+    .defaultNow(),
 });
 
 export type { Session };

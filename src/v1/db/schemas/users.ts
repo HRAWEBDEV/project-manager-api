@@ -12,8 +12,10 @@ const users = pgTable("users", {
   lastName: varchar("last_name", { length: 100 }).notNull(),
   avatar: text("avatar"),
   hashedPassword: text("hashed_password").notNull(),
-  emailVerified: boolean("email_verified").default(false),
-  phoneNumberVerified: boolean("phone_number_verified").default(false),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  phoneNumberVerified: boolean("phone_number_verified")
+    .notNull()
+    .default(false),
   active: boolean("active").default(true),
   ...trackChanges,
 });
