@@ -5,7 +5,7 @@ import { and, eq, gt, lt } from "drizzle-orm";
 
 const SESSION_NAME = "user_session";
 
-class SessionManager {
+class SessionsService {
   private static SESSION_EXPIRE_MS = 1000 * 60 * 60 * 24; // one day;
   constructor(private readonly db: DBExecuter) {}
   async createSession({
@@ -16,7 +16,7 @@ class SessionManager {
   }: Pick<Session, "deviceName" | "ipAddress" | "userAgent" | "userId">) {
     const token = this.generateToken();
     const hashedToken = await this.hashToken(token);
-    const expiresAt = new Date(Date.now() + SessionManager.SESSION_EXPIRE_MS);
+    const expiresAt = new Date(Date.now() + SessionsService.SESSION_EXPIRE_MS);
     await this.db.insert(sessions).values({
       userId,
       token: hashedToken,
@@ -44,7 +44,7 @@ class SessionManager {
   }
   async refreshSession(token: string) {
     const hashedToken = await this.hashToken(token);
-    const expiresAt = new Date(Date.now() + SessionManager.SESSION_EXPIRE_MS);
+    const expiresAt = new Date(Date.now() + SessionsService.SESSION_EXPIRE_MS);
     await this.db
       .update(sessions)
       .set({
@@ -76,4 +76,4 @@ class SessionManager {
   }
 }
 
-export { SESSION_NAME, SessionManager };
+export { SESSION_NAME, SessionsService };

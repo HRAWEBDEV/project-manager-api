@@ -6,8 +6,10 @@ import { handleZodError } from "./utils/zodErrorHandler";
 import { handleNotFoundError } from "./utils/notFoundErrorHandler";
 import { handleDbError } from "./utils/dbErrorHandler";
 import { handleInternalError } from "./utils/internalErrorlHandler";
+import { usersRoutes } from "./routes/users/users";
 
 const v1Routes = new Hono().basePath("/v1");
+v1Routes.route("/", usersRoutes);
 
 v1Routes.onError((err, c) => {
   if (err instanceof ZodError) {

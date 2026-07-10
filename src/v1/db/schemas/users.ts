@@ -1,7 +1,9 @@
 import { pgTable, uuid, varchar, text, boolean } from "drizzle-orm/pg-core";
 import { trackChanges } from "../utils/trackChanges";
+import { createInsertSchema } from "drizzle-zod";
 
 type User = typeof users.$inferSelect;
+type InsertUser = typeof users.$inferInsert;
 
 const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -20,5 +22,7 @@ const users = pgTable("users", {
   ...trackChanges,
 });
 
-export type { User };
-export { users };
+const insertUserSchema = createInsertSchema(users);
+
+export type { User, InsertUser };
+export { users, insertUserSchema };
