@@ -5,6 +5,7 @@ import { cors } from "hono/cors";
 import { serveStatic } from "hono/bun";
 import { logger } from "hono/logger";
 import { connectionOK, closeConnection } from "./src/v1/db/connect";
+import { v1Routes } from "./src/v1/api";
 
 // check env variables
 if (!process.env.PORT) {
@@ -17,8 +18,6 @@ const api = new Hono().basePath("/api");
 
 // logger setup
 app.use(logger());
-// secure headers
-app.use(secureHeaders());
 // cors
 app.use(
   cors({
@@ -26,7 +25,11 @@ app.use(
     credentials: true,
   }),
 );
-
+// secure headers
+app.use(secureHeaders());
+// attach api routes
+api.route("/", v1Routes);
+app.route("/", api);
 // serve static files
 app.use("static/*", serveStatic({ root: "./" }));
 
