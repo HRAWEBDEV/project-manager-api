@@ -1,4 +1,6 @@
-import { drizzle } from "drizzle-orm/node-postgres";
+import type { ExtractTablesWithRelations } from "drizzle-orm";
+import { drizzle, type NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
+import type { PgTransaction } from "drizzle-orm/pg-core";
 import { Pool } from "pg";
 
 if (!process.env.DATABASE_URL!) {
@@ -28,4 +30,13 @@ async function closeConnection() {
   await pool.end();
 }
 
+type DBExecuter =
+  | typeof db
+  | PgTransaction<
+      NodePgQueryResultHKT,
+      Record<string, never>,
+      ExtractTablesWithRelations<Record<string, never>>
+    >;
+
+export type { DBExecuter };
 export { db, pool, closeConnection, connectionOK };

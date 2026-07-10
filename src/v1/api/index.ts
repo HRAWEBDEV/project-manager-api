@@ -1,8 +1,6 @@
 import { DrizzleQueryError } from "drizzle-orm";
 import { Hono } from "hono";
-import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { ZodError } from "zod";
-import { getApiErrorShape } from "./utils/apiTypes";
 import { NotFoundError } from "./utils/NotFound";
 import { handleZodError } from "./utils/zodErrorHandler";
 import { handleNotFoundError } from "./utils/notFoundErrorHandler";
