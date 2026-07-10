@@ -85,4 +85,53 @@ const handleUserSignup: Handler = async (c) => {
 
 usersRoutes.post("/signup", handleUserSignup);
 
+const handleUserSignin: Handler = async (c) => {
+  const { username, password } = await c.req.json();
+  const parsedUser = insertUserSchema
+    .extend({
+      password: z.string(),
+    })
+    .pick({
+      username: true,
+      password: true,
+    })
+    .parse({
+      username,
+      password,
+    });
+  const userService = new UsersService(db);
+  const user = await userService.signInUserWithUsernamePassword({
+    password: parsedUser.password,
+    username: parsedUser.username,
+  });
+  if (!user) {
+    c.status(StatusCodes.UNAUTHORIZED);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.UNAUTHORIZED,
+        message: "Invalid username or password",
+      }),
+    );
+  }
+  const userAgent = getUserAgent(c);
+  const ipAddress = getUserIpAddress(c);
+  const sessionService = new SessionsService(db);
+  const createdSession = await sessionService.createSession({
+    userId: user.id,
+    ipAddress: ipAddress,
+    userAgent: userAgent,
+  });
+  setSessionCookie({
+    c,
+    token: createdSession.token,
+    expiresAt: createdSession.expiresAt,
+  });
+  return c.json({
+    message: "User signed in successfully",
+  });
+};
+
+usersRoutes.post("/sign-in", handleUserSignin);
+
 export { usersRoutes };
