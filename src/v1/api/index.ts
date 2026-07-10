@@ -4,64 +4,25 @@ import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { ZodError } from "zod";
 import { getApiErrorShape } from "./utils/apiTypes";
 import { NotFoundError } from "./utils/NotFound";
+import { handleZodError } from "./utils/zodErrorHandler";
+import { handleNotFoundError } from "./utils/notFoundErrorHandler";
+import { handleDbError } from "./utils/dbErrorHandler";
+import { handleInternalError } from "./utils/internalErrorlHandler";
 
 const v1Routes = new Hono().basePath("/v1");
 
 v1Routes.onError((err, c) => {
   if (err instanceof ZodError) {
-    return c.json(
-      getApiErrorShape({
-        status: "failed",
-        code: StatusCodes.BAD_REQUEST,
-        message: err.message,
-      }),
-      StatusCodes.BAD_REQUEST,
-    );
+    return handleZodError(c, err);
   }
   if (err instanceof NotFoundError) {
-    return c.json(
-      getApiErrorShape({
-        status: "failed",
-        code: StatusCodes.NOT_FOUND,
-        message: err.message || ReasonPhrases.NOT_FOUND,
-      }),
-      StatusCodes.NOT_FOUND,
-    );
+    return handleNotFoundError(c, err);
   }
-  if (
-    err instanceof DrizzleQueryError &&
-    process.env.NODE_ENV === "development"
-  ) {
-    if (
-      err.cause &&
-      "code" in err.cause &&
-      "detail" in err.cause &&
-      "table" in err.cause
-    ) {
-      if ((err.cause.code as string) == "23505") {
-        return c.json(
-          {
-            ...getApiErrorShape({
-              status: "failed",
-              code: StatusCodes.BAD_REQUEST,
-              message: "RESOURCE_ALREADY_EXISTS",
-            }),
-            detail: err.cause.detail,
-            table: err.cause.table,
-          },
-          StatusCodes.BAD_REQUEST,
-        );
-      }
-    }
+  if (err instanceof DrizzleQueryError) {
+    return handleDbError(c, err);
   }
-  return c.json(
-    getApiErrorShape({
-      status: "failed",
-      code: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: ReasonPhrases.INTERNAL_SERVER_ERROR,
-    }),
-    StatusCodes.INTERNAL_SERVER_ERROR,
-  );
+  // internal error
+  return handleInternalError(c);
 });
 
 export { v1Routes };
