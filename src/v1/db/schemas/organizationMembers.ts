@@ -4,6 +4,9 @@ import { organizations } from "./organizations";
 
 const roleEnum = pgEnum("organization_roles", ["owner", "admin", "member"]);
 
+type OrganizationMember = typeof organizationMembers.$inferSelect;
+type InsertOrganizationMember = typeof organizationMembers.$inferInsert;
+
 const organizationMembers = pgTable(
   "organization_members",
   {
@@ -18,4 +21,5 @@ const organizationMembers = pgTable(
   (table) => [primaryKey({ columns: [table.organizationId, table.userId] })],
 );
 
+export type { OrganizationMember, InsertOrganizationMember };
 export { organizationMembers, roleEnum };
