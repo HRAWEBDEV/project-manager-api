@@ -16,4 +16,14 @@ const handleGetUserInfo: Handler<{
 };
 usersRoutes.get("/info", handleGetUserInfo);
 
+const handleGetUserOrganizations: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const usersService = new UsersService(db);
+  const orgs = await usersService.getUserOrganizations(user.id);
+  return c.json(orgs);
+};
+usersRoutes.get("/organizations", handleGetUserOrganizations);
+
 export { usersRoutes };

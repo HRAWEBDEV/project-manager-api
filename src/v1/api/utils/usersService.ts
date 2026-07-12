@@ -80,6 +80,27 @@ class UsersService {
     };
   }
 
+  async getUserOrganizations(userId: string) {
+    const userOrganizations = await this.db
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        logo: organizations.logo,
+        slug: organizations.slug,
+        description: organizations.description,
+        createdAt: organizations.createdAt,
+        updatedAt: organizations.updatedAt,
+      })
+      .from(users)
+      .leftJoin(organizationMembers, eq(users.id, organizationMembers.userId))
+      .leftJoin(
+        organizations,
+        eq(organizationMembers.organizationId, organizations.id),
+      )
+      .where(eq(users.id, userId));
+    return userOrganizations;
+  }
+
   private hashPassword(password: string) {
     return argon2.hash(password, {
       type: argon2.argon2id,
