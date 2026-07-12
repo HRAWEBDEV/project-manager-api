@@ -3,7 +3,7 @@ import { type DBExecuter } from "../../db/connect";
 import { type InsertSession, sessions } from "../../db/schemas/sessions";
 import { and, eq, gt, lt } from "drizzle-orm";
 import type { Context } from "hono";
-import { setCookie } from "hono/cookie";
+import { setCookie, deleteCookie, getCookie } from "hono/cookie";
 
 const SESSION_NAME = "user_session";
 
@@ -93,4 +93,18 @@ function setSessionCookie({
   });
 }
 
-export { SESSION_NAME, SessionsService, setSessionCookie };
+function getSessionCookie(c: Context) {
+  return getCookie(c, SESSION_NAME);
+}
+
+function deleteSessionCookie(c: Context) {
+  deleteCookie(c, SESSION_NAME);
+}
+
+export {
+  SESSION_NAME,
+  SessionsService,
+  setSessionCookie,
+  deleteSessionCookie,
+  getSessionCookie,
+};

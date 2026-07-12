@@ -6,7 +6,12 @@ import { insertOrganizationSchema } from "../../../db/schemas/organizations";
 import { OrganizationMembersService } from "../../utils/organizationMembersService";
 import { OrganizationsService } from "../../utils/organizationsService";
 import { UsersService } from "../../utils/usersService";
-import { SessionsService, setSessionCookie } from "../../utils/sessionsService";
+import {
+  SessionsService,
+  getSessionCookie,
+  setSessionCookie,
+  deleteSessionCookie,
+} from "../../utils/sessionsService";
 import { getUserAgent, getUserIpAddress } from "../../utils/userHeaderInfo";
 import { db } from "../../../db/connect";
 import z from "zod";
@@ -133,5 +138,19 @@ const handleUserSignin: Handler = async (c) => {
 };
 
 usersRoutes.post("/sign-in", handleUserSignin);
+
+const handleUserLogout: Handler = async (c) => {
+  const token = getSessionCookie(c);
+  if (token) {
+    const sessionService = new SessionsService(db);
+    await sessionService.revokeSession(token);
+    deleteSessionCookie(c);
+  }
+  return c.json({
+    message: "User logged out successfully",
+  });
+};
+
+usersRoutes.post("logout", handleUserLogout);
 
 export { usersRoutes };
