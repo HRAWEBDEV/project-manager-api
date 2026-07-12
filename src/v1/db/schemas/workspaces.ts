@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text } from "drizzle-orm/pg-core";
 import { organizations } from "./organizations";
 import { users } from "./users";
 import { trackChanges } from "../utils/trackChanges";
@@ -15,6 +15,7 @@ const workspaces = pgTable("workspaces", {
     }),
   name: varchar("name", { length: 100 }).notNull(),
   slug: varchar("slug", { length: 150 }).notNull().unique(),
+  description: text("description"),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id),

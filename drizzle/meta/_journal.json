@@ -43,6 +43,13 @@
       "when": 1783834016901,
       "tag": "0005_nappy_clint_barton",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783834079268,
+      "tag": "0006_outstanding_wrecker",
+      "breakpoints": true
     }
   ]
 }
