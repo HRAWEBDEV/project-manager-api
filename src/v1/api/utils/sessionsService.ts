@@ -1,6 +1,7 @@
 import { randomBytes, subtle } from "crypto";
 import { type DBExecuter } from "../../db/connect";
 import { type InsertSession, sessions } from "../../db/schemas/sessions";
+import { users } from "../../db/schemas/users";
 import { and, eq, gt, lt } from "drizzle-orm";
 import type { Context } from "hono";
 import { setCookie, deleteCookie, getCookie } from "hono/cookie";
@@ -55,7 +56,16 @@ class SessionsService {
       .where(eq(sessions.token, hashedToken));
     return { expiresAt };
   }
-
+  async getSessionUser(token: string) {
+    const hashedToken = await this.hashToken(token);
+    const [sessionUser] = await this.db
+      .select()
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(eq(sessions.token, hashedToken))
+      .limit(1);
+    return sessionUser || null;
+  }
   async revokeSession(token: string) {
     const hashedToken = await this.hashToken(token);
     await this.db.delete(sessions).where(eq(sessions.token, hashedToken));
