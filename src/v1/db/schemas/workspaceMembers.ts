@@ -5,11 +5,12 @@ import { workspaces } from "./workspaces";
 export const roleEnum = pgEnum("workspace_roles", ["admin", "member"]);
 
 type WorkspaceMember = typeof workspaceMembers.$inferSelect;
+type InsertWorkspaceMember = typeof workspaceMembers.$inferInsert;
 
 const workspaceMembers = pgTable(
   "workspace_members",
   {
-    id: uuid("id").primaryKey().notNull(),
+    id: uuid("id").primaryKey().defaultRandom(),
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, {
@@ -30,5 +31,5 @@ const workspaceMembers = pgTable(
   ],
 );
 
-export type { WorkspaceMember };
+export type { WorkspaceMember, InsertWorkspaceMember };
 export { workspaceMembers };

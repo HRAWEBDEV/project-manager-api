@@ -16,7 +16,7 @@ class OrganizationsService {
       lower: true,
       strict: true,
       trim: true,
-    })}_${nanoid()}`;
+    })}_${nanoid(8)}`;
     const result = await this.db
       .insert(organizations)
       .values({
