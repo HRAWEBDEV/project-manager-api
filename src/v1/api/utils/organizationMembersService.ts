@@ -19,8 +19,7 @@ class OrganizationMembersService {
         role,
       })
       .returning({
-        userId: organizationMembers.userId,
-        organizationId: organizationMembers.organizationId,
+        id: organizationMembers.id,
       });
     return result[0];
   }

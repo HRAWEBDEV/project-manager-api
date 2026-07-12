@@ -10,7 +10,7 @@ type InsertOrganizationMember = typeof organizationMembers.$inferInsert;
 const organizationMembers = pgTable(
   "organization_members",
   {
-    id: uuid("id").primaryKey().notNull(),
+    id: uuid("id").primaryKey().defaultRandom(),
     organizationId: uuid("organization_id")
       .notNull()
       .references(() => organizations.id),

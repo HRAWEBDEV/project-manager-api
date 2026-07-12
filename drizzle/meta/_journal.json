@@ -8,6 +8,20 @@
       "when": 1783836159585,
       "tag": "0000_flowery_stingray",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783850951860,
+      "tag": "0001_chemical_gambit",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783851314997,
+      "tag": "0002_fantastic_mac_gargan",
+      "breakpoints": true
     }
   ]
 }

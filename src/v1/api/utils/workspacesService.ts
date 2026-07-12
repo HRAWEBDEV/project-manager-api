@@ -31,6 +31,17 @@ class WorkspacesService {
       .returning({ id: workspaces.id });
     return createdWorkspace;
   }
+  async createPublicWorkspace({
+    organizationId,
+    createdBy,
+  }: Pick<InsertWorkspace, "organizationId" | "createdBy">) {
+    return this.createWorkspace({
+      organizationId,
+      createdBy,
+      name: "public",
+      description: "default public workspace",
+    });
+  }
 }
 
 export { WorkspacesService };

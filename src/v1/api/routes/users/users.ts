@@ -5,6 +5,8 @@ import { insertUserSchema } from "../../../db/schemas/users";
 import { insertOrganizationSchema } from "../../../db/schemas/organizations";
 import { OrganizationMembersService } from "../../utils/organizationMembersService";
 import { OrganizationsService } from "../../utils/organizationsService";
+import { WorkspacesService } from "../../utils/workspacesService";
+import { WorkspaceMembersService } from "../../utils/workspaceMembersService";
 import { UsersService } from "../../utils/usersService";
 import {
   SessionsService,
@@ -63,13 +65,24 @@ const handleUserSignup: Handler = async (c) => {
     const organizationsService = new OrganizationsService(tx);
     const organizationMembersService = new OrganizationMembersService(tx);
     const sessionsService = new SessionsService(tx);
+    const workspacesService = new WorkspacesService(tx);
+    const workspaceMembersService = new WorkspaceMembersService(tx);
     const createdUser = await usersService.createUser(parsedUser);
     const createdOrganization =
       await organizationsService.createOrganization(parsedOrganization);
-    await organizationMembersService.createMember({
-      userId: createdUser!.id,
+    const createOrganizationMember =
+      await organizationMembersService.createMember({
+        userId: createdUser!.id,
+        organizationId: createdOrganization!.id,
+        role: "admin",
+      });
+    const createdWorkspace = await workspacesService.createPublicWorkspace({
+      createdBy: createdUser!.id,
       organizationId: createdOrganization!.id,
-      role: "admin",
+    });
+    await workspaceMembersService.createWorkspaceMember({
+      organizationMemberId: createOrganizationMember!.id,
+      workspaceId: createdWorkspace!.id,
     });
     const createdSession = await sessionsService.createSession({
       userId: createdUser!.id,
