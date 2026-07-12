@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1783667104640,
-      "tag": "0000_foamy_ironclad",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1783668144631,
-      "tag": "0001_wakeful_doomsday",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1783668923627,
-      "tag": "0002_burly_vision",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1783684091241,
-      "tag": "0003_peaceful_the_call",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1783684389765,
-      "tag": "0004_icy_prism",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1783834016901,
-      "tag": "0005_nappy_clint_barton",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1783834079268,
-      "tag": "0006_outstanding_wrecker",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1783835926397,
-      "tag": "0007_messy_smasher",
+      "when": 1783836159585,
+      "tag": "0000_flowery_stingray",
       "breakpoints": true
     }
   ]
