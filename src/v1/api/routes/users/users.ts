@@ -117,6 +117,7 @@ const handleUserSignin: Handler = async (c) => {
       username,
       password,
     });
+  const token = getSessionCookie(c);
   const userService = new UsersService(db);
   const user = await userService.signInUserWithUsernamePassword({
     password: parsedUser.password,
@@ -135,6 +136,10 @@ const handleUserSignin: Handler = async (c) => {
   const userAgent = getUserAgent(c);
   const ipAddress = getUserIpAddress(c);
   const sessionService = new SessionsService(db);
+  if (token) {
+    await sessionService.revokeSession(token);
+    deleteSessionCookie(c);
+  }
   const createdSession = await sessionService.createSession({
     userId: user.id,
     ipAddress: ipAddress,
