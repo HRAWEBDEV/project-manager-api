@@ -6,9 +6,14 @@ import { handleZodError } from "./utils/zodErrorHandler";
 import { handleNotFoundError } from "./utils/notFoundErrorHandler";
 import { handleDbError } from "./utils/dbErrorHandler";
 import { handleInternalError } from "./utils/internalErrorlHandler";
+import { authRoutes } from "./routes/auth/auth";
 import { usersRoutes } from "./routes/users/users";
+import { checkSessionUser } from "./middlewares/checkSessionUser";
 
 const v1Routes = new Hono().basePath("/v1");
+
+v1Routes.route("/", authRoutes);
+v1Routes.use(checkSessionUser);
 v1Routes.route("/", usersRoutes);
 
 v1Routes.onError((err, c) => {

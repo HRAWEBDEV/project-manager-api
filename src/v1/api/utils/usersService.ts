@@ -1,5 +1,7 @@
 import { type DBExecuter } from "../../db/connect";
 import { users, type InsertUser } from "../../db/schemas/users";
+import { organizations } from "../../db/schemas/organizations";
+import { organizationMembers } from "../../db/schemas/organizationMembers";
 import * as argon2 from "argon2";
 import { and, eq } from "drizzle-orm";
 
@@ -56,6 +58,26 @@ class UsersService {
     );
     if (!isPasswordValid) return null;
     return user;
+  }
+
+  async getUserInfo(userId: string) {
+    const [userInfo] = await this.db
+      .select()
+      .from(users)
+      .leftJoin(organizationMembers, eq(users.id, organizationMembers.userId))
+      .leftJoin(
+        organizations,
+        eq(organizationMembers.organizationId, organizations.id),
+      )
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (!userInfo) return null;
+    const { hashedPassword, ...publicUserInfo } = userInfo.users;
+
+    return {
+      user: publicUserInfo,
+      organization: userInfo.organizations,
+    };
   }
 
   private hashPassword(password: string) {
