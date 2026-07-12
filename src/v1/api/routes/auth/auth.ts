@@ -74,7 +74,7 @@ const handleUserSignup: Handler = async (c) => {
       await organizationMembersService.createMember({
         userId: createdUser!.id,
         organizationId: createdOrganization!.id,
-        role: "admin",
+        role: "owner",
       });
     const createdWorkspace = await workspacesService.createPublicWorkspace({
       createdBy: createdUser!.id,

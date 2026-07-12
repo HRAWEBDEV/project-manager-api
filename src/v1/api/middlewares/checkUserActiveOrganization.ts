@@ -1,0 +1,42 @@
+import { createMiddleware } from "hono/factory";
+import { type MiddlewareHandler } from "hono";
+import { type WithSessionUserVariables } from "../utils/sessionUserContext";
+import { OrganizationMembersService } from "../utils/organizationMembersService";
+import {
+  getHeaderActiveOrganization,
+  setContextUserOrganizationRole,
+} from "../utils/userActiveOrganization";
+import { StatusCodes } from "http-status-codes";
+import { getApiErrorShape } from "../utils/apiTypes";
+import { db } from "../../db/connect";
+
+export const checkUserActiveOrganization: MiddlewareHandler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = createMiddleware(async (c, next) => {
+  const activeOrganizationId = getHeaderActiveOrganization(c);
+  if (!activeOrganizationId) {
+    c.status(StatusCodes.BAD_REQUEST);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.BAD_REQUEST,
+        message: `Header organization id is required`,
+      }),
+    );
+  }
+  const organizationMember = new OrganizationMembersService(db);
+  const member =
+    await organizationMember.getOrganizationMember(activeOrganizationId);
+  if (!member) {
+    c.status(StatusCodes.FORBIDDEN);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.FORBIDDEN,
+        message: `You are not a member of the organization ${activeOrganizationId}`,
+      }),
+    );
+  }
+  setContextUserOrganizationRole(c, member.role);
+  await next();
+});

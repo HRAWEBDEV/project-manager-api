@@ -9,14 +9,20 @@ import { handleInternalError } from "./utils/internalErrorlHandler";
 import { authRoutes } from "./routes/auth/auth";
 import { usersRoutes } from "./routes/users/users";
 import { checkSessionUser } from "./middlewares/checkSessionUser";
+import { workspacesRoutes } from "./routes/workspace/workspaces";
+import { checkUserActiveOrganization } from "./middlewares/checkUserActiveOrganization";
 
 const v1Routes = new Hono().basePath("/v1");
 
 v1Routes.route("/", authRoutes);
 v1Routes.use(checkSessionUser);
 v1Routes.route("/", usersRoutes);
+//  active organization
+v1Routes.use(checkUserActiveOrganization);
+v1Routes.route("/", workspacesRoutes);
 
 v1Routes.onError((err, c) => {
+  console.log(err);
   if (err instanceof ZodError) {
     return handleZodError(c, err);
   }
@@ -26,7 +32,6 @@ v1Routes.onError((err, c) => {
   if (err instanceof DrizzleQueryError) {
     return handleDbError(c, err);
   }
-  console.log(err);
   // internal error
   return handleInternalError(c);
 });

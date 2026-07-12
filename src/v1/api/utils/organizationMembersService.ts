@@ -3,6 +3,7 @@ import {
   type InsertOrganizationMember,
   organizationMembers,
 } from "../../db/schemas/organizationMembers";
+import { eq } from "drizzle-orm";
 
 class OrganizationMembersService {
   constructor(private readonly db: DBExecuter) {}
@@ -22,6 +23,14 @@ class OrganizationMembersService {
         id: organizationMembers.id,
       });
     return result[0];
+  }
+  async getOrganizationMember(organizationId: string) {
+    const [member] = await this.db
+      .select()
+      .from(organizationMembers)
+      .where(eq(organizationMembers.organizationId, organizationId))
+      .limit(1);
+    return member || null;
   }
 }
 

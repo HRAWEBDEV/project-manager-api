@@ -1,6 +1,8 @@
 import type { Context } from "hono";
 import { type Session } from "../../db/schemas/sessions";
 import { type User } from "../../db/schemas/users";
+import { type OrganizationRole } from "./organizationPermissions";
+import { CONTEXT_USER_ORGANIZATION_ROLE } from "./userActiveOrganization";
 
 const USER = "user";
 const SESSION = "session";
@@ -9,6 +11,7 @@ type WithSessionUserVariables = {
   Variables: {
     [USER]: User;
     [SESSION]: Session;
+    [CONTEXT_USER_ORGANIZATION_ROLE]: OrganizationRole;
   };
 };
 
