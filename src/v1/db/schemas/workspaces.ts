@@ -2,6 +2,7 @@ import { pgTable, uuid, varchar, text } from "drizzle-orm/pg-core";
 import { organizations } from "./organizations";
 import { users } from "./users";
 import { trackChanges } from "../utils/trackChanges";
+import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 
 type Workspace = typeof workspaces.$inferSelect;
 type InsertWorkspace = typeof workspaces.$inferInsert;
@@ -22,5 +23,8 @@ const workspaces = pgTable("workspaces", {
   ...trackChanges,
 });
 
+const insertWorkspaceSchema = createInsertSchema(workspaces);
+const updateWorkspaceSchema = createUpdateSchema(workspaces);
+
 export type { Workspace, InsertWorkspace };
-export { workspaces };
+export { workspaces, insertWorkspaceSchema, updateWorkspaceSchema };

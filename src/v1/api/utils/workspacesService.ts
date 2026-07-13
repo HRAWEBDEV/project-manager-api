@@ -1,5 +1,9 @@
 import { type DBExecuter } from "../../db/connect";
-import { type InsertWorkspace, workspaces } from "../../db/schemas/workspaces";
+import {
+  type Workspace,
+  type InsertWorkspace,
+  workspaces,
+} from "../../db/schemas/workspaces";
 import { workspaceMembers } from "../../db/schemas/workspaceMembers";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import slugify from "slugify";
@@ -104,6 +108,39 @@ class WorkspacesService {
       name: "public",
       description: "default public workspace",
     });
+  }
+  async updateWorkspace({
+    id,
+    name,
+    description,
+    organizationId,
+  }: Pick<Workspace, "id" | "organizationId"> &
+    Partial<Pick<InsertWorkspace, "name" | "description">>) {
+    let slug: string | undefined = undefined;
+    if (name) {
+      slug = `${slugify(name, {
+        trim: true,
+        strict: true,
+        lower: true,
+      })}_${nanoid(8)}`;
+    }
+    const [updatedWorkspace] = await this.db
+      .update(workspaces)
+      .set({
+        name,
+        slug,
+        description,
+      })
+      .where(
+        and(
+          eq(workspaces.id, id),
+          eq(workspaces.organizationId, organizationId),
+        ),
+      )
+      .returning({
+        id: workspaces.id,
+      });
+    return updatedWorkspace;
   }
 }
 
