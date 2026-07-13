@@ -10,7 +10,7 @@ import {
   InvalidImageTypeError,
   saveUserAvatar,
   deleteUserAvatar,
-} from "../../utils/saveUserAvatar";
+} from "../../utils/userAvatarManager";
 
 const usersRoutes = new Hono().basePath("/users");
 
