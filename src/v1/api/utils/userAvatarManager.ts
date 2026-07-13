@@ -1,6 +1,6 @@
 import { mkdir } from "node:fs/promises";
 import { writeFile } from "node:fs/promises";
-import { extname, join, normalize } from "node:path";
+import { extname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { unlink } from "node:fs/promises";
 
