@@ -1,6 +1,7 @@
-import { pgTable, uuid, pgEnum, unique } from "drizzle-orm/pg-core";
+import { pgTable, uuid, pgEnum, unique, timestamp } from "drizzle-orm/pg-core";
 import { organizationMembers } from "./organizationMembers";
 import { workspaces } from "./workspaces";
+import { users } from "./users";
 
 export const roleEnum = pgEnum("workspace_roles", ["admin", "member"]);
 
@@ -22,6 +23,10 @@ const workspaceMembers = pgTable(
         onDelete: "cascade",
       }),
     role: roleEnum("role").notNull().default("member"),
+    joinedAt: timestamp("joined_at").notNull().defaultNow(),
+    addedBy: uuid("added_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
   },
   (table) => [
     unique("workspace_members_unique").on(

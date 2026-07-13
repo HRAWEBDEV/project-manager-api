@@ -1,4 +1,4 @@
-import { pgTable, uuid, pgEnum, unique } from "drizzle-orm/pg-core";
+import { pgTable, uuid, pgEnum, unique, timestamp } from "drizzle-orm/pg-core";
 import { users } from "./users";
 import { organizations } from "./organizations";
 
@@ -18,6 +18,10 @@ const organizationMembers = pgTable(
       .notNull()
       .references(() => users.id),
     role: roleEnum("role").notNull().default("member"),
+    joinedAt: timestamp("joined_at").notNull().defaultNow(),
+    addedBy: uuid("added_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
   },
   (table) => [
     unique("organization_members_unique").on(
