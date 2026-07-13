@@ -1,4 +1,5 @@
 import { Context } from "hono";
+import { type OrganizationRole } from "./organizationPermissions";
 
 const HEADER_ACTIVE_ORGANIZATION_NAME = "organization-id";
 const CONTEXT_USER_ORGANIZATION_ROLE = "userOrganizationRole";
@@ -10,10 +11,13 @@ function getHeaderActiveOrganization(context: Context) {
 function getContextUserOrganizationRole(context: Context) {
   const role = context.get(CONTEXT_USER_ORGANIZATION_ROLE);
   if (!role) throw new Error("User organization role not set");
-  return role;
+  return role as OrganizationRole;
 }
 
-function setContextUserOrganizationRole(context: Context, role: string) {
+function setContextUserOrganizationRole(
+  context: Context,
+  role: OrganizationRole,
+) {
   context.set(CONTEXT_USER_ORGANIZATION_ROLE, role);
 }
 

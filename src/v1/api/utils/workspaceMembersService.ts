@@ -3,6 +3,7 @@ import {
   type InsertWorkspaceMember,
   workspaceMembers,
 } from "../../db/schemas/workspaceMembers";
+import { eq } from "drizzle-orm";
 
 class WorkspaceMembersService {
   constructor(private readonly db: DBExecuter) {}
@@ -23,6 +24,14 @@ class WorkspaceMembersService {
       })
       .returning({ id: workspaceMembers.id });
     return createdWorkspaceMember;
+  }
+  async getWorkspaceMember(workspaceId: string) {
+    const [member] = await this.db
+      .select()
+      .from(workspaceMembers)
+      .where(eq(workspaceMembers.workspaceId, workspaceId))
+      .limit(1);
+    return member || null;
   }
 }
 

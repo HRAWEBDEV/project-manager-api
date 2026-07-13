@@ -11,6 +11,7 @@ import { usersRoutes } from "./routes/users/users";
 import { checkSessionUser } from "./middlewares/checkSessionUser";
 import { workspacesRoutes } from "./routes/workspace/workspaces";
 import { checkUserActiveOrganization } from "./middlewares/checkUserActiveOrganization";
+import { checkUserActiveWorkspace } from "./middlewares/checkUserActiveWorkspace";
 
 const v1Routes = new Hono().basePath("/v1");
 
@@ -20,6 +21,8 @@ v1Routes.route("/", usersRoutes);
 //  active organization
 v1Routes.use(checkUserActiveOrganization);
 v1Routes.route("/", workspacesRoutes);
+// active workspace
+v1Routes.use(checkUserActiveWorkspace);
 
 v1Routes.onError((err, c) => {
   console.log(err);

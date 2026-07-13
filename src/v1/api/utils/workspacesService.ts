@@ -68,7 +68,6 @@ class WorkspacesService {
       .orderBy(workspaces.createdAt);
     return workspacesResult;
   }
-
   async createWorkspace({
     name,
     organizationId,
