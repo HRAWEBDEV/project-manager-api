@@ -1,5 +1,5 @@
 import { type DBExecuter } from "../../db/connect";
-import { users, type InsertUser } from "../../db/schemas/users";
+import { users, type InsertUser, type User } from "../../db/schemas/users";
 import { organizations } from "../../db/schemas/organizations";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import * as argon2 from "argon2";
@@ -100,7 +100,42 @@ class UsersService {
       .where(eq(users.id, userId));
     return userOrganizations;
   }
-
+  async updateUser({
+    id,
+    firstName,
+    lastName,
+    email,
+    username,
+    phoneNumber,
+    avatar,
+  }: Pick<User, "id"> &
+    Partial<
+      Pick<
+        InsertUser,
+        | "firstName"
+        | "lastName"
+        | "email"
+        | "username"
+        | "phoneNumber"
+        | "avatar"
+      >
+    >) {
+    const [updatedUser] = await this.db
+      .update(users)
+      .set({
+        firstName,
+        lastName,
+        email,
+        username,
+        phoneNumber,
+        avatar,
+      })
+      .where(eq(users.id, id))
+      .returning({
+        id: users.id,
+      });
+    return updatedUser;
+  }
   private hashPassword(password: string) {
     return argon2.hash(password, {
       type: argon2.argon2id,

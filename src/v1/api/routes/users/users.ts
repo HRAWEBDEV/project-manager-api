@@ -3,6 +3,14 @@ import type { WithSessionUserVariables } from "../../utils/sessionUserContext";
 import { getContextUser } from "../../utils/sessionUserContext";
 import { UsersService } from "../../utils/usersService";
 import { db } from "../../../db/connect";
+import { StatusCodes } from "http-status-codes";
+import { getApiErrorShape } from "../../utils/apiTypes";
+import {
+  ImageTooLargeError,
+  InvalidImageTypeError,
+  saveUserAvatar,
+  deleteUserAvatar,
+} from "../../utils/saveUserAvatar";
 
 const usersRoutes = new Hono().basePath("/users");
 
@@ -25,5 +33,75 @@ const handleGetUserOrganizations: Handler<{
   return c.json(orgs);
 };
 usersRoutes.get("/organizations", handleGetUserOrganizations);
+
+const handleUpdateUserAvatar: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const parseBody = await c.req.parseBody();
+  const image = parseBody.image;
+  const user = getContextUser(c);
+  const usersService = new UsersService(db);
+  if (!(image instanceof File)) {
+    c.status(StatusCodes.BAD_REQUEST);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.BAD_REQUEST,
+        message: "Image is not a file",
+      }),
+    );
+  }
+  const url = new URL(c.req.url);
+  const baseUrl = url.origin;
+  try {
+    const avatarUrl = await saveUserAvatar(image);
+    const updatedUser = await usersService.updateUser({
+      id: user.id,
+      avatar: avatarUrl,
+    });
+    if (user.avatar) {
+      deleteUserAvatar(user.avatar);
+    }
+    return c.json({
+      message: "Avatar updated successfully",
+      avatarUrl: `${baseUrl}${avatarUrl}`,
+      userId: updatedUser ? updatedUser.id : null,
+    });
+  } catch (err) {
+    if (
+      err instanceof InvalidImageTypeError ||
+      err instanceof ImageTooLargeError
+    ) {
+      c.status(StatusCodes.BAD_REQUEST);
+      return c.json(
+        getApiErrorShape({
+          status: "failed",
+          code: StatusCodes.BAD_REQUEST,
+          message: err.message,
+        }),
+      );
+    }
+    throw err;
+  }
+};
+usersRoutes.post("/avatar", handleUpdateUserAvatar);
+
+const handleDeleteUserAvatar: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const usersService = new UsersService(db);
+  if (user.avatar) {
+    await deleteUserAvatar(user.avatar);
+    await usersService.updateUser({
+      id: user.id,
+      avatar: null,
+    });
+  }
+  return c.json({
+    message: "Avatar deleted successfully",
+  });
+};
+usersRoutes.delete("/avatar", handleDeleteUserAvatar);
 
 export { usersRoutes };
