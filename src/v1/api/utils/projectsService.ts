@@ -112,8 +112,14 @@ class ProjectsService {
     color,
     icon,
     id,
+    archived,
   }: Pick<Project, "organizationId" | "workspaceId" | "id"> &
-    Partial<Pick<InsertProject, "name" | "description" | "color" | "icon">>) {
+    Partial<
+      Pick<
+        InsertProject,
+        "name" | "description" | "color" | "icon" | "archived"
+      >
+    >) {
     const [updatedProject] = await this.db
       .update(projects)
       .set({
@@ -121,6 +127,7 @@ class ProjectsService {
         description,
         color,
         icon,
+        archived,
       })
       .where(
         and(

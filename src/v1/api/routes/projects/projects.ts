@@ -11,6 +11,9 @@ import {
   updateProjectSchema,
 } from "../../../db/schemas/projects";
 import { checkUserPermission } from "../../middlewares/checkUserPermission";
+import { ar } from "zod/v4/locales";
+import { StatusCodes } from "http-status-codes";
+import { getApiErrorShape } from "../../utils/apiTypes";
 
 const projectsRoutes = new Hono().basePath("/projects");
 
@@ -91,19 +94,21 @@ const handleUpdateProject: Handler<{
   const id = c.req.param("id");
   const activeOrganizationMember = getContextUserOrganizationMember(c);
   const workspaceId = getHeaderActiveWorkspace(c);
-  const { name, description, color, icon } = await c.req.json();
+  const { name, description, color, icon, archived } = await c.req.json();
   const parsedProject = updateProjectSchema
     .pick({
       name: true,
       description: true,
       color: true,
       icon: true,
+      archived: true,
     })
     .parse({
       name,
       description,
       color,
       icon,
+      archived,
     });
   const projectService = new ProjectsService(db);
   const updatedProject = await projectService.updateProject({
@@ -112,6 +117,16 @@ const handleUpdateProject: Handler<{
     id: id!,
     ...parsedProject,
   });
+  if (!updatedProject) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Project not found",
+      }),
+    );
+  }
   return c.json(updatedProject);
 };
 
