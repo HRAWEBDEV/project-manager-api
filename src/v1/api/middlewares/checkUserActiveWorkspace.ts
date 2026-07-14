@@ -8,14 +8,14 @@ import {
   getHeaderActiveWorkspace,
   setContextUserWorkspaceRole,
 } from "../utils/userActiveWorkspace";
-import { getContextUserOrganizationRole } from "../utils/userActiveOrganization";
+import { getContextUserOrganizationMember } from "../utils/userActiveOrganization";
 import { WorkspaceMembersService } from "../utils/workspaceMembersService";
 
 export const checkUserActiveWorkspace: MiddlewareHandler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = createMiddleware(async (c, next) => {
   const activeWorkspaceId = getHeaderActiveWorkspace(c);
-  const userOrganizationRole = getContextUserOrganizationRole(c);
+  const userOrganizationMember = getContextUserOrganizationMember(c);
   if (!activeWorkspaceId) {
     c.status(StatusCodes.BAD_REQUEST);
     return c.json(
@@ -26,11 +26,14 @@ export const checkUserActiveWorkspace: MiddlewareHandler<{
       }),
     );
   }
-  if (userOrganizationRole === "owner") {
+  if (userOrganizationMember.role === "owner") {
     setContextUserWorkspaceRole(c, "admin");
   } else {
     const workspaceMember = new WorkspaceMembersService(db);
-    const member = await workspaceMember.getWorkspaceMember(activeWorkspaceId);
+    const member = await workspaceMember.getWorkspaceMember(
+      activeWorkspaceId,
+      userOrganizationMember.id,
+    );
     if (!member) {
       c.status(StatusCodes.FORBIDDEN);
       return c.json(

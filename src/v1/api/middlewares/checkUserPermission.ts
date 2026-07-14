@@ -1,5 +1,5 @@
 import { createMiddleware } from "hono/factory";
-import { getContextUserOrganizationRole } from "../utils/userActiveOrganization";
+import { getContextUserOrganizationMember } from "../utils/userActiveOrganization";
 import { getContextUserWorkspaceRole } from "../utils/userActiveWorkspace";
 import {
   type OrganizationRolePermissions,
@@ -34,7 +34,7 @@ export const checkUserPermission = ({
   return createMiddleware(async (c, next) => {
     let memeberHasPermission = false;
     if (type === "organization" || type === "organizationAndWorkspace") {
-      const orgRole = getContextUserOrganizationRole(c);
+      const orgRole = getContextUserOrganizationMember(c).role;
       memeberHasPermission = hasPermission(orgRole, rolePermission);
     }
     if (

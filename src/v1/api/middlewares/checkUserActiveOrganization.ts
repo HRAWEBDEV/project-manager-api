@@ -4,15 +4,17 @@ import { type WithSessionUserVariables } from "../utils/sessionUserContext";
 import { OrganizationMembersService } from "../utils/organizationMembersService";
 import {
   getHeaderActiveOrganization,
-  setContextUserOrganizationRole,
+  setContextUserOrganizationMember,
 } from "../utils/userActiveOrganization";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../utils/apiTypes";
 import { db } from "../../db/connect";
+import { getContextUser } from "../utils/sessionUserContext";
 
 export const checkUserActiveOrganization: MiddlewareHandler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = createMiddleware(async (c, next) => {
+  const user = getContextUser(c);
   const activeOrganizationId = getHeaderActiveOrganization(c);
   if (!activeOrganizationId) {
     c.status(StatusCodes.BAD_REQUEST);
@@ -25,8 +27,10 @@ export const checkUserActiveOrganization: MiddlewareHandler<{
     );
   }
   const organizationMember = new OrganizationMembersService(db);
-  const member =
-    await organizationMember.getOrganizationMember(activeOrganizationId);
+  const member = await organizationMember.getOrganizationMember(
+    activeOrganizationId,
+    user.id,
+  );
   if (!member) {
     c.status(StatusCodes.FORBIDDEN);
     return c.json(
@@ -37,6 +41,6 @@ export const checkUserActiveOrganization: MiddlewareHandler<{
       }),
     );
   }
-  setContextUserOrganizationRole(c, member.role);
+  setContextUserOrganizationMember(c, member);
   await next();
 });

@@ -1,6 +1,7 @@
 import { type Handler, Hono } from "hono";
 import type { WithSessionUserVariables } from "../../utils/sessionUserContext";
 import { getContextUser } from "../../utils/sessionUserContext";
+import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
 import { WorkspacesService } from "../../utils/workspacesService";
 import { db } from "../../../db/connect";
 import { checkUserPermission } from "../../middlewares/checkUserPermission";
@@ -8,7 +9,6 @@ import {
   insertWorkspaceSchema,
   updateWorkspaceSchema,
 } from "../../../db/schemas/workspaces";
-import { getHeaderActiveOrganization } from "../../utils/userActiveOrganization";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
 import { WorkspaceMembersService } from "../../utils/workspaceMembersService";
@@ -42,7 +42,7 @@ const handleCreateWorkspace: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
   const user = getContextUser(c);
-  const organizationId = getHeaderActiveOrganization(c);
+  const organizationMember = getContextUserOrganizationMember(c);
   const { name, description } = await c.req.json();
   const parsedWorkspace = insertWorkspaceSchema
     .pick({
@@ -57,11 +57,11 @@ const handleCreateWorkspace: Handler<{
       name: parsedWorkspace.name,
       description: parsedWorkspace.description,
       createdBy: user.id,
-      organizationId: organizationId!,
+      organizationId: organizationMember.organizationId,
     });
     await workspaceMemberService.createWorkspaceMember({
       workspaceId: createdWorkspace!.id,
-      organizationMemberId: user.id,
+      organizationMemberId: organizationMember.id,
       role: "admin",
     });
     return createdWorkspace;
@@ -81,7 +81,7 @@ workspacesRoutes.post(
 const handleUpdateWorkspace: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
-  const organizationId = getHeaderActiveOrganization(c);
+  const organizationMember = getContextUserOrganizationMember(c);
   const workspaceId = c.req.param("id");
   const { name, description } = await c.req.json();
   const parsedWorkspace = updateWorkspaceSchema
@@ -95,7 +95,7 @@ const handleUpdateWorkspace: Handler<{
     id: workspaceId!,
     name: parsedWorkspace.name,
     description: parsedWorkspace.description,
-    organizationId: organizationId!,
+    organizationId: organizationMember.organizationId,
   });
   if (!updatedWorkspace) {
     c.status(StatusCodes.NOT_FOUND);
