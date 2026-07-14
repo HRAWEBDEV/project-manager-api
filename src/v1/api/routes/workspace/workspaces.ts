@@ -11,6 +11,7 @@ import {
 import { getHeaderActiveOrganization } from "../../utils/userActiveOrganization";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
+import { WorkspaceMembersService } from "../../utils/workspaceMembersService";
 
 const workspacesRoutes = new Hono().basePath("/workspaces");
 
@@ -49,12 +50,21 @@ const handleCreateWorkspace: Handler<{
       description: true,
     })
     .parse({ name, description });
-  const workspaceService = new WorkspacesService(db);
-  const createdWorkspace = await workspaceService.createWorkspace({
-    name: parsedWorkspace.name,
-    description: parsedWorkspace.description,
-    createdBy: user.id,
-    organizationId: organizationId!,
+  const createdWorkspace = await db.transaction(async (tx) => {
+    const workspaceService = new WorkspacesService(tx);
+    const workspaceMemberService = new WorkspaceMembersService(tx);
+    const createdWorkspace = await workspaceService.createWorkspace({
+      name: parsedWorkspace.name,
+      description: parsedWorkspace.description,
+      createdBy: user.id,
+      organizationId: organizationId!,
+    });
+    await workspaceMemberService.createWorkspaceMember({
+      workspaceId: createdWorkspace!.id,
+      organizationMemberId: user.id,
+      role: "admin",
+    });
+    return createdWorkspace;
   });
   return c.json(createdWorkspace);
 };

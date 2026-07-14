@@ -10,6 +10,7 @@ import { authRoutes } from "./routes/auth/auth";
 import { usersRoutes } from "./routes/users/users";
 import { checkSessionUser } from "./middlewares/checkSessionUser";
 import { workspacesRoutes } from "./routes/workspace/workspaces";
+import projectsRoutes from "./routes/projects/projects";
 import { checkUserActiveOrganization } from "./middlewares/checkUserActiveOrganization";
 import { checkUserActiveWorkspace } from "./middlewares/checkUserActiveWorkspace";
 
@@ -23,6 +24,7 @@ v1Routes.use(checkUserActiveOrganization);
 v1Routes.route("/", workspacesRoutes);
 // active workspace
 v1Routes.use(checkUserActiveWorkspace);
+v1Routes.route("/", projectsRoutes);
 
 v1Routes.onError((err, c) => {
   console.log(err);

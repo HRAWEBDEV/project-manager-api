@@ -97,7 +97,8 @@ class UsersService {
         organizations,
         eq(organizationMembers.organizationId, organizations.id),
       )
-      .where(eq(users.id, userId));
+      .where(eq(users.id, userId))
+      .orderBy(organizations.createdAt);
     return userOrganizations;
   }
   async updateUser({
