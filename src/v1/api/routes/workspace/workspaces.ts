@@ -2,7 +2,7 @@ import { type Handler, Hono } from "hono";
 import type { WithSessionUserVariables } from "../../utils/sessionUserContext";
 import { getContextUser } from "../../utils/sessionUserContext";
 import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
-import { WorkspacesService } from "../../utils/workspacesService";
+import { WorkspacesService } from "../../services/workspacesService";
 import { db } from "../../../db/connect";
 import { checkUserPermission } from "../../middlewares/checkUserPermission";
 import {
@@ -11,7 +11,7 @@ import {
 } from "../../../db/schemas/workspaces";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
-import { WorkspaceMembersService } from "../../utils/workspaceMembersService";
+import { WorkspaceMembersService } from "../../services/workspaceMembersService";
 
 const workspacesRoutes = new Hono().basePath("/workspaces");
 

@@ -3,17 +3,17 @@ import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
 import { insertUserSchema } from "../../../db/schemas/users";
 import { insertOrganizationSchema } from "../../../db/schemas/organizations";
-import { OrganizationMembersService } from "../../utils/organizationMembersService";
-import { OrganizationsService } from "../../utils/organizationsService";
-import { WorkspacesService } from "../../utils/workspacesService";
-import { WorkspaceMembersService } from "../../utils/workspaceMembersService";
-import { UsersService } from "../../utils/usersService";
+import { OrganizationMembersService } from "../../services/organizationMembersService";
+import { OrganizationsService } from "../../services/organizationsService";
+import { WorkspacesService } from "../../services/workspacesService";
+import { WorkspaceMembersService } from "../../services/workspaceMembersService";
+import { UsersService } from "../../services/usersService";
 import {
   SessionsService,
   getSessionCookie,
   setSessionCookie,
   deleteSessionCookie,
-} from "../../utils/sessionsService";
+} from "../../services/sessionsService";
 import { getUserAgent, getUserIpAddress } from "../../utils/userHeaderInfo";
 import { db } from "../../../db/connect";
 import z from "zod";

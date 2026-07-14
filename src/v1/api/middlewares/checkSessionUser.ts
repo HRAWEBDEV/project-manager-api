@@ -1,10 +1,10 @@
 import { createMiddleware } from "hono/factory";
 import { type MiddlewareHandler } from "hono";
 import { type WithSessionUserVariables } from "../utils/sessionUserContext";
-import { getSessionCookie } from "../utils/sessionsService";
+import { getSessionCookie } from "../services/sessionsService";
 import { getApiErrorShape } from "../utils/apiTypes";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
-import { SessionsService } from "../utils/sessionsService";
+import { SessionsService } from "../services/sessionsService";
 import { db } from "../../db/connect";
 import { setContextSession, setContextUser } from "../utils/sessionUserContext";
 

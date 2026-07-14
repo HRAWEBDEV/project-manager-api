@@ -9,7 +9,7 @@ import {
   setContextUserWorkspaceRole,
 } from "../utils/userActiveWorkspace";
 import { getContextUserOrganizationMember } from "../utils/userActiveOrganization";
-import { WorkspaceMembersService } from "../utils/workspaceMembersService";
+import { WorkspaceMembersService } from "../services/workspaceMembersService";
 
 export const checkUserActiveWorkspace: MiddlewareHandler<{
   Variables: WithSessionUserVariables["Variables"];

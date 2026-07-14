@@ -1,7 +1,7 @@
 import { createMiddleware } from "hono/factory";
 import { type MiddlewareHandler } from "hono";
 import { type WithSessionUserVariables } from "../utils/sessionUserContext";
-import { OrganizationMembersService } from "../utils/organizationMembersService";
+import { OrganizationMembersService } from "../services/organizationMembersService";
 import {
   getHeaderActiveOrganization,
   setContextUserOrganizationMember,

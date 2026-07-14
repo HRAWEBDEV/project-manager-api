@@ -1,7 +1,7 @@
 import { type Handler, Hono } from "hono";
 import type { WithSessionUserVariables } from "../../utils/sessionUserContext";
-import { ProjectsService } from "../../utils/projectsService";
-import { ProjectMembersService } from "../../utils/projectMembersService";
+import { ProjectsService } from "../../services/projectsService";
+import { ProjectMembersService } from "../../services/projectMembersService";
 import { getContextUser } from "../../utils/sessionUserContext";
 import { getHeaderActiveWorkspace } from "../../utils/userActiveWorkspace";
 import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";

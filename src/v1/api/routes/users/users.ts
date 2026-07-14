@@ -1,7 +1,7 @@
 import { type Handler, Hono } from "hono";
 import type { WithSessionUserVariables } from "../../utils/sessionUserContext";
 import { getContextUser } from "../../utils/sessionUserContext";
-import { UsersService } from "../../utils/usersService";
+import { UsersService } from "../../services/usersService";
 import { db } from "../../../db/connect";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
