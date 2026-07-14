@@ -16,7 +16,9 @@ const projects = pgTable("projects", {
   color: varchar("color", { length: 20 }),
   createdBy: uuid("createdBy")
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, {
+      onDelete: "set null",
+    }),
   archived: boolean("archived").default(false).notNull(),
   organizationId: uuid("organization_id")
     .notNull()

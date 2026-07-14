@@ -12,10 +12,14 @@ const projectMembers = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     projectId: uuid("project_id")
       .notNull()
-      .references(() => projects.id),
+      .references(() => projects.id, {
+        onDelete: "cascade",
+      }),
     organizationMemberId: uuid("organization_member_id")
       .notNull()
-      .references(() => organizationMembers.id),
+      .references(() => organizationMembers.id, {
+        onDelete: "cascade",
+      }),
     joinedAt: timestamp("joined_at").notNull().defaultNow(),
     addedBy: uuid("added_by").references(() => users.id, {
       onDelete: "set null",

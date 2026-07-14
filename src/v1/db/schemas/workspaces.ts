@@ -11,9 +11,7 @@ const workspaces = pgTable("workspaces", {
   id: uuid("id").defaultRandom().primaryKey(),
   organizationId: uuid("organization_id")
     .notNull()
-    .references(() => organizations.id, {
-      onDelete: "cascade",
-    }),
+    .references(() => organizations.id),
   name: varchar("name", { length: 100 }).notNull(),
   slug: varchar("slug", { length: 150 }).notNull().unique(),
   description: text("description"),

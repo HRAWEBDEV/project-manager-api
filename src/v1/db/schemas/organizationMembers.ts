@@ -13,10 +13,14 @@ const organizationMembers = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     organizationId: uuid("organization_id")
       .notNull()
-      .references(() => organizations.id),
+      .references(() => organizations.id, {
+        onDelete: "cascade",
+      }),
     userId: uuid("user_id")
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, {
+        onDelete: "cascade",
+      }),
     role: roleEnum("role").notNull().default("member"),
     joinedAt: timestamp("joined_at").notNull().defaultNow(),
     addedBy: uuid("added_by").references(() => users.id, {
