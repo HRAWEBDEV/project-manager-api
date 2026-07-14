@@ -11,9 +11,10 @@ class WorkspaceMembersService {
     organizationMemberId,
     workspaceId,
     role,
+    addedBy,
   }: Pick<
     InsertWorkspaceMember,
-    "organizationMemberId" | "workspaceId" | "role"
+    "organizationMemberId" | "workspaceId" | "role" | "addedBy"
   >) {
     const [createdWorkspaceMember] = await this.db
       .insert(workspaceMembers)
@@ -21,6 +22,7 @@ class WorkspaceMembersService {
         organizationMemberId,
         workspaceId,
         role,
+        addedBy,
       })
       .returning({ id: workspaceMembers.id });
     return createdWorkspaceMember;

@@ -1,5 +1,127 @@
-import { Hono } from "hono";
+import { type Handler, Hono } from "hono";
+import type { WithSessionUserVariables } from "../../utils/sessionUserContext";
+import { ProjectsService } from "../../utils/projectsService";
+import { ProjectMembersService } from "../../utils/projectMembersService";
+import { getContextUser } from "../../utils/sessionUserContext";
+import { getHeaderActiveWorkspace } from "../../utils/userActiveWorkspace";
+import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
+import { db } from "../../../db/connect";
+import {
+  insertProjectSchema,
+  updateProjectSchema,
+} from "../../../db/schemas/projects";
+import { checkUserPermission } from "../../middlewares/checkUserPermission";
 
 const projectsRoutes = new Hono().basePath("/projects");
+
+const handleGetProjects: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const activeWorkspaceId = getHeaderActiveWorkspace(c);
+  const projectsService = new ProjectsService(db);
+  const projects = await projectsService.getProjects({
+    filters: {
+      userId: user.id,
+      workspaceId: activeWorkspaceId!,
+    },
+  });
+  return c.json({ projects });
+};
+
+projectsRoutes.get(
+  "/",
+  checkUserPermission({
+    rolePermission: "project:read",
+    type: "organizationAndWorkspace",
+  }),
+  handleGetProjects,
+);
+
+const handleCreateProject: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const activeOrganizationMember = getContextUserOrganizationMember(c);
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const { name, description, color, icon } = await c.req.json();
+  const parsedProject = insertProjectSchema
+    .pick({
+      name: true,
+      description: true,
+      color: true,
+      icon: true,
+    })
+    .parse({
+      name,
+      description,
+      color,
+      icon,
+    });
+  const createdProject = await db.transaction(async (tx) => {
+    const projectService = new ProjectsService(tx);
+    const projectMemberService = new ProjectMembersService(tx);
+    const createdProject = await projectService.createProject({
+      ...parsedProject,
+      organizationId: activeOrganizationMember.organizationId,
+      workspaceId: workspaceId!,
+      createdBy: user.id,
+    });
+    await projectMemberService.createMember({
+      organizationMemberId: activeOrganizationMember.id,
+      projectId: createdProject!.id,
+    });
+    return createdProject;
+  });
+  return c.json(createdProject);
+};
+
+projectsRoutes.post(
+  "/",
+  checkUserPermission({
+    rolePermission: "project:create",
+    type: "organizationAndWorkspace",
+  }),
+  handleCreateProject,
+);
+
+const handleUpdateProject: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const id = c.req.param("id");
+  const activeOrganizationMember = getContextUserOrganizationMember(c);
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const { name, description, color, icon } = await c.req.json();
+  const parsedProject = updateProjectSchema
+    .pick({
+      name: true,
+      description: true,
+      color: true,
+      icon: true,
+    })
+    .parse({
+      name,
+      description,
+      color,
+      icon,
+    });
+  const projectService = new ProjectsService(db);
+  const updatedProject = await projectService.updateProject({
+    organizationId: activeOrganizationMember.organizationId,
+    workspaceId: workspaceId!,
+    id: id!,
+    ...parsedProject,
+  });
+  return c.json(updatedProject);
+};
+
+projectsRoutes.patch(
+  "/:id",
+  checkUserPermission({
+    rolePermission: "project:update",
+    type: "organizationAndWorkspace",
+  }),
+  handleUpdateProject,
+);
 
 export default projectsRoutes;

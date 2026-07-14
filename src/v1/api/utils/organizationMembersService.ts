@@ -11,13 +11,18 @@ class OrganizationMembersService {
     userId,
     organizationId,
     role,
-  }: Pick<InsertOrganizationMember, "organizationId" | "role" | "userId">) {
+    addedBy,
+  }: Pick<
+    InsertOrganizationMember,
+    "organizationId" | "role" | "userId" | "addedBy"
+  >) {
     const result = await this.db
       .insert(organizationMembers)
       .values({
         userId,
         organizationId,
         role,
+        addedBy,
       })
       .returning({
         id: organizationMembers.id,

@@ -3,8 +3,10 @@ import { organizations } from "./organizations";
 import { workspaces } from "./workspaces";
 import { users } from "./users";
 import { trackChanges } from "../utils/trackChanges";
+import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 
 type Project = typeof projects.$inferSelect;
+type InsertProject = typeof projects.$inferInsert;
 
 const projects = pgTable("projects", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -25,5 +27,8 @@ const projects = pgTable("projects", {
   ...trackChanges,
 });
 
-export type { Project };
-export { projects };
+const insertProjectSchema = createInsertSchema(projects);
+const updateProjectSchema = createUpdateSchema(projects);
+
+export type { Project, InsertProject };
+export { projects, insertProjectSchema, updateProjectSchema };

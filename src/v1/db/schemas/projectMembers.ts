@@ -4,6 +4,7 @@ import { organizationMembers } from "./organizationMembers";
 import { users } from "./users";
 
 type ProjectMember = typeof projectMembers.$inferSelect;
+type InsertProjectMember = typeof projectMembers.$inferInsert;
 
 const projectMembers = pgTable(
   "project_members",
@@ -28,5 +29,5 @@ const projectMembers = pgTable(
   ],
 );
 
-export type { ProjectMember };
+export type { ProjectMember, InsertProjectMember };
 export { projectMembers };
