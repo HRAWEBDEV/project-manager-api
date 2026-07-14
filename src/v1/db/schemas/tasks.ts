@@ -17,9 +17,9 @@ const tasks = pgTable(
     projectId: uuid("project_id").references(() => projects.id),
     title: varchar("title", { length: 255 }).notNull(),
     description: text("description"),
-    startAt: timestamp("start_at"),
-    endAt: timestamp("end_at"),
-    completedAt: timestamp("completed_at"),
+    startAt: timestamp("start_at", { withTimezone: true }),
+    endAt: timestamp("end_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
     parentTaskId: uuid("parent_task_id"),
     createdBy: uuid("created_by").references(() => organizationMembers.id, {
       onDelete: "set null",

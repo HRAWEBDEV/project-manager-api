@@ -20,7 +20,9 @@ const projectMembers = pgTable(
       .references(() => organizationMembers.id, {
         onDelete: "cascade",
       }),
-    joinedAt: timestamp("joined_at").notNull().defaultNow(),
+    joinedAt: timestamp("joined_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     addedBy: uuid("added_by").references(() => users.id, {
       onDelete: "set null",
     }),

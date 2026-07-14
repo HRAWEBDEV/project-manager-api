@@ -15,7 +15,9 @@ const taskAssignees = pgTable(
         onDelete: "cascade",
       },
     ),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     unique("task_assignee_unique_member").on(
