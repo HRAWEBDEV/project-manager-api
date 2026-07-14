@@ -1,6 +1,6 @@
 import { pgTable, unique, uuid, timestamp } from "drizzle-orm/pg-core";
 import { projects } from "./projects";
-import { workspaceMembers } from "./workspaceMembers";
+import { organizationMembers } from "./organizationMembers";
 import { users } from "./users";
 
 type ProjectMember = typeof projectMembers.$inferSelect;
@@ -12,9 +12,9 @@ const projectMembers = pgTable(
     projectId: uuid("project_id")
       .notNull()
       .references(() => projects.id),
-    workspaceMemberId: uuid("workspace_member_id")
+    organizationMemberId: uuid("organization_member_id")
       .notNull()
-      .references(() => workspaceMembers.id),
+      .references(() => organizationMembers.id),
     joinedAt: timestamp("joined_at").notNull().defaultNow(),
     addedBy: uuid("added_by").references(() => users.id, {
       onDelete: "set null",
@@ -23,7 +23,7 @@ const projectMembers = pgTable(
   (table) => [
     unique("project_members_unique").on(
       table.projectId,
-      table.workspaceMemberId,
+      table.organizationMemberId,
     ),
   ],
 );
