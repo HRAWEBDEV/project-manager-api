@@ -57,6 +57,13 @@
       "when": 1784036325208,
       "tag": "0007_glorious_taskmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784038115388,
+      "tag": "0008_hot_meggan",
+      "breakpoints": true
     }
   ]
 }
