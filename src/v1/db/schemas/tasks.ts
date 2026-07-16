@@ -14,7 +14,9 @@ const tasks = pgTable(
   "tasks",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    projectId: uuid("project_id").references(() => projects.id),
+    projectId: uuid("project_id").references(() => projects.id, {
+      onDelete: "cascade",
+    }),
     title: varchar("title", { length: 255 }).notNull(),
     description: text("description"),
     startAt: timestamp("start_at", { withTimezone: true }),

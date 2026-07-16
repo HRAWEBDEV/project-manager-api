@@ -22,10 +22,14 @@ const projects = pgTable("projects", {
   archived: boolean("archived").default(false).notNull(),
   organizationId: uuid("organization_id")
     .notNull()
-    .references(() => organizations.id),
+    .references(() => organizations.id, {
+      onDelete: "cascade",
+    }),
   workspaceId: uuid("workspace_id")
     .notNull()
-    .references(() => workspaces.id),
+    .references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
   ...trackChanges,
 });
 
