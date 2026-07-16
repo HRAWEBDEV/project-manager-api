@@ -4,7 +4,6 @@ import {
   organizations,
 } from "../../db/schemas/organizations";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
-import { users } from "../../db/schemas/users";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";

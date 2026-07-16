@@ -12,6 +12,7 @@ import {
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
 import { WorkspaceMembersService } from "../../services/workspaceMembersService";
+import { getHeaderActiveWorkspace } from "../../utils/userActiveWorkspace";
 
 const workspacesRoutes = new Hono().basePath("/workspaces");
 
@@ -148,6 +149,29 @@ workspacesRoutes.delete(
     type: "organization",
   }),
   handleDeleteWorkspace,
+);
+
+// MEMBERS
+const handleGetWorkspaceMembers: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const workspaceMembersService = new WorkspaceMembersService(db);
+  const workspaceMembers = await workspaceMembersService.getWorkspaceMembers({
+    filters: {
+      workspaceId: workspaceId!,
+    },
+  });
+  return c.json({ workspaceMembers });
+};
+
+workspacesRoutes.get(
+  "/members",
+  checkUserPermission({
+    rolePermission: "workspace_member:read",
+    type: "organizationAndWorkspace",
+  }),
+  handleGetWorkspaceMembers,
 );
 
 export { workspacesRoutes };
