@@ -157,6 +157,7 @@ const handleUpdateUserInvitation: Handler<{
       await organizationMembersService.createMember({
         organizationId: updatedInvitation.organizationId,
         userId: user.id,
+        addedBy: updatedInvitation.userId,
       });
     }
     return updatedInvitation;

@@ -120,6 +120,7 @@ class OrganizationInvitationsService {
         id: organizationInvitations.id,
         organizationId: organizationInvitations.organizationId,
         status: organizationInvitations.status,
+        userId: organizationInvitations.userId,
       });
     return updatedInvitation;
   }

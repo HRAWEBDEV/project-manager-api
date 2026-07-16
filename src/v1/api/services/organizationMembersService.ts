@@ -1,9 +1,12 @@
 import { type DBExecuter } from "../../db/connect";
 import {
+  type OrganizationMember,
   type InsertOrganizationMember,
   organizationMembers,
 } from "../../db/schemas/organizationMembers";
-import { and, eq } from "drizzle-orm";
+import { and, eq, not, or, type SQLWrapper } from "drizzle-orm";
+import { organizations } from "../../db/schemas/organizations";
+import { users } from "../../db/schemas/users";
 
 class OrganizationMembersService {
   constructor(private readonly db: DBExecuter) {}
@@ -29,6 +32,35 @@ class OrganizationMembersService {
       });
     return result[0];
   }
+  async getOrganizationsMembers({
+    filters,
+  }: {
+    filters: { organizationId: string };
+  }) {
+    const members = await this.db
+      .select({
+        id: organizationMembers.id,
+        organizationId: organizationMembers.organizationId,
+        role: organizationMembers.role,
+        joinedAt: organizationMembers.joinedAt,
+        addedBy: organizationMembers.addedBy,
+        organizationName: organizations.name,
+        username: users.username,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        userEmail: users.email,
+        userPhoneNumber: users.phoneNumber,
+      })
+      .from(organizationMembers)
+      .leftJoin(
+        organizations,
+        eq(organizations.id, organizationMembers.organizationId),
+      )
+      .leftJoin(users, eq(users.id, organizationMembers.userId))
+      .where(eq(organizationMembers.organizationId, filters.organizationId))
+      .orderBy(organizationMembers.joinedAt);
+    return members;
+  }
   async getOrganizationMember(organizationId: string, userId: string) {
     const [member] = await this.db
       .select()
@@ -41,6 +73,33 @@ class OrganizationMembersService {
       )
       .limit(1);
     return member || null;
+  }
+  async deleteOrganizationMember({
+    organizationId,
+    id,
+    role,
+  }: Pick<OrganizationMember, "organizationId" | "id" | "role">) {
+    const filtersConditions: (SQLWrapper | undefined)[] = [
+      eq(organizationMembers.organizationId, organizationId),
+      eq(organizationMembers.id, id),
+    ];
+    if (role === "owner") {
+      filtersConditions.push(not(eq(organizationMembers.role, "owner")));
+    } else if (role === "admin") {
+      filtersConditions.push(
+        and(
+          not(eq(organizationMembers.role, "owner")),
+          not(eq(organizationMembers.role, "admin")),
+        ),
+      );
+    }
+    const [deleteOrganizationMember] = await this.db
+      .delete(organizationMembers)
+      .where(and(...filtersConditions))
+      .returning({
+        id: organizationMembers.id,
+      });
+    return deleteOrganizationMember;
   }
 }
 

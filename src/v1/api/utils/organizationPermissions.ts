@@ -40,6 +40,9 @@ const organizationPermissions = {
     "organization_invitation:create",
     "organization_invitation:update",
     "organization_invitation:delete",
+    "organization_member:read",
+    "organization_member:update",
+    "organization_member:delete",
   ],
   admin: [
     "workspace:read",
@@ -50,6 +53,7 @@ const organizationPermissions = {
     "organization_invitation:create",
     "organization_invitation:update",
     "organization_invitation:delete",
+    "organization_member:read",
   ],
   member: ["workspace:read"],
 } as const;
