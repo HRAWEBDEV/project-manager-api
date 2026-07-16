@@ -117,6 +117,7 @@ class OrganizationInvitationsService {
       )
       .returning({
         id: organizationInvitations.id,
+        organizationId: organizationInvitations.organizationId,
         status: organizationInvitations.status,
       });
     return updatedInvitation;

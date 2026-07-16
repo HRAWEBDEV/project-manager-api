@@ -15,6 +15,7 @@ import {
   selectInvitationSchema,
   OrganizationInvitationsService,
 } from "../../services/organizationInvitationsService";
+import { OrganizationMembersService } from "../../services/organizationMembersService";
 
 const usersRoutes = new Hono().basePath("/users");
 
@@ -130,29 +131,32 @@ const handleUpdateUserInvitation: Handler<{
 }> = async (c) => {
   const user = getContextUser(c);
   const id = c.req.param("id");
-  const organizationInvitationsService = new OrganizationInvitationsService(db);
   const { status } = await c.req.json();
   const parsedBody = selectInvitationSchema
     .pick({
       status: true,
     })
     .parse({ status });
-  const updatedInvitation =
-    await organizationInvitationsService.updateInvitationStatus({
-      id: id!,
-      userId: user.id,
-      status: parsedBody.status,
-    });
-  if (!updatedInvitation) {
-    c.status(StatusCodes.NOT_FOUND);
-    return c.json(
-      getApiErrorShape({
-        status: "failed",
-        code: StatusCodes.NOT_FOUND,
-        message: "Invitation not found",
-      }),
+  const updatedInvitation = await db.transaction(async (tx) => {
+    const organizationInvitationsService = new OrganizationInvitationsService(
+      tx,
     );
-  }
+    const organizationMembersService = new OrganizationMembersService(tx);
+    const updatedInvitation =
+      await organizationInvitationsService.updateInvitationStatus({
+        id: id!,
+        userId: user.id,
+        status: parsedBody.status,
+      });
+    if (updatedInvitation && updatedInvitation.status === "accepted") {
+      await organizationMembersService.createMember({
+        organizationId: updatedInvitation.organizationId,
+        userId: user.id,
+      });
+    }
+    return updatedInvitation;
+  });
+  return c.json(updatedInvitation);
 };
 
 usersRoutes.patch("/me/invitations/:id", handleUpdateUserInvitation);
