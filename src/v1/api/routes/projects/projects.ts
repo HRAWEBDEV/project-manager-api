@@ -11,7 +11,6 @@ import {
   updateProjectSchema,
 } from "../../../db/schemas/projects";
 import { checkUserPermission } from "../../middlewares/checkUserPermission";
-import { ar } from "zod/v4/locales";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
 

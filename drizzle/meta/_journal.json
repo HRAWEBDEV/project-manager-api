@@ -78,6 +78,13 @@
       "when": 1784210909540,
       "tag": "0010_smiling_impossible_man",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1784212835266,
+      "tag": "0011_motionless_caretaker",
+      "breakpoints": true
     }
   ]
 }
