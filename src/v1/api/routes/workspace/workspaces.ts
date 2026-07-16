@@ -119,4 +119,25 @@ workspacesRoutes.patch(
   handleUpdateWorkspace,
 );
 
+const handleDeleteWorkspace: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const id = c.req.param("id");
+  const organizatinMember = getContextUserOrganizationMember(c);
+  const workspaceService = new WorkspacesService(db);
+  const deletedWorkspace = await workspaceService.deleteWorkspace({
+    organizationId: organizatinMember.organizationId,
+    id: id!,
+  });
+  return c.json(deletedWorkspace);
+};
+workspacesRoutes.delete(
+  "/:id",
+  checkUserPermission({
+    rolePermission: "workspace:delete",
+    type: "organization",
+  }),
+  handleDeleteWorkspace,
+);
+
 export { workspacesRoutes };

@@ -142,6 +142,23 @@ class WorkspacesService {
       });
     return updatedWorkspace;
   }
+  async deleteWorkspace({
+    id,
+    organizationId,
+  }: Pick<Workspace, "id" | "organizationId">) {
+    const [deletedWorkspace] = await this.db
+      .delete(workspaces)
+      .where(
+        and(
+          eq(workspaces.id, id),
+          eq(workspaces.organizationId, organizationId),
+        ),
+      )
+      .returning({
+        id: workspaces.id,
+      });
+    return deletedWorkspace;
+  }
 }
 
 export { WorkspacesService };
