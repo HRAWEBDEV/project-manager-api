@@ -1,5 +1,6 @@
 import { type DBExecuter } from "../../db/connect";
 import { users, type InsertUser, type User } from "../../db/schemas/users";
+import { OrganizationsService } from "./organizationsService";
 import { organizations } from "../../db/schemas/organizations";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import * as argon2 from "argon2";
@@ -80,27 +81,6 @@ class UsersService {
     };
   }
 
-  async getUserOrganizations(userId: string) {
-    const userOrganizations = await this.db
-      .select({
-        id: organizations.id,
-        name: organizations.name,
-        logo: organizations.logo,
-        slug: organizations.slug,
-        description: organizations.description,
-        createdAt: organizations.createdAt,
-        updatedAt: organizations.updatedAt,
-      })
-      .from(users)
-      .leftJoin(organizationMembers, eq(users.id, organizationMembers.userId))
-      .leftJoin(
-        organizations,
-        eq(organizationMembers.organizationId, organizations.id),
-      )
-      .where(eq(users.id, userId))
-      .orderBy(organizations.createdAt);
-    return userOrganizations;
-  }
   async updateUser({
     id,
     firstName,

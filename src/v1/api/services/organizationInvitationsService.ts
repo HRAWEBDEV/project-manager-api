@@ -4,7 +4,7 @@ import {
   type OrganizationInvitation,
   organizationInvitations,
 } from "../../db/schemas/organizationInvitations";
-import { eq, inArray, and, lte } from "drizzle-orm";
+import { eq, inArray, and, gte } from "drizzle-orm";
 import { users } from "../../db/schemas/users";
 import { organizations } from "../../db/schemas/organizations";
 import {
@@ -112,7 +112,8 @@ class OrganizationInvitationsService {
         and(
           eq(organizationInvitations.id, id),
           inArray(organizationInvitations.email, targetUser),
-          lte(organizationInvitations.expiresAt, new Date()),
+          gte(organizationInvitations.expiresAt, new Date()),
+          eq(organizationInvitations.status, "pending"),
         ),
       )
       .returning({

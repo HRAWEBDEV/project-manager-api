@@ -3,11 +3,44 @@ import {
   type InsertOrganization,
   organizations,
 } from "../../db/schemas/organizations";
+import { organizationMembers } from "../../db/schemas/organizationMembers";
+import { users } from "../../db/schemas/users";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
+import { eq, and } from "drizzle-orm";
 
 class OrganizationsService {
   constructor(private readonly db: DBExecuter) {}
+  async getOrganizations({
+    filters: { userId },
+  }: {
+    filters: {
+      userId: string;
+    };
+  }) {
+    const organizationsResult = await this.db
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        logo: organizations.logo,
+        slug: organizations.slug,
+        description: organizations.description,
+        createdAt: organizations.createdAt,
+        updatedAt: organizations.updatedAt,
+        userRole: organizationMembers.role,
+      })
+      .from(organizations)
+      .innerJoin(
+        organizationMembers,
+        and(
+          eq(organizationMembers.organizationId, organizations.id),
+          eq(organizationMembers.userId, userId),
+        ),
+      )
+      .where(and(eq(organizationMembers.userId, userId)))
+      .orderBy(organizations.createdAt);
+    return organizationsResult;
+  }
   async createOrganization({
     name,
     logo,

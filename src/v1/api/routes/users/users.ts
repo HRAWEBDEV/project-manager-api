@@ -16,6 +16,7 @@ import {
   OrganizationInvitationsService,
 } from "../../services/organizationInvitationsService";
 import { OrganizationMembersService } from "../../services/organizationMembersService";
+import { OrganizationsService } from "../../services/organizationsService";
 
 const usersRoutes = new Hono().basePath("/users");
 
@@ -33,9 +34,13 @@ const handleGetUserOrganizations: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
   const user = getContextUser(c);
-  const usersService = new UsersService(db);
-  const orgs = await usersService.getUserOrganizations(user.id);
-  return c.json(orgs);
+  const organizationsService = new OrganizationsService(db);
+  const organizations = await organizationsService.getOrganizations({
+    filters: {
+      userId: user.id,
+    },
+  });
+  return c.json({ organizations });
 };
 usersRoutes.get("/organizations", handleGetUserOrganizations);
 

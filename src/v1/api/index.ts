@@ -7,6 +7,7 @@ import { handleNotFoundError } from "./utils/notFoundErrorHandler";
 import { handleDbError } from "./utils/dbErrorHandler";
 import { handleInternalError } from "./utils/internalErrorlHandler";
 import { authRoutes } from "./routes/auth/auth";
+import { organizationsRoutes } from "./routes/organizations/organizations";
 import { usersRoutes } from "./routes/users/users";
 import { checkSessionUser } from "./middlewares/checkSessionUser";
 import { workspacesRoutes } from "./routes/workspace/workspaces";
@@ -19,8 +20,9 @@ const v1Routes = new Hono().basePath("/v1");
 v1Routes.route("/", authRoutes);
 v1Routes.use(checkSessionUser);
 v1Routes.route("/", usersRoutes);
-//  active organization
+// active organization
 v1Routes.use(checkUserActiveOrganization);
+v1Routes.route("/", organizationsRoutes);
 v1Routes.route("/", workspacesRoutes);
 // active workspace
 v1Routes.use(checkUserActiveWorkspace);
