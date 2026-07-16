@@ -74,6 +74,40 @@ class OrganizationMembersService {
       .limit(1);
     return member || null;
   }
+
+  async updateOrganizationMemberRole({
+    organizationId,
+    id,
+    role,
+    updatorRole,
+  }: Pick<OrganizationMember, "organizationId" | "id" | "role"> & {
+    updatorRole: OrganizationMember["role"];
+  }) {
+    const filtersConditions: (SQLWrapper | undefined)[] = [
+      eq(organizationMembers.organizationId, organizationId),
+      eq(organizationMembers.id, id),
+    ];
+    if (updatorRole === "owner") {
+      filtersConditions.push(not(eq(organizationMembers.role, "owner")));
+    } else if (updatorRole === "admin") {
+      filtersConditions.push(
+        and(
+          not(eq(organizationMembers.role, "owner")),
+          not(eq(organizationMembers.role, "admin")),
+        ),
+      );
+    }
+    const [updatedMember] = await this.db
+      .update(organizationMembers)
+      .set({ role })
+      .where(and(...filtersConditions))
+      .returning({
+        id: organizationMembers.id,
+        role: organizationMembers.role,
+      });
+    return updatedMember;
+  }
+
   async deleteOrganizationMember({
     organizationId,
     id,

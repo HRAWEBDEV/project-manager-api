@@ -1,6 +1,7 @@
 import { pgTable, uuid, pgEnum, unique, timestamp } from "drizzle-orm/pg-core";
 import { users } from "./users";
 import { organizations } from "./organizations";
+import { createSelectSchema } from "drizzle-zod";
 
 const roleEnum = pgEnum("organization_roles", ["owner", "admin", "member"]);
 
@@ -37,5 +38,7 @@ const organizationMembers = pgTable(
   ],
 );
 
+const selectOrganizationMemberSchema = createSelectSchema(organizationMembers);
+
 export type { OrganizationMember, InsertOrganizationMember };
-export { organizationMembers, roleEnum };
+export { organizationMembers, roleEnum, selectOrganizationMemberSchema };

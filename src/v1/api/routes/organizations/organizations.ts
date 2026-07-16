@@ -9,6 +9,9 @@ import {
 } from "../../services/organizationInvitationsService";
 import { db } from "../../../db/connect";
 import { OrganizationMembersService } from "../../services/organizationMembersService";
+import { selectOrganizationMemberSchema } from "../../../db/schemas/organizationMembers";
+import { StatusCodes } from "http-status-codes";
+import { getApiErrorShape } from "../../utils/apiTypes";
 
 const organizationsRoutes = new Hono().basePath("/organizations");
 
@@ -85,6 +88,55 @@ organizationsRoutes.get(
   handleGetOrganizationMembers,
 );
 
+const handleUpdateOrganizationMember: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const id = c.req.param("id");
+  const { role } = await c.req.json();
+  const parsedBody = selectOrganizationMemberSchema
+    .pick({ role: true })
+    .parse({ role });
+  if (parsedBody.role === "owner") {
+    c.status(StatusCodes.BAD_REQUEST);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.BAD_REQUEST,
+        message: "Can not set organization member role to owner",
+      }),
+    );
+  }
+  const ogMember = getContextUserOrganizationMember(c);
+  const organizationMembersService = new OrganizationMembersService(db);
+  const updatedMember =
+    await organizationMembersService.updateOrganizationMemberRole({
+      id: id!,
+      organizationId: ogMember.organizationId,
+      role: parsedBody.role,
+      updatorRole: ogMember.role,
+    });
+  if (!updatedMember) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Organization member not found",
+      }),
+    );
+  }
+  return c.json(updatedMember);
+};
+
+organizationsRoutes.patch(
+  "/members/:id",
+  checkUserPermission({
+    type: "organization",
+    rolePermission: "organization_member:update",
+  }),
+  handleUpdateOrganizationMember,
+);
+
 const handleDeleteOrganizationMember: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
@@ -97,6 +149,16 @@ const handleDeleteOrganizationMember: Handler<{
       role: ogMember.role,
       id: id!,
     });
+  if (!deleteMember) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Organization member not found",
+      }),
+    );
+  }
   return c.json(deleteMember);
 };
 
