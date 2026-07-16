@@ -85,6 +85,13 @@
       "when": 1784212835266,
       "tag": "0011_motionless_caretaker",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1784217924374,
+      "tag": "0012_harsh_pyro",
+      "breakpoints": true
     }
   ]
 }

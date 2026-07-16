@@ -1,27 +1,48 @@
 import type { DBExecuter } from "../../db/connect";
 import {
   type InsertOrganizationInvitation,
+  type OrganizationInvitation,
   organizationInvitations,
 } from "../../db/schemas/organizationInvitations";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and, lte } from "drizzle-orm";
 import { users } from "../../db/schemas/users";
 import { organizations } from "../../db/schemas/organizations";
+import {
+  createSelectSchema,
+  createUpdateSchema,
+  createInsertSchema,
+} from "drizzle-zod";
 
 class OrganizationInvitationsService {
   constructor(private readonly db: DBExecuter) {}
   getUserInvitations = async ({
-    filters: { userId },
+    filters: { userId, organizationId },
   }: {
     filters: {
-      userId: string;
+      userId?: string;
+      organizationId?: string;
     };
   }) => {
-    const targetUser = this.db
-      .select({
-        email: users.email,
-      })
-      .from(users)
-      .where(eq(users.id, userId));
+    if (!userId && !organizationId) {
+      throw new Error(
+        "userId or organizationId is required to get invitations",
+      );
+    }
+    const filterConditions = [];
+    if (organizationId) {
+      filterConditions.push(
+        eq(organizationInvitations.organizationId, organizationId),
+      );
+    }
+    if (userId) {
+      const targetUser = this.db
+        .select({
+          email: users.email,
+        })
+        .from(users)
+        .where(eq(users.id, userId));
+      filterConditions.push(inArray(organizationInvitations.email, targetUser));
+    }
     const invitations = await this.db
       .select({
         id: organizationInvitations.id,
@@ -42,7 +63,8 @@ class OrganizationInvitationsService {
         organizations,
         eq(organizations.id, organizationInvitations.organizationId),
       )
-      .where(inArray(organizationInvitations.email, targetUser));
+      .where(and(...filterConditions))
+      .orderBy(organizationInvitations.createAt);
 
     return invitations;
   };
@@ -71,6 +93,63 @@ class OrganizationInvitationsService {
       });
     return createdInvitation;
   }
+
+  async updateInvitationStatus({
+    id,
+    status,
+    userId,
+  }: Pick<OrganizationInvitation, "id" | "status" | "userId">) {
+    const targetUser = this.db
+      .select({
+        email: users.email,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+    const [updatedInvitation] = await this.db
+      .update(organizationInvitations)
+      .set({ status })
+      .where(
+        and(
+          eq(organizationInvitations.id, id),
+          inArray(organizationInvitations.email, targetUser),
+          lte(organizationInvitations.expiresAt, new Date()),
+        ),
+      )
+      .returning({
+        id: organizationInvitations.id,
+        status: organizationInvitations.status,
+      });
+    return updatedInvitation;
+  }
+
+  async deleteInvitation({
+    id,
+    userId,
+  }: Pick<OrganizationInvitation, "id" | "userId">) {
+    const [deletedInvitation] = await this.db
+      .delete(organizationInvitations)
+      .where(
+        and(
+          eq(organizationInvitations.id, id),
+          eq(organizationInvitations.userId, userId),
+        ),
+      )
+      .returning({
+        id: organizationInvitations.id,
+      });
+    return deletedInvitation;
+  }
 }
 
-export { OrganizationInvitationsService };
+const selectInvitationSchema = createSelectSchema(organizationInvitations);
+const insertInvitationSchema = createInsertSchema(organizationInvitations);
+const updateInvitationStatusSchema = createUpdateSchema(
+  organizationInvitations,
+);
+
+export {
+  OrganizationInvitationsService,
+  updateInvitationStatusSchema,
+  insertInvitationSchema,
+  selectInvitationSchema,
+};

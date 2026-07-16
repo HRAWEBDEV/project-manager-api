@@ -11,7 +11,10 @@ import {
   saveUserAvatar,
   deleteUserAvatar,
 } from "../../utils/userAvatarManager";
-import { OrganizationInvitationsService } from "../../services/organizationInvitationsService";
+import {
+  selectInvitationSchema,
+  OrganizationInvitationsService,
+} from "../../services/organizationInvitationsService";
 
 const usersRoutes = new Hono().basePath("/users");
 
@@ -121,5 +124,37 @@ const handleGetUserInvitations: Handler<{
 };
 
 usersRoutes.get("/me/invitations", handleGetUserInvitations);
+
+const handleUpdateUserInvitation: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const id = c.req.param("id");
+  const organizationInvitationsService = new OrganizationInvitationsService(db);
+  const { status } = await c.req.json();
+  const parsedBody = selectInvitationSchema
+    .pick({
+      status: true,
+    })
+    .parse({ status });
+  const updatedInvitation =
+    await organizationInvitationsService.updateInvitationStatus({
+      id: id!,
+      userId: user.id,
+      status: parsedBody.status,
+    });
+  if (!updatedInvitation) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Invitation not found",
+      }),
+    );
+  }
+};
+
+usersRoutes.patch("/me/invitations/:id", handleUpdateUserInvitation);
 
 export { usersRoutes };

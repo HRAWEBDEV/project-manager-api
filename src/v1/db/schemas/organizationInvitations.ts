@@ -11,7 +11,7 @@ import { users } from "./users";
 
 const organizationInvitationStatusEnum = pgEnum(
   "organization_invitation_status",
-  ["pending", "accepted", "declined", "expired", "cancelled"],
+  ["pending", "accepted", "declined"],
 );
 
 type OrganizationInvitation = typeof organizationInvitations.$inferSelect;
