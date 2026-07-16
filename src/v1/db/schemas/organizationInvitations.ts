@@ -14,6 +14,9 @@ const organizationInvitationStatusEnum = pgEnum(
   ["pending", "accepted", "declined", "expired", "cancelled"],
 );
 
+type OrganizationInvitation = typeof organizationInvitations.$inferSelect;
+type InsertOrganizationInvitation = typeof organizationInvitations.$inferInsert;
+
 const organizationInvitations = pgTable(
   "organization_invitations",
   {
@@ -46,4 +49,5 @@ const organizationInvitations = pgTable(
   ],
 );
 
+export type { OrganizationInvitation, InsertOrganizationInvitation };
 export { organizationInvitations, organizationInvitationStatusEnum };
