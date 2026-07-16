@@ -129,6 +129,16 @@ const handleDeleteWorkspace: Handler<{
     organizationId: organizatinMember.organizationId,
     id: id!,
   });
+  if (!deletedWorkspace) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "workspace not found",
+      }),
+    );
+  }
   return c.json(deletedWorkspace);
 };
 workspacesRoutes.delete(

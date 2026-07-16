@@ -141,6 +141,25 @@ class ProjectsService {
       });
     return updatedProject;
   }
+  async deleteProject({
+    organizationId,
+    workspaceId,
+    id,
+  }: Pick<Project, "organizationId" | "workspaceId" | "id">) {
+    const [deletedProject] = await this.db
+      .delete(projects)
+      .where(
+        and(
+          eq(projects.organizationId, organizationId),
+          eq(projects.workspaceId, workspaceId),
+          eq(projects.id, id),
+        ),
+      )
+      .returning({
+        id: projects.id,
+      });
+    return deletedProject;
+  }
 }
 
 export { ProjectsService };

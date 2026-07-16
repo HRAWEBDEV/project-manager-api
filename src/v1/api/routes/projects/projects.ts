@@ -139,4 +139,38 @@ projectsRoutes.patch(
   handleUpdateProject,
 );
 
+const handleDeleteProject: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const id = c.req.param("id");
+  const activeOrganizationMember = getContextUserOrganizationMember(c);
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const projectService = new ProjectsService(db);
+  const deletedProject = await projectService.deleteProject({
+    organizationId: activeOrganizationMember.organizationId,
+    workspaceId: workspaceId!,
+    id: id!,
+  });
+  if (!deletedProject) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Project not found",
+      }),
+    );
+  }
+  return c.json(deletedProject);
+};
+
+projectsRoutes.delete(
+  "/:id",
+  checkUserPermission({
+    rolePermission: "project:delete",
+    type: "organizationAndWorkspace",
+  }),
+  handleDeleteProject,
+);
+
 export default projectsRoutes;
