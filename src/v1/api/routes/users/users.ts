@@ -11,6 +11,7 @@ import {
   saveUserAvatar,
   deleteUserAvatar,
 } from "../../utils/userAvatarManager";
+import { OrganizationInvitationsService } from "../../services/organizationInvitationsService";
 
 const usersRoutes = new Hono().basePath("/users");
 
@@ -103,5 +104,22 @@ const handleDeleteUserAvatar: Handler<{
   });
 };
 usersRoutes.delete("/avatar", handleDeleteUserAvatar);
+
+const handleGetUserInvitations: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const organizationInvitationsService = new OrganizationInvitationsService(db);
+  const invitations = await organizationInvitationsService.getUserInvitations({
+    filters: {
+      userId: user.id,
+    },
+  });
+  return c.json({
+    invitations,
+  });
+};
+
+usersRoutes.get("/me/invitations", handleGetUserInvitations);
 
 export { usersRoutes };

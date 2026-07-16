@@ -1,5 +1,8 @@
 import type { DBExecuter } from "../../db/connect";
-import { organizationInvitations } from "../../db/schemas/organizationInvitations";
+import {
+  type InsertOrganizationInvitation,
+  organizationInvitations,
+} from "../../db/schemas/organizationInvitations";
 import { eq, inArray } from "drizzle-orm";
 import { users } from "../../db/schemas/users";
 import { organizations } from "../../db/schemas/organizations";
@@ -43,6 +46,31 @@ class OrganizationInvitationsService {
 
     return invitations;
   };
+
+  async sendInvitation({
+    userId,
+    email,
+    organizationId,
+  }: Pick<
+    InsertOrganizationInvitation,
+    "userId" | "email" | "organizationId"
+  >) {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    const [createdInvitation] = await this.db
+      .insert(organizationInvitations)
+      .values({ userId, email, expiresAt, organizationId })
+      .returning({
+        id: organizationInvitations.id,
+      })
+      .onConflictDoUpdate({
+        target: [
+          organizationInvitations.email,
+          organizationInvitations.organizationId,
+        ],
+        set: { expiresAt, status: "pending", acceptedAt: null },
+      });
+    return createdInvitation;
+  }
 }
 
 export { OrganizationInvitationsService };
