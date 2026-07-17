@@ -11,27 +11,6 @@ import { organizations } from "../../db/schemas/organizations";
 
 class WorkspaceMembersService {
   constructor(private readonly db: DBExecuter) {}
-  async createWorkspaceMember({
-    organizationMemberId,
-    workspaceId,
-    role,
-    addedBy,
-  }: Pick<
-    InsertWorkspaceMember,
-    "organizationMemberId" | "workspaceId" | "role" | "addedBy"
-  >) {
-    const [createdWorkspaceMember] = await this.db
-      .insert(workspaceMembers)
-      .values({
-        organizationMemberId,
-        workspaceId,
-        role,
-        addedBy,
-      })
-      .returning({ id: workspaceMembers.id });
-    return createdWorkspaceMember;
-  }
-
   async getWorkspaceMembers({
     filters,
   }: {
@@ -88,7 +67,43 @@ class WorkspaceMembersService {
         ),
       )
       .limit(1);
-    return member || null;
+    return member;
+  }
+
+  async createWorkspaceMember({
+    organizationMemberId,
+    workspaceId,
+    role,
+    addedBy,
+  }: Pick<
+    InsertWorkspaceMember,
+    "organizationMemberId" | "workspaceId" | "role" | "addedBy"
+  >) {
+    const [createdWorkspaceMember] = await this.db
+      .insert(workspaceMembers)
+      .values({
+        organizationMemberId,
+        workspaceId,
+        role,
+        addedBy,
+      })
+      .returning({ id: workspaceMembers.id });
+    return createdWorkspaceMember;
+  }
+
+  async deleteWorkspaceMember(workspaceId: string, id: string) {
+    const [deletedMember] = await this.db
+      .delete(workspaceMembers)
+      .where(
+        and(
+          eq(workspaceMembers.workspaceId, workspaceId),
+          eq(workspaceMembers.id, id),
+        ),
+      )
+      .returning({
+        id: workspaceMembers.id,
+      });
+    return deletedMember;
   }
 }
 

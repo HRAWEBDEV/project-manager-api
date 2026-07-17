@@ -199,4 +199,36 @@ workspacesRoutes.post(
   handleCreateWorkspaceMember,
 );
 
+const handleDeleteWorkspaceMember: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const id = c.req.param("id");
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const workspaceMembersService = new WorkspaceMembersService(db);
+  const deletedMember = await workspaceMembersService.deleteWorkspaceMember(
+    workspaceId!,
+    id!,
+  );
+  if (!deletedMember) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Workspace member not found",
+      }),
+    );
+  }
+  return c.json(deletedMember);
+};
+
+workspacesRoutes.delete(
+  "/members/:id",
+  checkUserPermission({
+    rolePermission: "workspace_member:delete",
+    type: "organization",
+  }),
+  handleDeleteWorkspaceMember,
+);
+
 export { workspacesRoutes };
