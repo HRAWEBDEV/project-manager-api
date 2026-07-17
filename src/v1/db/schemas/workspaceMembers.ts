@@ -3,6 +3,7 @@ import { organizationMembers } from "./organizationMembers";
 import { workspaces } from "./workspaces";
 import { users } from "./users";
 import { createSelectSchema } from "drizzle-zod";
+import { createInsertSchema } from "drizzle-zod";
 
 export const roleEnum = pgEnum("workspace_roles", ["admin", "member"]);
 
@@ -40,6 +41,7 @@ const workspaceMembers = pgTable(
 );
 
 const selectWorkspaceMemberSchema = createSelectSchema(workspaceMembers);
+const insertWorkspaceMember = createInsertSchema(workspaceMembers);
 
 export type { WorkspaceMember, InsertWorkspaceMember };
-export { workspaceMembers, selectWorkspaceMemberSchema };
+export { workspaceMembers, selectWorkspaceMemberSchema, insertWorkspaceMember };

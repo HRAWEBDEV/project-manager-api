@@ -2,6 +2,7 @@ import { pgTable, unique, uuid, timestamp } from "drizzle-orm/pg-core";
 import { projects } from "./projects";
 import { organizationMembers } from "./organizationMembers";
 import { users } from "./users";
+import { createSelectSchema, createInsertSchema } from "drizzle-zod";
 
 type ProjectMember = typeof projectMembers.$inferSelect;
 type InsertProjectMember = typeof projectMembers.$inferInsert;
@@ -34,6 +35,8 @@ const projectMembers = pgTable(
     ),
   ],
 );
+const selectProjectMemberSchema = createSelectSchema(projectMembers);
+const insertProjectMemberSchema = createInsertSchema(projectMembers);
 
 export type { ProjectMember, InsertProjectMember };
-export { projectMembers };
+export { projectMembers, insertProjectMemberSchema, selectProjectMemberSchema };

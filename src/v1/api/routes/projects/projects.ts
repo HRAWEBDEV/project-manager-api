@@ -2,6 +2,7 @@ import { type Handler, Hono } from "hono";
 import type { WithSessionUserVariables } from "../../utils/sessionUserContext";
 import { ProjectsService } from "../../services/projectsService";
 import { ProjectMembersService } from "../../services/projectMembersService";
+import { insertProjectMemberSchema } from "../../../db/schemas/projectMembers";
 import { getContextUser } from "../../utils/sessionUserContext";
 import { getHeaderActiveWorkspace } from "../../utils/userActiveWorkspace";
 import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
@@ -195,6 +196,66 @@ projectsRoutes.get(
     type: "organizationAndWorkspace",
   }),
   handleGetProjectMembers,
+);
+
+const handleCreateProjectMember: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const projectId = c.req.param("id");
+  const { organizationMemberId } = await c.req.json();
+  const parsedBody = insertProjectMemberSchema
+    .pick({ organizationMemberId: true })
+    .parse({ organizationMemberId });
+  const projectMemberService = new ProjectMembersService(db);
+  const createdMember = await projectMemberService.createMember({
+    addedBy: user.id,
+    organizationMemberId: parsedBody.organizationMemberId,
+    projectId: projectId!,
+  });
+  return c.json(createdMember);
+};
+
+projectsRoutes.post(
+  "/:id/members",
+  checkUserPermission({
+    rolePermission: "project_member:create",
+    type: "organizationAndWorkspace",
+  }),
+  handleCreateProjectMember,
+);
+
+const handleDeleteProjectMember: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const projectId = c.req.param("projectId");
+  const id = c.req.param("id");
+  const projectMemberService = new ProjectMembersService(db);
+  const deletedMember = await projectMemberService.deleteProjectMember(
+    id!,
+    projectId!,
+  );
+  if (!deletedMember) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Project member not found",
+      }),
+    );
+  }
+  return c.json(deletedMember);
+};
+
+projectsRoutes.delete(
+  "/:projectId/members/:id",
+  checkUserPermission({
+    rolePermission: "project_member:delete",
+    type: "organizationAndWorkspace",
+  }),
+  handleDeleteProjectMember,
 );
 
 export default projectsRoutes;

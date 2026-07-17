@@ -13,7 +13,10 @@ import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
 import { WorkspaceMembersService } from "../../services/workspaceMembersService";
 import { getHeaderActiveWorkspace } from "../../utils/userActiveWorkspace";
-import { selectWorkspaceMemberSchema } from "../../../db/schemas/workspaceMembers";
+import {
+  insertWorkspaceMember,
+  selectWorkspaceMemberSchema,
+} from "../../../db/schemas/workspaceMembers";
 
 const workspacesRoutes = new Hono().basePath("/workspaces");
 
@@ -178,21 +181,24 @@ workspacesRoutes.get(
 const handleCreateWorkspaceMember: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
-  const id = c.req.param("id");
+  const { organizationMemberId, role } = await c.req.json();
+  const parsedBody = insertWorkspaceMember
+    .pick({ role: true, organizationMemberId: true })
+    .parse({ role, organizationMemberId });
   const organizationMember = getContextUserOrganizationMember(c);
   const workspaceId = getHeaderActiveWorkspace(c);
   const workspaceMembersService = new WorkspaceMembersService(db);
   const createWorkspace = await workspaceMembersService.createWorkspaceMember({
-    organizationMemberId: id!,
+    organizationMemberId: parsedBody.organizationMemberId,
     workspaceId: workspaceId!,
     addedBy: organizationMember.userId,
-    role: "member",
+    role: parsedBody.role,
   });
   return c.json(createWorkspace);
 };
 
 workspacesRoutes.post(
-  "/members/:id",
+  "/members",
   checkUserPermission({
     rolePermission: "workspace_member:create",
     type: "organization",

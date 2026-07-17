@@ -61,6 +61,16 @@ class ProjectMembersService {
       .orderBy(projectMembers.joinedAt);
     return projectMembersResult;
   }
+
+  async deleteProjectMember(id: string, projectId: string) {
+    const [deletedProjectMember] = await this.db
+      .delete(projectMembers)
+      .where(
+        and(eq(projectMembers.id, id), eq(projectMembers.projectId, projectId)),
+      )
+      .returning({ id: projectMembers.id });
+    return deletedProjectMember;
+  }
 }
 
 export { ProjectMembersService };
