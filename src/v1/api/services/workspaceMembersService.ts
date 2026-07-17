@@ -36,6 +36,7 @@ class WorkspaceMembersService {
         addedBy: workspaceMembers.addedBy,
         workspaceName: workspaces.name,
         userId: users.id,
+        userAvatar: users.avatar,
         username: users.username,
         userFirstName: users.firstName,
         userLastName: users.lastName,
