@@ -2,6 +2,7 @@ import { pgTable, uuid, pgEnum, unique, timestamp } from "drizzle-orm/pg-core";
 import { organizationMembers } from "./organizationMembers";
 import { workspaces } from "./workspaces";
 import { users } from "./users";
+import { createSelectSchema } from "drizzle-zod";
 
 export const roleEnum = pgEnum("workspace_roles", ["admin", "member"]);
 
@@ -38,5 +39,7 @@ const workspaceMembers = pgTable(
   ],
 );
 
+const selectWorkspaceMemberSchema = createSelectSchema(workspaceMembers);
+
 export type { WorkspaceMember, InsertWorkspaceMember };
-export { workspaceMembers };
+export { workspaceMembers, selectWorkspaceMemberSchema };

@@ -13,6 +13,7 @@ import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
 import { WorkspaceMembersService } from "../../services/workspaceMembersService";
 import { getHeaderActiveWorkspace } from "../../utils/userActiveWorkspace";
+import { selectWorkspaceMemberSchema } from "../../../db/schemas/workspaceMembers";
 
 const workspacesRoutes = new Hono().basePath("/workspaces");
 
@@ -197,6 +198,43 @@ workspacesRoutes.post(
     type: "organization",
   }),
   handleCreateWorkspaceMember,
+);
+
+const handleUpdateWorkspaceMember: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const id = c.req.param("id");
+  const { role } = await c.req.json();
+  const parsedBody = selectWorkspaceMemberSchema
+    .pick({ role: true })
+    .parse({ role });
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const workspaceMembersService = new WorkspaceMembersService(db);
+  const updatedMember = await workspaceMembersService.updateWorkspaceMember({
+    id: id!,
+    workspaceId: workspaceId!,
+    role: parsedBody.role,
+  });
+  if (!updatedMember) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Workspace member not found",
+      }),
+    );
+  }
+  return c.json(updatedMember);
+};
+
+workspacesRoutes.patch(
+  "/members/:id",
+  checkUserPermission({
+    rolePermission: "workspace_member:update",
+    type: "organization",
+  }),
+  handleUpdateWorkspaceMember,
 );
 
 const handleDeleteWorkspaceMember: Handler<{

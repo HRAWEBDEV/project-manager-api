@@ -1,5 +1,6 @@
 import { type DBExecuter } from "../../db/connect";
 import {
+  type WorkspaceMember,
   type InsertWorkspaceMember,
   workspaceMembers,
 } from "../../db/schemas/workspaceMembers";
@@ -89,6 +90,24 @@ class WorkspaceMembersService {
       })
       .returning({ id: workspaceMembers.id });
     return createdWorkspaceMember;
+  }
+
+  async updateWorkspaceMember({
+    id,
+    role,
+    workspaceId,
+  }: Pick<WorkspaceMember, "id" | "role" | "workspaceId">) {
+    const [updatedMember] = await this.db
+      .update(workspaceMembers)
+      .set({ role })
+      .where(
+        and(
+          eq(workspaceMembers.id, id),
+          eq(workspaceMembers.workspaceId, workspaceId),
+        ),
+      )
+      .returning({ id: workspaceMembers.id, role: workspaceMembers.role });
+    return updatedMember;
   }
 
   async deleteWorkspaceMember(workspaceId: string, id: string) {
