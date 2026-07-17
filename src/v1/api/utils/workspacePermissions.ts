@@ -33,6 +33,11 @@ const workspacePermissions = {
     "comment:create",
     "comment:update",
     "comment:delete",
+    "workspace_member:read",
+    "project_member:read",
+    "project_member:create",
+    "project_member:update",
+    "project_member:delete",
   ],
   member: [
     "workspace:read",
@@ -49,6 +54,7 @@ const workspacePermissions = {
     "comment:update",
     "comment:delete",
     "workspace_member:read",
+    "project_member:read",
   ],
 } as const;
 

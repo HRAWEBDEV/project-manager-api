@@ -172,4 +172,29 @@ projectsRoutes.delete(
   handleDeleteProject,
 );
 
+// members
+const handleGetProjectMembers: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const projectId = c.req.param("id");
+  const projectMemberService = new ProjectMembersService(db);
+  const projectMembers = await projectMemberService.getProjectMembers({
+    filters: {
+      projectId: projectId!,
+      workspaceId: workspaceId!,
+    },
+  });
+  return c.json({ projectMembers });
+};
+
+projectsRoutes.get(
+  "/:id/members",
+  checkUserPermission({
+    rolePermission: "project_member:read",
+    type: "organizationAndWorkspace",
+  }),
+  handleGetProjectMembers,
+);
+
 export default projectsRoutes;

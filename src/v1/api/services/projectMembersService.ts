@@ -3,6 +3,10 @@ import {
   type InsertProjectMember,
   projectMembers,
 } from "../../db/schemas/projectMembers";
+import { projects } from "../../db/schemas/projects";
+import { organizationMembers } from "../../db/schemas/organizationMembers";
+import { users } from "../../db/schemas/users";
+import { eq, and } from "drizzle-orm";
 
 class ProjectMembersService {
   constructor(private readonly db: DBExecuter) {}
@@ -19,6 +23,43 @@ class ProjectMembersService {
       .values({ addedBy, organizationMemberId, projectId })
       .returning({ id: projectMembers.id });
     return createdProjectMember;
+  }
+
+  async getProjectMembers({
+    filters,
+  }: {
+    filters: {
+      projectId: string;
+      workspaceId: string;
+    };
+  }) {
+    const fitlersCondition = [
+      eq(projectMembers.projectId, filters.projectId),
+      eq(projects.workspaceId, filters.workspaceId),
+    ];
+    const projectMembersResult = await this.db
+      .select({
+        id: projectMembers.id,
+        projectId: projectMembers.projectId,
+        projectName: projects.name,
+        organizationMemberId: projectMembers.organizationMemberId,
+        userId: organizationMembers.userId,
+        username: users.username,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        joinedAt: projectMembers.joinedAt,
+        addedBy: projectMembers.addedBy,
+      })
+      .from(projectMembers)
+      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
+      .innerJoin(
+        organizationMembers,
+        eq(projectMembers.organizationMemberId, organizationMembers.id),
+      )
+      .innerJoin(users, eq(organizationMembers.userId, users.id))
+      .where(and(...fitlersCondition))
+      .orderBy(projectMembers.joinedAt);
+    return projectMembersResult;
   }
 }
 

@@ -46,6 +46,10 @@ const organizationPermissions = {
     "workspace_member:create",
     "workspace_member:update",
     "workspace_member:delete",
+    "project_member:read",
+    "project_member:create",
+    "project_member:update",
+    "project_member:delete",
   ],
   admin: [
     "workspace:read",
@@ -60,6 +64,10 @@ const organizationPermissions = {
     "workspace_member:create",
     "workspace_member:update",
     "workspace_member:delete",
+    "project_member:read",
+    "project_member:create",
+    "project_member:update",
+    "project_member:delete",
   ],
   member: ["workspace:read"],
 } as const;
