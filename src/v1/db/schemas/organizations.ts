@@ -1,6 +1,6 @@
 import { pgTable, uuid, varchar, text } from "drizzle-orm/pg-core";
 import { trackChanges } from "../utils/trackChanges";
-import { createInsertSchema } from "drizzle-zod";
+import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 
 type Organization = typeof organizations.$inferSelect;
 type InsertOrganization = typeof organizations.$inferInsert;
@@ -15,6 +15,7 @@ const organizations = pgTable("organizations", {
 });
 
 const insertOrganizationSchema = createInsertSchema(organizations);
+const updateOrganizationSchema = createUpdateSchema(organizations);
 
 export type { Organization, InsertOrganization };
-export { organizations, insertOrganizationSchema };
+export { organizations, insertOrganizationSchema, updateOrganizationSchema };

@@ -5,6 +5,7 @@ type OrganizationRolePermissions =
 
 const organizationPermissions = {
   owner: [
+    "organization:update",
     "workspace:read",
     "workspace:create",
     "workspace:update",

@@ -8,12 +8,102 @@ import {
   OrganizationInvitationsService,
 } from "../../services/organizationInvitationsService";
 import { db } from "../../../db/connect";
+import { updateOrganizationSchema } from "../../../db/schemas/organizations";
+import { OrganizationsService } from "../../services/organizationsService";
 import { OrganizationMembersService } from "../../services/organizationMembersService";
 import { selectOrganizationMemberSchema } from "../../../db/schemas/organizationMembers";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
+import { OrganizationLogoService } from "../../utils/organizatoinLogoService";
+import {
+  ImageTooLargeError,
+  InvalidImageTypeError,
+} from "../../utils/staticImagesService";
 
 const organizationsRoutes = new Hono().basePath("/organizations");
+
+const handleUpdateOrganization: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const organizationMember = getContextUserOrganizationMember(c);
+  const { name } = await c.req.json();
+  const parsedBody = updateOrganizationSchema
+    .pick({ name: true })
+    .parse({ name });
+  const organizationService = new OrganizationsService(db);
+  const updatedOrganization = await organizationService.updateOrganization({
+    id: organizationMember.organizationId,
+    name: parsedBody.name,
+  });
+  return c.json(updatedOrganization);
+};
+
+organizationsRoutes.patch(
+  "/",
+  checkUserPermission({
+    type: "organization",
+    rolePermission: "organization:update",
+  }),
+  handleUpdateOrganization,
+);
+
+const handleUpdateOrganizationLogo: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const parseBody = await c.req.parseBody();
+  const image = parseBody.image;
+  const organizationMember = getContextUserOrganizationMember(c);
+  const organizationService = new OrganizationsService(db);
+  if (!(image instanceof File)) {
+    c.status(StatusCodes.BAD_REQUEST);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.BAD_REQUEST,
+        message: "Image is not a file",
+      }),
+    );
+  }
+  const url = new URL(c.req.url);
+  const baseUrl = url.origin;
+  const organizationLogoService = new OrganizationLogoService();
+  try {
+    const logoUrl = await organizationLogoService.saveStaticImage(image);
+    const updatedUser = await organizationService.updateOrganization({
+      id: organizationMember.organizationId,
+      logo: logoUrl,
+    });
+    return c.json({
+      message: "Avatar updated successfully",
+      avatarUrl: `${baseUrl}${logoUrl}`,
+      userId: updatedUser ? updatedUser.id : null,
+    });
+  } catch (err) {
+    if (
+      err instanceof InvalidImageTypeError ||
+      err instanceof ImageTooLargeError
+    ) {
+      c.status(StatusCodes.BAD_REQUEST);
+      return c.json(
+        getApiErrorShape({
+          status: "failed",
+          code: StatusCodes.BAD_REQUEST,
+          message: err.message,
+        }),
+      );
+    }
+    throw err;
+  }
+};
+
+organizationsRoutes.post(
+  "/logo",
+  checkUserPermission({
+    type: "organization",
+    rolePermission: "organization:update",
+  }),
+  handleUpdateOrganizationLogo,
+);
 
 // invitations
 const handleGetInvitations: Handler<{
