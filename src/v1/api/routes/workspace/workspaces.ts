@@ -174,4 +174,29 @@ workspacesRoutes.get(
   handleGetWorkspaceMembers,
 );
 
+const handleCreateWorkspaceMember: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const id = c.req.param("id");
+  const organizationMember = getContextUserOrganizationMember(c);
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const workspaceMembersService = new WorkspaceMembersService(db);
+  const createWorkspace = await workspaceMembersService.createWorkspaceMember({
+    organizationMemberId: id!,
+    workspaceId: workspaceId!,
+    addedBy: organizationMember.userId,
+    role: "member",
+  });
+  return c.json(createWorkspace);
+};
+
+workspacesRoutes.post(
+  "/members/:id",
+  checkUserPermission({
+    rolePermission: "workspace_member:create",
+    type: "organization",
+  }),
+  handleCreateWorkspaceMember,
+);
+
 export { workspacesRoutes };
