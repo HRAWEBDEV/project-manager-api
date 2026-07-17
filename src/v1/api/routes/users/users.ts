@@ -5,18 +5,17 @@ import { UsersService } from "../../services/usersService";
 import { db } from "../../../db/connect";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
-import {
-  ImageTooLargeError,
-  InvalidImageTypeError,
-  saveUserAvatar,
-  deleteUserAvatar,
-} from "../../utils/userAvatarManager";
+import { UserAvatarService } from "../../utils/userAvatarService";
 import {
   selectInvitationSchema,
   OrganizationInvitationsService,
 } from "../../services/organizationInvitationsService";
 import { OrganizationMembersService } from "../../services/organizationMembersService";
 import { OrganizationsService } from "../../services/organizationsService";
+import {
+  ImageTooLargeError,
+  InvalidImageTypeError,
+} from "../../utils/staticImagesService";
 
 const usersRoutes = new Hono().basePath("/users");
 
@@ -63,14 +62,15 @@ const handleUpdateUserAvatar: Handler<{
   }
   const url = new URL(c.req.url);
   const baseUrl = url.origin;
+  const avatarService = new UserAvatarService();
   try {
-    const avatarUrl = await saveUserAvatar(image);
+    const avatarUrl = await avatarService.saveStaticImage(image);
     const updatedUser = await usersService.updateUser({
       id: user.id,
       avatar: avatarUrl,
     });
     if (user.avatar) {
-      deleteUserAvatar(user.avatar);
+      avatarService.deleteStaticImage(user.avatar);
     }
     return c.json({
       message: "Avatar updated successfully",
@@ -101,8 +101,9 @@ const handleDeleteUserAvatar: Handler<{
 }> = async (c) => {
   const user = getContextUser(c);
   const usersService = new UsersService(db);
+  const avatarService = new UserAvatarService();
   if (user.avatar) {
-    await deleteUserAvatar(user.avatar);
+    await avatarService.deleteStaticImage(user.avatar);
     await usersService.updateUser({
       id: user.id,
       avatar: null,
