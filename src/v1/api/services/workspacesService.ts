@@ -60,6 +60,7 @@ class WorkspacesService {
       or(
         isNotNull(workspaceMembers.organizationMemberId),
         eq(organizationMembers.role, "owner"),
+        eq(organizationMembers.role, "admin"),
       ),
     ];
     if (filters.organizationId) {
