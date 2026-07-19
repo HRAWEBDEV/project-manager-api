@@ -1,6 +1,5 @@
 import { type Handler, Hono } from "hono";
 import type { WithSessionUserVariables } from "../../utils/sessionUserContext";
-import { ProjectsService } from "../../services/projectsService";
 import { ProjectMembersService } from "../../services/projectMembersService";
 import { insertProjectMemberSchema } from "../../../db/schemas/projectMembers";
 import { getContextUser } from "../../utils/sessionUserContext";
@@ -14,6 +13,12 @@ import {
 import { checkUserPermission } from "../../middlewares/checkUserPermission";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
+import { ProjectIconService } from "../../utils/projectIconService";
+import { ProjectsService } from "../../services/projectsService";
+import {
+  ImageTooLargeError,
+  InvalidImageTypeError,
+} from "../../utils/staticImagesService";
 
 const projectsRoutes = new Hono().basePath("/projects");
 
@@ -137,6 +142,79 @@ projectsRoutes.patch(
     type: "organizationAndWorkspace",
   }),
   handleUpdateProject,
+);
+
+const handleUpdateProjectIcon: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const projectId = c.req.param("id");
+  const parseBody = await c.req.parseBody();
+  const image = parseBody.image;
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const organizationMember = getContextUserOrganizationMember(c);
+  const projectService = new ProjectsService(db);
+  if (!(image instanceof File)) {
+    c.status(StatusCodes.BAD_REQUEST);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.BAD_REQUEST,
+        message: "Image is not a file",
+      }),
+    );
+  }
+  const url = new URL(c.req.url);
+  const baseUrl = url.origin;
+  const projectIconService = new ProjectIconService();
+  try {
+    const project = await projectService.getProject({
+      filters: {
+        userId: user.id,
+        workspaceId: workspaceId!,
+        projectId: projectId!,
+      },
+    });
+    const logoUrl = await projectIconService.saveStaticImage(image);
+    const updatedUser = await projectService.updateProject({
+      id: projectId!,
+      organizationId: organizationMember.organizationId,
+      workspaceId: workspaceId!,
+      icon: logoUrl,
+    });
+    if (project?.icon) {
+      projectIconService.deleteStaticImage(project.icon);
+    }
+    return c.json({
+      message: "icon updated successfully",
+      avatarUrl: `${baseUrl}${logoUrl}`,
+      userId: updatedUser ? updatedUser.id : null,
+    });
+  } catch (err) {
+    if (
+      err instanceof InvalidImageTypeError ||
+      err instanceof ImageTooLargeError
+    ) {
+      c.status(StatusCodes.BAD_REQUEST);
+      return c.json(
+        getApiErrorShape({
+          status: "failed",
+          code: StatusCodes.BAD_REQUEST,
+          message: err.message,
+        }),
+      );
+    }
+    throw err;
+  }
+};
+
+projectsRoutes.post(
+  "/:id/icon",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "project:update",
+  }),
+  handleUpdateProjectIcon,
 );
 
 const handleDeleteProject: Handler<{

@@ -10,17 +10,18 @@ import { workspaceMembers } from "../../db/schemas/workspaceMembers";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { and, eq, or, isNotNull } from "drizzle-orm";
 
+type GetProjectProps = {
+  filters: {
+    userId: string;
+    workspaceId: string;
+    projectId?: string;
+  };
+};
+
 class ProjectsService {
   constructor(private readonly db: DBExecuter) {}
-  async getProjects({
-    filters,
-  }: {
-    filters: {
-      userId: string;
-      workspaceId: string;
-    };
-  }) {
-    const baseQuery = this.db
+  async getProjects({ filters }: GetProjectProps) {
+    let baseQuery = this.db
       .select({
         id: projects.id,
         name: projects.name,
@@ -54,21 +55,36 @@ class ProjectsService {
           eq(projectMembers.organizationMemberId, organizationMembers.id),
           eq(projectMembers.projectId, projects.id),
         ),
-      );
+      )
+      .$dynamic();
     const filterConditions = [
-      and(
-        eq(projects.workspaceId, filters.workspaceId),
-        or(
-          eq(organizationMembers.role, "owner"),
-          eq(workspaceMembers.role, "admin"),
-          isNotNull(projectMembers.organizationMemberId),
-        ),
+      eq(projects.workspaceId, filters.workspaceId),
+      or(
+        eq(organizationMembers.role, "owner"),
+        eq(workspaceMembers.role, "admin"),
+        isNotNull(projectMembers.organizationMemberId),
       ),
     ];
-    const projectsResult = await baseQuery
+    if (filters.projectId) {
+      filterConditions.push(eq(projects.id, filters.projectId));
+    }
+    baseQuery = baseQuery
       .where(and(...filterConditions))
       .orderBy(projects.createdAt);
+    if (filters.projectId) {
+      baseQuery = baseQuery.limit(1);
+    }
+    const projectsResult = await baseQuery;
     return projectsResult;
+  }
+  async getProject(
+    props: GetProjectProps & {
+      filters: {
+        projectId: string;
+      };
+    },
+  ) {
+    return (await this.getProjects(props))[0];
   }
   async createProject({
     name,
