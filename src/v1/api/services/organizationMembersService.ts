@@ -4,7 +4,7 @@ import {
   type InsertOrganizationMember,
   organizationMembers,
 } from "../../db/schemas/organizationMembers";
-import { and, eq, not, or, type SQLWrapper } from "drizzle-orm";
+import { and, eq, not, type SQLWrapper } from "drizzle-orm";
 import { organizations } from "../../db/schemas/organizations";
 import { users } from "../../db/schemas/users";
 

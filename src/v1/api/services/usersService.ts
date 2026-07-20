@@ -1,6 +1,5 @@
 import { type DBExecuter } from "../../db/connect";
 import { users, type InsertUser, type User } from "../../db/schemas/users";
-import { OrganizationsService } from "./organizationsService";
 import { organizations } from "../../db/schemas/organizations";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import * as argon2 from "argon2";

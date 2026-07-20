@@ -306,7 +306,6 @@ projectsRoutes.post(
 const handleDeleteProjectMember: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
-  const user = getContextUser(c);
   const projectId = c.req.param("projectId");
   const id = c.req.param("id");
   const projectMemberService = new ProjectMembersService(db);

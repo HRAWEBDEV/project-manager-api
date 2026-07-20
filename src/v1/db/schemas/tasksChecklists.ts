@@ -1,11 +1,4 @@
-import {
-  pgTable,
-  uuid,
-  text,
-  boolean,
-  timestamp,
-  integer,
-} from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, boolean, timestamp } from "drizzle-orm/pg-core";
 import { tasks } from "./tasks";
 import { trackChanges } from "../utils/trackChanges";
 
