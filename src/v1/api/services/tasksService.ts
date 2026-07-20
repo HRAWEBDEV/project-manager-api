@@ -53,7 +53,7 @@ class TasksService {
       )
       .$dynamic();
     const filtersConditions = [
-      eq(workspaces, filters.workspaceId),
+      eq(workspaces.id, filters.workspaceId),
       eq(tasks.projectId, filters.projectId),
       or(
         eq(organizationMembers.role, "owner"),
