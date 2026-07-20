@@ -5,8 +5,11 @@ import { checkUserPermission } from "../../middlewares/checkUserPermission";
 import { getContextUser } from "../../utils/sessionUserContext";
 import { getHeaderActiveWorkspace } from "../../utils/userActiveWorkspace";
 import { db } from "../../../db/connect";
-import { selectTasksSchema, createTaskSchema } from "../../../db/schemas/tasks";
-import { de } from "zod/v4/locales";
+import {
+  selectTasksSchema,
+  createTaskSchema,
+  updateTaskSchema,
+} from "../../../db/schemas/tasks";
 
 const tasksRoutes = new Hono().basePath("/tasks");
 
@@ -75,6 +78,41 @@ tasksRoutes.post(
     rolePermission: "task:create",
   }),
   handleCreateTask,
+);
+
+const handleUpdateTask: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const taskId = c.req.param("id");
+  const { title, description, startAt, endAt } = await c.req.json();
+  const parsedTask = updateTaskSchema
+    .pick({
+      title: true,
+      description: true,
+      startAt: true,
+      endAt: true,
+    })
+    .parse({
+      title,
+      description,
+      startAt,
+      endAt,
+    });
+  const taskService = new TasksService(db);
+  const updatedTask = await taskService.updateTask({
+    id: taskId!,
+    ...parsedTask,
+  });
+  return c.json(updatedTask);
+};
+
+tasksRoutes.patch(
+  "/:id",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task:update",
+  }),
+  handleUpdateTask,
 );
 
 export { tasksRoutes };

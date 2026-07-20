@@ -1,5 +1,5 @@
 import type { DBExecuter } from "../../db/connect";
-import { type InsertTask, tasks } from "../../db/schemas/tasks";
+import { type InsertTask, type Task, tasks } from "../../db/schemas/tasks";
 import { workspaces } from "../../db/schemas/workspaces";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { projects } from "../../db/schemas/projects";
@@ -67,6 +67,7 @@ class TasksService {
     const tasksResult = await baseQuery;
     return tasksResult;
   }
+
   async createTask(
     task: Pick<
       InsertTask,
@@ -83,6 +84,29 @@ class TasksService {
       id: tasks.id,
     });
     return createdTask;
+  }
+
+  async updateTask({
+    title,
+    description,
+    startAt,
+    endAt,
+    id,
+  }: Pick<Task, "id"> &
+    Partial<Pick<InsertTask, "title" | "description" | "startAt" | "endAt">>) {
+    const [updatedTask] = await this.db
+      .update(tasks)
+      .set({
+        title,
+        description,
+        startAt,
+        endAt,
+      })
+      .where(eq(tasks.id, id))
+      .returning({
+        id: tasks.id,
+      });
+    return updatedTask;
   }
 }
 
