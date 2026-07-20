@@ -122,6 +122,13 @@ class OrganizationInvitationsService {
         status: organizationInvitations.status,
         userId: organizationInvitations.userId,
       });
+    // TODO delete invitation if status is "accepted"
+    // if (status === "accepted") {
+    //   await this.deleteInvitation({
+    //     id,
+    //     userId,
+    //   });
+    // }
     return updatedInvitation;
   }
 
