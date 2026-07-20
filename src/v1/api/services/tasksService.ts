@@ -1,5 +1,5 @@
 import type { DBExecuter } from "../../db/connect";
-import { tasks } from "../../db/schemas/tasks";
+import { type InsertTask, tasks } from "../../db/schemas/tasks";
 import { workspaces } from "../../db/schemas/workspaces";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { projects } from "../../db/schemas/projects";
@@ -66,6 +66,23 @@ class TasksService {
       .orderBy(tasks.createdAt);
     const tasksResult = await baseQuery;
     return tasksResult;
+  }
+  async createTask(
+    task: Pick<
+      InsertTask,
+      | "title"
+      | "description"
+      | "createdBy"
+      | "projectId"
+      | "parentTaskId"
+      | "startAt"
+      | "endAt"
+    >,
+  ) {
+    const [createdTask] = await this.db.insert(tasks).values(task).returning({
+      id: tasks.id,
+    });
+    return createdTask;
   }
 }
 

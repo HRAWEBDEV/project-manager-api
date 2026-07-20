@@ -9,7 +9,10 @@ import {
 import { projects } from "./projects";
 import { trackChanges } from "../utils/trackChanges";
 import { organizationMembers } from "./organizationMembers";
-import { createSelectSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+
+type Task = typeof tasks.$inferSelect;
+type InsertTask = typeof tasks.$inferInsert;
 
 const tasks = pgTable(
   "tasks",
@@ -41,5 +44,7 @@ const tasks = pgTable(
 );
 
 const selectTasksSchema = createSelectSchema(tasks);
+const createTaskSchema = createInsertSchema(tasks);
 
-export { tasks, selectTasksSchema };
+export type { Task, InsertTask };
+export { tasks, selectTasksSchema, createTaskSchema };
