@@ -9,14 +9,17 @@ import {
 import { projects } from "./projects";
 import { trackChanges } from "../utils/trackChanges";
 import { organizationMembers } from "./organizationMembers";
+import { createSelectSchema } from "drizzle-zod";
 
 const tasks = pgTable(
   "tasks",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    projectId: uuid("project_id").references(() => projects.id, {
-      onDelete: "cascade",
-    }),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, {
+        onDelete: "cascade",
+      }),
     title: varchar("title", { length: 255 }).notNull(),
     description: text("description"),
     startAt: timestamp("start_at", { withTimezone: true }),
@@ -37,4 +40,6 @@ const tasks = pgTable(
   ],
 );
 
-export { tasks };
+const selectTasksSchema = createSelectSchema(tasks);
+
+export { tasks, selectTasksSchema };

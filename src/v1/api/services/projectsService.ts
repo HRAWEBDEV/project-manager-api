@@ -10,17 +10,17 @@ import { workspaceMembers } from "../../db/schemas/workspaceMembers";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { and, eq, or, isNotNull } from "drizzle-orm";
 
-type GetProjectProps = {
-  filters: {
-    userId: string;
-    workspaceId: string;
-    projectId?: string;
-  };
-};
-
 class ProjectsService {
   constructor(private readonly db: DBExecuter) {}
-  async getProjects({ filters }: GetProjectProps) {
+  async getProjects({
+    filters,
+  }: {
+    filters: {
+      userId: string;
+      workspaceId: string;
+      projectId?: string;
+    };
+  }) {
     let baseQuery = this.db
       .select({
         id: projects.id,
@@ -77,13 +77,13 @@ class ProjectsService {
     const projectsResult = await baseQuery;
     return projectsResult;
   }
-  async getProject(
-    props: GetProjectProps & {
-      filters: {
-        projectId: string;
-      };
-    },
-  ) {
+  async getProject(props: {
+    filters: {
+      projectId: string;
+      userId: string;
+      workspaceId: string;
+    };
+  }) {
     return (await this.getProjects(props))[0];
   }
   async createProject({

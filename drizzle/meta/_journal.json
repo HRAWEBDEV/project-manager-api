@@ -92,6 +92,13 @@
       "when": 1784217924374,
       "tag": "0012_harsh_pyro",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1784523036193,
+      "tag": "0013_lethal_wind_dancer",
+      "breakpoints": true
     }
   ]
 }
