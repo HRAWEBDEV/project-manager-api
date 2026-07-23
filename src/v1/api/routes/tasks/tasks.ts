@@ -3,16 +3,17 @@ import type { WithSessionUserVariables } from "../../utils/sessionUserContext";
 import { TasksService } from "../../services/tasksService";
 import { checkUserPermission } from "../../middlewares/checkUserPermission";
 import { getContextUser } from "../../utils/sessionUserContext";
-import { getHeaderActiveWorkspace } from "../../utils/userActiveWorkspace";
-import { db } from "../../../db/connect";
 import {
-  selectTasksSchema,
-  createTaskSchema,
-  updateTaskSchema,
-} from "../../../db/schemas/tasks";
+  getContextUserWorkspaceRole,
+  getHeaderActiveWorkspace,
+} from "../../utils/userActiveWorkspace";
+import { db } from "../../../db/connect";
+import { createTaskSchema, updateTaskSchema } from "../../../db/schemas/tasks";
 import { ProjectsService } from "../../services/projectsService";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
+import { TaskAssigneesServices } from "../../services/taskAssigneesServices";
+import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
 
 const tasksRoutes = new Hono().basePath("/tasks");
 
@@ -132,6 +133,46 @@ tasksRoutes.patch(
     rolePermission: "task:update",
   }),
   handleUpdateTask,
+);
+
+const handleGetTaskAssignees: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const taskId = c.req.param("id");
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const taskAssigneesService = new TaskAssigneesServices(db);
+  const taskAssignees = await taskAssigneesService.getTaskAssignees({
+    taskId: taskId!,
+    workspaceId: workspaceId!,
+  });
+  return c.json({ taskAssignees });
+};
+
+tasksRoutes.get(
+  "/:id/assignees",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task_assignee:read",
+  }),
+  handleGetTaskAssignees,
+);
+
+const handleUpdateTaskAssignees: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const taskId = c.req.param("id");
+  const organizationMember = getContextUserOrganizationMember(c);
+  const workspaceRole = getContextUserWorkspaceRole(c);
+  const { assignees } = await c.req.json();
+};
+
+tasksRoutes.patch(
+  "/:id/assignees",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task_assignee:update",
+  }),
+  handleUpdateTaskAssignees,
 );
 
 export { tasksRoutes };

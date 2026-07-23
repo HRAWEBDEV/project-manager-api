@@ -99,6 +99,13 @@
       "when": 1784523036193,
       "tag": "0013_lethal_wind_dancer",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1784820187509,
+      "tag": "0014_wide_magma",
+      "breakpoints": true
     }
   ]
 }
