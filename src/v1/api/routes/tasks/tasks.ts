@@ -10,6 +10,9 @@ import {
   createTaskSchema,
   updateTaskSchema,
 } from "../../../db/schemas/tasks";
+import { ProjectsService } from "../../services/projectsService";
+import { StatusCodes } from "http-status-codes";
+import { getApiErrorShape } from "../../utils/apiTypes";
 
 const tasksRoutes = new Hono().basePath("/tasks");
 
@@ -47,8 +50,11 @@ tasksRoutes.get(
 const handleCreateTask: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
+  const user = getContextUser(c);
   const { title, description, parentTaskId, startAt, endAt, projectId } =
     await c.req.json();
+  const workspaceId = getHeaderActiveWorkspace(c);
+
   const parsedTask = createTaskSchema
     .pick({
       title: true,
@@ -66,6 +72,24 @@ const handleCreateTask: Handler<{
       endAt,
       projectId,
     });
+  const projectsService = new ProjectsService(db);
+  const workspaceProjects = await projectsService.getProjects({
+    filters: {
+      userId: user.id,
+      workspaceId: workspaceId!,
+      projectId: parsedTask.projectId,
+    },
+  });
+  if (workspaceProjects.length === 0) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Project not found",
+      }),
+    );
+  }
   const taskService = new TasksService(db);
   const task = await taskService.createTask(parsedTask);
   return c.json(task);
