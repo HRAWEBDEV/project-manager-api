@@ -82,6 +82,7 @@ class TasksService {
   }: {
     filters: {
       workspaceId: string;
+      projectId?: string;
       userId: string;
       taskId?: string;
     };

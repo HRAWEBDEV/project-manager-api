@@ -9,10 +9,11 @@ import {
 } from "../../utils/userActiveWorkspace";
 import { db } from "../../../db/connect";
 import { createTaskSchema, updateTaskSchema } from "../../../db/schemas/tasks";
-import { ProjectsService } from "../../services/projectsService";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
 import { TaskAssigneesServices } from "../../services/taskAssigneesServices";
+import { ProjectsService } from "../../services/projectsService";
+import { insertTaskAssignee } from "../../../db/schemas/taskAssignees";
 import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
 
 const tasksRoutes = new Hono().basePath("/tasks");
@@ -47,9 +48,9 @@ const handleCreateTask: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
   const user = getContextUser(c);
+  const workspaceId = getHeaderActiveWorkspace(c);
   const { title, description, parentTaskId, startAt, endAt, projectId } =
     await c.req.json();
-  const workspaceId = getHeaderActiveWorkspace(c);
 
   const parsedTask = createTaskSchema
     .pick({
@@ -68,21 +69,21 @@ const handleCreateTask: Handler<{
       endAt,
       projectId,
     });
-  const projectsService = new ProjectsService(db);
-  const workspaceProjects = await projectsService.getProjects({
+  const projectService = new ProjectsService(db);
+  const project = await projectService.getProject({
     filters: {
+      projectId: projectId!,
       userId: user.id,
       workspaceId: workspaceId!,
-      projectId: parsedTask.projectId,
     },
   });
-  if (workspaceProjects.length === 0) {
+  if (!project) {
     c.status(StatusCodes.NOT_FOUND);
     return c.json(
       getApiErrorShape({
         status: "failed",
         code: StatusCodes.NOT_FOUND,
-        message: "Project not found",
+        message: "Task not found",
       }),
     );
   }
@@ -124,8 +125,8 @@ const handleUpdateTask: Handler<{
   const task = await taskService.getTask({
     filters: {
       workspaceId: workspaceId!,
+      taskId: taskId,
       userId: user.id,
-      taskId: taskId!,
     },
   });
   if (!task) {
@@ -138,28 +139,20 @@ const handleUpdateTask: Handler<{
       }),
     );
   }
-  const projectsService = new ProjectsService(db);
-  const workspaceProjects = await projectsService.getProjects({
-    filters: {
-      userId: user.id,
-      workspaceId: workspaceId!,
-      projectId: task.projectId,
-    },
+  const updatedTask = await taskService.updateTask({
+    id: taskId!,
+    ...parsedTask,
   });
-  if (workspaceProjects.length === 0) {
+  if (!updatedTask) {
     c.status(StatusCodes.NOT_FOUND);
     return c.json(
       getApiErrorShape({
         status: "failed",
         code: StatusCodes.NOT_FOUND,
-        message: "Project not found",
+        message: "Task not found",
       }),
     );
   }
-  const updatedTask = await taskService.updateTask({
-    id: taskId!,
-    ...parsedTask,
-  });
   return c.json(updatedTask);
 };
 
@@ -179,8 +172,10 @@ const handleGetTaskAssignees: Handler<{
   const workspaceId = getHeaderActiveWorkspace(c);
   const taskAssigneesService = new TaskAssigneesServices(db);
   const taskAssignees = await taskAssigneesService.getTaskAssignees({
-    taskId: taskId!,
-    workspaceId: workspaceId!,
+    filters: {
+      taskId: taskId!,
+      workspaceId: workspaceId!,
+    },
   });
   return c.json({ taskAssignees });
 };
@@ -197,10 +192,62 @@ tasksRoutes.get(
 const handleUpdateTaskAssignees: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
-  const taskId = c.req.param("id");
+  const user = getContextUser(c);
+  const workspaceId = getHeaderActiveWorkspace(c);
   const organizationMember = getContextUserOrganizationMember(c);
   const workspaceRole = getContextUserWorkspaceRole(c);
+  const taskId = c.req.param("id");
   const { assignees } = await c.req.json();
+  const parsedAssignees = insertTaskAssignee.shape.organizationMemberId
+    .array()
+    .parse(assignees);
+  const taskService = new TasksService(db);
+  const task = await taskService.getTask({
+    filters: {
+      workspaceId: workspaceId!,
+      taskId: taskId!,
+      userId: user.id,
+    },
+  });
+  if (!task) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Task not found",
+      }),
+    );
+  }
+  const taskAssigneeService = new TaskAssigneesServices(db);
+  if (
+    !parsedAssignees.some((item) => item === organizationMember.id) &&
+    organizationMember.role === "member" &&
+    workspaceRole === "member"
+  ) {
+    const taskAssignees = await taskAssigneeService.getTaskAssignees({
+      filters: {
+        taskId: taskId!,
+        workspaceId: workspaceId!,
+        userId: user.id,
+      },
+    });
+    if (taskAssignees.length === 0) {
+      c.status(StatusCodes.FORBIDDEN);
+      return c.json(
+        getApiErrorShape({
+          status: "failed",
+          code: StatusCodes.FORBIDDEN,
+          message: "You are not a task assignee",
+        }),
+      );
+    }
+  }
+  const updatedAssignees = await taskAssigneeService.updateTaskAssignees({
+    taskId: taskId!,
+    assignees: parsedAssignees,
+  });
+  return c.json(updatedAssignees);
 };
 
 tasksRoutes.patch(

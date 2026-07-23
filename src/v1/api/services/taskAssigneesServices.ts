@@ -12,16 +12,21 @@ import { users } from "../../db/schemas/users";
 class TaskAssigneesServices {
   constructor(private readonly db: DBExecuter) {}
   async getTaskAssignees({
-    taskId,
-    workspaceId,
+    filters,
   }: {
-    taskId: string;
-    workspaceId: string;
+    filters: {
+      userId?: string;
+      taskId: string;
+      workspaceId: string;
+    };
   }) {
     const filterCondition = [
-      eq(taskAssignees.taskId, taskId),
-      eq(projects.workspaceId, workspaceId),
+      eq(taskAssignees.taskId, filters.taskId),
+      eq(projects.workspaceId, filters.workspaceId),
     ];
+    if (filters.userId) {
+      filterCondition.push(eq(users.id, filters.userId));
+    }
     const baseQuery = this.db
       .select({
         taskId: taskAssignees.taskId,
