@@ -103,7 +103,9 @@ tasksRoutes.post(
 const handleUpdateTask: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
+  const user = getContextUser(c);
   const taskId = c.req.param("id");
+  const workspaceId = getHeaderActiveWorkspace(c);
   const { title, description, startAt, endAt } = await c.req.json();
   const parsedTask = updateTaskSchema
     .pick({
@@ -119,6 +121,41 @@ const handleUpdateTask: Handler<{
       endAt,
     });
   const taskService = new TasksService(db);
+  const task = await taskService.getTask({
+    filters: {
+      workspaceId: workspaceId!,
+      userId: user.id,
+      taskId: taskId!,
+    },
+  });
+  if (!task) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Task not found",
+      }),
+    );
+  }
+  const projectsService = new ProjectsService(db);
+  const workspaceProjects = await projectsService.getProjects({
+    filters: {
+      userId: user.id,
+      workspaceId: workspaceId!,
+      projectId: task.projectId,
+    },
+  });
+  if (workspaceProjects.length === 0) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Project not found",
+      }),
+    );
+  }
   const updatedTask = await taskService.updateTask({
     id: taskId!,
     ...parsedTask,

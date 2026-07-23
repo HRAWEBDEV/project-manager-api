@@ -15,6 +15,7 @@ class TasksService {
       workspaceId: string;
       projectId?: string;
       userId: string;
+      taskId?: string;
     };
   }) {
     let baseQuery = this.db
@@ -63,11 +64,33 @@ class TasksService {
     if (filters.projectId) {
       filtersConditions.push(eq(tasks.projectId, filters.projectId));
     }
+    if (filters.taskId) {
+      filtersConditions.push(eq(tasks.id, filters.taskId));
+    }
     baseQuery = baseQuery
       .where(and(...filtersConditions))
       .orderBy(tasks.createdAt);
+    if (filters.taskId) {
+      baseQuery = baseQuery.limit(1);
+    }
     const tasksResult = await baseQuery;
     return tasksResult;
+  }
+
+  async getTask({
+    filters,
+  }: {
+    filters: {
+      workspaceId: string;
+      userId: string;
+      taskId?: string;
+    };
+  }) {
+    return (
+      await this.getTasks({
+        filters,
+      })
+    )[0];
   }
 
   async createTask(
