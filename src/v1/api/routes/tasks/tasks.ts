@@ -23,15 +23,10 @@ const handleGetTasks: Handler<{
   const tasksService = new TasksService(db);
   const workspaceId = getHeaderActiveWorkspace(c);
   const projectId = c.req.query("project-id");
-  const parsedQuery = selectTasksSchema
-    .pick({
-      projectId: true,
-    })
-    .parse({ projectId });
   const tasks = await tasksService.getTasks({
     filters: {
       workspaceId: workspaceId!,
-      projectId: parsedQuery.projectId,
+      projectId: projectId,
       userId: user.id,
     },
   });

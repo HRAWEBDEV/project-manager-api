@@ -13,7 +13,7 @@ class TasksService {
   }: {
     filters: {
       workspaceId: string;
-      projectId: string;
+      projectId?: string;
       userId: string;
     };
   }) {
@@ -54,13 +54,15 @@ class TasksService {
       .$dynamic();
     const filtersConditions = [
       eq(workspaces.id, filters.workspaceId),
-      eq(tasks.projectId, filters.projectId),
       or(
         eq(organizationMembers.role, "owner"),
         eq(organizationMembers.role, "admin"),
         isNotNull(projectMembers.organizationMemberId),
       ),
     ];
+    if (filters.projectId) {
+      filtersConditions.push(eq(tasks.projectId, filters.projectId));
+    }
     baseQuery = baseQuery
       .where(and(...filtersConditions))
       .orderBy(tasks.createdAt);
