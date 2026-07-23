@@ -3,11 +3,8 @@ import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
 import { insertUserSchema } from "../../../db/schemas/users";
 import { insertOrganizationSchema } from "../../../db/schemas/organizations";
-import { OrganizationMembersService } from "../../services/organizationMembersService";
-import { OrganizationsService } from "../../services/organizationsService";
-import { WorkspacesService } from "../../services/workspacesService";
-import { WorkspaceMembersService } from "../../services/workspaceMembersService";
 import { UsersService } from "../../services/usersService";
+import { AccountServices } from "../../services/accountServices";
 import {
   SessionsService,
   getSessionCookie,
@@ -59,43 +56,19 @@ const handleUserSignup: Handler = async (c) => {
     .parse(organization);
   const userAgent = getUserAgent(c);
   const ipAddress = getUserIpAddress(c);
-
-  const createdSession = await db.transaction(async (tx) => {
-    const usersService = new UsersService(tx);
-    const organizationsService = new OrganizationsService(tx);
-    const organizationMembersService = new OrganizationMembersService(tx);
-    const sessionsService = new SessionsService(tx);
-    const workspacesService = new WorkspacesService(tx);
-    const workspaceMembersService = new WorkspaceMembersService(tx);
-    const createdUser = await usersService.createUser(parsedUser);
-    const createdOrganization =
-      await organizationsService.createOrganization(parsedOrganization);
-    const createOrganizationMember =
-      await organizationMembersService.createMember({
-        userId: createdUser!.id,
-        organizationId: createdOrganization!.id,
-        role: "owner",
-      });
-    const createdWorkspace = await workspacesService.createPublicWorkspace({
-      createdBy: createdUser!.id,
-      organizationId: createdOrganization!.id,
-    });
-    await workspaceMembersService.createWorkspaceMember({
-      organizationMemberId: createOrganizationMember!.id,
-      workspaceId: createdWorkspace!.id,
-    });
-    const createdSession = await sessionsService.createSession({
-      userId: createdUser!.id,
-      ipAddress: ipAddress,
-      userAgent: userAgent,
-    });
-    return createdSession!;
+  const accountService = new AccountServices(db);
+  const createdAccount = await accountService.createAccount({
+    user: parsedUser,
+    organization: parsedOrganization,
+    session: {
+      ipAddress,
+      userAgent,
+    },
   });
-
   setSessionCookie({
     c,
-    token: createdSession.token,
-    expiresAt: createdSession.expiresAt,
+    token: createdAccount.session.token,
+    expiresAt: createdAccount.session.expiresAt,
   });
   c.status(StatusCodes.CREATED);
   return c.json({ message: "User signed up successfully" });
