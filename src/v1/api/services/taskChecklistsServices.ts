@@ -31,7 +31,7 @@ class TaskChecklistsServices {
       .innerJoin(projects, eq(tasks.projectId, projects.id));
     const checklists = await baseQuery
       .where(and(...filterConditions))
-      .orderBy(tasksChecklists.orderNo);
+      .orderBy(tasksChecklists.order);
     return checklists;
   }
   async updateTaskChecklist() {}
