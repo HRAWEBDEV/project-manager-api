@@ -1,5 +1,5 @@
 import type { DBExecuter } from "../../db/connect";
-import { type InsertTag, tags } from "../../db/schemas/tags";
+import { type InsertTag, type Tag, tags } from "../../db/schemas/tags";
 import { eq, and } from "drizzle-orm";
 
 class TagsService {
@@ -18,6 +18,7 @@ class TagsService {
       .orderBy(tags.createdAt);
     return tagsResult;
   }
+
   async createTag(tag: Pick<InsertTag, "name" | "workspaceId" | "color">) {
     const createdTag = await this.db
       .insert(tags)
@@ -28,6 +29,36 @@ class TagsService {
       })
       .returning({ id: tags.id });
     return createdTag;
+  }
+
+  async updateTag({
+    name,
+    color,
+    workspaceId,
+    id,
+  }: Pick<Tag, "id" | "workspaceId"> &
+    Partial<Pick<InsertTag, "name" | "color">>) {
+    const updatedTag = await this.db
+      .update(tags)
+      .set({
+        name,
+        color,
+      })
+      .where(and(eq(tags.id, id), eq(tags.workspaceId, workspaceId)))
+      .returning({
+        id: tags.id,
+      });
+    return updatedTag[0];
+  }
+
+  async deleteTag({ id, workspaceId }: Pick<Tag, "id" | "workspaceId">) {
+    const deletedTag = await this.db
+      .delete(tags)
+      .where(and(eq(tags.id, id), eq(tags.workspaceId, workspaceId)))
+      .returning({
+        id: tags.id,
+      });
+    return deletedTag[0];
   }
 }
 

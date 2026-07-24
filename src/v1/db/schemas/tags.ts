@@ -1,7 +1,11 @@
 import { pgTable, unique, uuid, varchar } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 import { trackChanges } from "../utils/trackChanges";
-import { createSelectSchema, createInsertSchema } from "drizzle-zod";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
 
 type Tag = typeof tags.$inferSelect;
 type InsertTag = typeof tags.$inferInsert;
@@ -24,6 +28,7 @@ const tags = pgTable(
 
 const selectTagSchema = createSelectSchema(tags);
 const insertTagSchema = createInsertSchema(tags);
+const updateTagSchema = createUpdateSchema(tags);
 
 export type { Tag, InsertTag };
-export { tags, selectTagSchema, insertTagSchema };
+export { tags, selectTagSchema, insertTagSchema, updateTagSchema };
