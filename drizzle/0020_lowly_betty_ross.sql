@@ -1,0 +1,1 @@
+ALTER TABLE "tags" ALTER COLUMN "color" DROP NOT NULL;

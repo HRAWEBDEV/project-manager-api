@@ -55,6 +55,10 @@ const organizationPermissions = {
     "task_assignee:update",
     "task_checklist:read",
     "task_checklist:update",
+    "tag:read",
+    "tag:create",
+    "tag:update",
+    "tag:delete",
   ],
   admin: [
     "workspace:read",
@@ -104,6 +108,10 @@ const organizationPermissions = {
     "task_assignee:update",
     "task_checklist:read",
     "task_checklist:update",
+    "tag:read",
+    "tag:create",
+    "tag:update",
+    "tag:delete",
   ],
   member: [],
 } as const;
