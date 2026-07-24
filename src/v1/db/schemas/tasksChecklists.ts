@@ -15,7 +15,7 @@ type InsertTasksChecklists = typeof tasksChecklists.$inferInsert;
 
 const tasksChecklists = pgTable("tasks_checklists", {
   id: uuid("id").defaultRandom().primaryKey(),
-  order: integer("order").notNull().default(0),
+  sortNo: integer("sort_no").notNull().default(0),
   taskId: uuid("task_id")
     .notNull()
     .references(() => tasks.id, {

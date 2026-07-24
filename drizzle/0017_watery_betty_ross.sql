@@ -1,0 +1,1 @@
+ALTER TABLE "tasks_checklists" RENAME COLUMN "order" TO "sort_no";
