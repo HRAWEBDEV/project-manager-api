@@ -15,6 +15,7 @@ import { TaskAssigneesServices } from "../../services/taskAssigneesServices";
 import { ProjectsService } from "../../services/projectsService";
 import { insertTaskAssignee } from "../../../db/schemas/taskAssignees";
 import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
+import { checkTaskAssignee } from "../../utils/checkTaskAssignee";
 
 const tasksRoutes = new Hono().basePath("/tasks");
 
@@ -225,23 +226,15 @@ const handleUpdateTaskAssignees: Handler<{
     organizationMember.role === "member" &&
     workspaceRole === "member"
   ) {
-    const taskAssignees = await taskAssigneeService.getTaskAssignees({
+    await checkTaskAssignee({
+      db,
+      c,
       filters: {
         taskId: taskId!,
         workspaceId: workspaceId!,
         userId: user.id,
       },
     });
-    if (taskAssignees.length === 0) {
-      c.status(StatusCodes.FORBIDDEN);
-      return c.json(
-        getApiErrorShape({
-          status: "failed",
-          code: StatusCodes.FORBIDDEN,
-          message: "You are not a task assignee",
-        }),
-      );
-    }
   }
   const updatedAssignees = await taskAssigneeService.updateTaskAssignees({
     taskId: taskId!,

@@ -53,6 +53,8 @@ const organizationPermissions = {
     "project_member:delete",
     "task_assignee:read",
     "task_assignee:update",
+    "task_checklist:read",
+    "task_checklist:update",
   ],
   admin: [
     "workspace:read",
@@ -100,8 +102,10 @@ const organizationPermissions = {
     "project_member:delete",
     "task_assignee:read",
     "task_assignee:update",
+    "task_checklist:read",
+    "task_checklist:update",
   ],
-  member: ["workspace:read"],
+  member: [],
 } as const;
 
 function hasPermission(

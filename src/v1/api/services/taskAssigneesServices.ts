@@ -27,8 +27,9 @@ class TaskAssigneesServices {
     if (filters.userId) {
       filterCondition.push(eq(users.id, filters.userId));
     }
-    const baseQuery = this.db
+    let baseQuery = this.db
       .select({
+        id: taskAssignees.id,
         taskId: taskAssignees.taskId,
         organizationMemberId: taskAssignees.organizationMemberId,
         userId: users.id,
@@ -43,13 +44,32 @@ class TaskAssigneesServices {
         organizationMembers,
         eq(taskAssignees.organizationMemberId, organizationMembers.id),
       )
-      .innerJoin(users, eq(organizationMembers.userId, users.id));
+      .innerJoin(users, eq(organizationMembers.userId, users.id))
+      .$dynamic();
 
-    const tasksAssigness = await baseQuery
+    baseQuery = baseQuery
       .where(and(...filterCondition))
       .orderBy(taskAssignees.createdAt);
+    if (filters.userId) {
+      baseQuery = baseQuery.limit(1);
+    }
+    const tasksAssigness = await baseQuery;
+
     return tasksAssigness;
   }
+
+  async getTaskAssignee({
+    filters,
+  }: {
+    filters: {
+      userId: string;
+      taskId: string;
+      workspaceId: string;
+    };
+  }) {
+    return (await this.getTaskAssignees({ filters }))[0];
+  }
+
   async updateTaskAssignees({
     taskId,
     assignees,

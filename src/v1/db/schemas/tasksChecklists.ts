@@ -1,9 +1,21 @@
-import { pgTable, uuid, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  uuid,
+  text,
+  boolean,
+  timestamp,
+  integer,
+} from "drizzle-orm/pg-core";
 import { tasks } from "./tasks";
 import { trackChanges } from "../utils/trackChanges";
+import { createSelectSchema, createInsertSchema } from "drizzle-zod";
+
+type TasksChecklists = typeof tasksChecklists.$inferSelect;
+type InsertTasksChecklists = typeof tasksChecklists.$inferInsert;
 
 const tasksChecklists = pgTable("tasks_checklists", {
   id: uuid("id").defaultRandom().primaryKey(),
+  orderNo: integer("order_no").notNull().default(0),
   taskId: uuid("task_id")
     .notNull()
     .references(() => tasks.id, {
@@ -15,4 +27,8 @@ const tasksChecklists = pgTable("tasks_checklists", {
   ...trackChanges,
 });
 
-export { tasksChecklists };
+const selectTasksChecklists = createSelectSchema(tasksChecklists);
+const insertTasksChecklists = createInsertSchema(tasksChecklists);
+
+export type { TasksChecklists, InsertTasksChecklists };
+export { tasksChecklists, selectTasksChecklists, insertTasksChecklists };

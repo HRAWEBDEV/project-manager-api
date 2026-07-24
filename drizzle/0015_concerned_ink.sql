@@ -1,0 +1,1 @@
+ALTER TABLE "tasks_checklists" ADD COLUMN "order_no" integer DEFAULT 0 NOT NULL;

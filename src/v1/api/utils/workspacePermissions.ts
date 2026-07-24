@@ -40,6 +40,8 @@ const workspacePermissions = {
     "project_member:delete",
     "task_assignee:read",
     "task_assignee:update",
+    "task_checklist:read",
+    "task_checklist:update",
   ],
   member: [
     "workspace:read",
@@ -59,6 +61,8 @@ const workspacePermissions = {
     "project_member:read",
     "task_assignee:read",
     "task_assignee:update",
+    "task_checklist:read",
+    "task_checklist:update",
   ],
 } as const;
 
