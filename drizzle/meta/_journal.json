@@ -134,6 +134,13 @@
       "when": 1784902320022,
       "tag": "0018_aberrant_micromax",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1784902387862,
+      "tag": "0019_military_mentor",
+      "breakpoints": true
     }
   ]
 }
