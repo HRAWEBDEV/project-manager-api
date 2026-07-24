@@ -12,8 +12,10 @@ import { createTaskSchema, updateTaskSchema } from "../../../db/schemas/tasks";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../../utils/apiTypes";
 import { TaskAssigneesServices } from "../../services/taskAssigneesServices";
+import { TaskChecklistsServices } from "../../services/taskChecklistsServices";
 import { ProjectsService } from "../../services/projectsService";
 import { insertTaskAssignee } from "../../../db/schemas/taskAssignees";
+import { insertTasksChecklists } from "../../../db/schemas/tasksChecklists";
 import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
 import { checkTaskAssignee } from "../../utils/checkTaskAssignee";
 
@@ -250,6 +252,79 @@ tasksRoutes.patch(
     rolePermission: "task_assignee:update",
   }),
   handleUpdateTaskAssignees,
+);
+
+const handleGetTaskChecklists: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const taskId = c.req.param("id");
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const taskChecklistsService = new TaskChecklistsServices(db);
+  const checklists = await taskChecklistsService.getTaskChecklists({
+    filters: {
+      workspaceId: workspaceId!,
+      taskId: taskId!,
+    },
+  });
+  return c.json({
+    checklists,
+  });
+};
+
+tasksRoutes.get(
+  "/:id/checklists",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task_checklist:read",
+  }),
+  handleGetTaskChecklists,
+);
+
+const handleUpdateTaskChecklists: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const taskId = c.req.param("id");
+  const { checklists } = await c.req.json();
+  const taskService = new TasksService(db);
+  const task = await taskService.getTask({
+    filters: {
+      workspaceId: workspaceId!,
+      taskId: taskId!,
+      userId: user.id,
+    },
+  });
+  if (!task) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Task not found",
+      }),
+    );
+  }
+  const parsedChecklists = insertTasksChecklists
+    .omit({ taskId: true, createdAt: true, updatedAt: true })
+    .array()
+    .parse(checklists);
+  const taskChecklistsService = new TaskChecklistsServices(db);
+  const updatedChecklists = await taskChecklistsService.updateTaskChecklist({
+    taskId: taskId!,
+    workspaceId: workspaceId!,
+    checklists: parsedChecklists,
+  });
+  return c.json(updatedChecklists);
+};
+
+tasksRoutes.patch(
+  "/:id/checklists",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task_checklist:update",
+  }),
+  handleUpdateTaskChecklists,
 );
 
 export { tasksRoutes };

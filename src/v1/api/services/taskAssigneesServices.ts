@@ -77,20 +77,29 @@ class TaskAssigneesServices {
     taskId: InsertTaskAssignee["taskId"];
     assignees: InsertTaskAssignee["organizationMemberId"][];
   }) {
-    await this.deleteTaskAssignees(taskId);
-    const updatedAssignees = await this.db
-      .insert(taskAssignees)
-      .values(
-        assignees.map((assignee) => ({
-          taskId,
-          organizationMemberId: assignee,
-        })),
-      )
-      .returning({ id: taskAssignees.id });
+    const updatedAssignees = await this.db.transaction(async (tx) => {
+      await this.deleteTaskAssignees({ taskId, db: tx });
+      const updatedAssignees = await tx
+        .insert(taskAssignees)
+        .values(
+          assignees.map((assignee) => ({
+            taskId,
+            organizationMemberId: assignee,
+          })),
+        )
+        .returning({ id: taskAssignees.id });
+      return updatedAssignees;
+    });
     return updatedAssignees;
   }
-  async deleteTaskAssignees(taskId: string) {
-    await this.db.delete(taskAssignees).where(eq(taskAssignees.taskId, taskId));
+  private async deleteTaskAssignees({
+    taskId,
+    db,
+  }: {
+    taskId: string;
+    db: DBExecuter;
+  }) {
+    await db.delete(taskAssignees).where(eq(taskAssignees.taskId, taskId));
   }
 }
 

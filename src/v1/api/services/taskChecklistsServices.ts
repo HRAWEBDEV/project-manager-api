@@ -1,5 +1,8 @@
 import type { DBExecuter } from "../../db/connect";
-import { tasksChecklists } from "../../db/schemas/tasksChecklists";
+import {
+  type InsertTasksChecklists,
+  tasksChecklists,
+} from "../../db/schemas/tasksChecklists";
 import { tasks } from "../../db/schemas/tasks";
 import { and, eq } from "drizzle-orm";
 import { projects } from "../../db/schemas/projects";
@@ -34,6 +37,68 @@ class TaskChecklistsServices {
       .orderBy(tasksChecklists.sortNo);
     return checklists;
   }
-  async updateTaskChecklist() {}
-  async deleteTaskChecklist() {}
+
+  async updateTaskChecklist({
+    taskId,
+    workspaceId,
+    checklists,
+  }: {
+    taskId: string;
+    workspaceId: string;
+    checklists: Pick<
+      InsertTasksChecklists,
+      "id" | "title" | "isCompleted" | "sortNo"
+    >[];
+  }) {
+    const oldChecklists = await this.getTaskChecklists({
+      filters: {
+        workspaceId,
+        taskId,
+      },
+    });
+    const updatedTaskchecklists = await this.db.transaction(async (tx) => {
+      await this.deleteTaskChecklist({ taskId, db: tx });
+      if (!!checklists.length) {
+        const updateTaskChecklist = await tx
+          .insert(tasksChecklists)
+          .values(
+            checklists.map((item) => {
+              let completedAt: Date | null = null;
+              if (item.isCompleted) {
+                if (item.id) {
+                  completedAt =
+                    oldChecklists.find((item) => item.id === item.id)
+                      ?.completedAt ?? new Date();
+                } else {
+                  completedAt = new Date();
+                }
+              }
+              return {
+                title: item.title,
+                isCompleted: item.isCompleted,
+                sortNo: item.sortNo,
+                completedAt,
+                taskId: taskId,
+              };
+            }),
+          )
+          .returning({ id: tasksChecklists.id });
+        return updateTaskChecklist;
+      }
+      return [];
+    });
+    return updatedTaskchecklists;
+  }
+
+  private async deleteTaskChecklist({
+    taskId,
+    db,
+  }: {
+    taskId: string;
+    db: DBExecuter;
+  }) {
+    await db.delete(tasksChecklists).where(eq(tasksChecklists.taskId, taskId));
+  }
 }
+
+export { TaskChecklistsServices };
