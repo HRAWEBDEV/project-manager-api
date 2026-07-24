@@ -7,7 +7,6 @@ import {
   integer,
 } from "drizzle-orm/pg-core";
 import { tasks } from "./tasks";
-import { trackChanges } from "../utils/trackChanges";
 import { createSelectSchema, createInsertSchema } from "drizzle-zod";
 
 type TasksChecklists = typeof tasksChecklists.$inferSelect;
@@ -24,7 +23,6 @@ const tasksChecklists = pgTable("tasks_checklists", {
   title: text("title").notNull(),
   isCompleted: boolean("is_completed").default(false),
   completedAt: timestamp("completed_at", { withTimezone: true }),
-  ...trackChanges,
 });
 
 const selectTasksChecklists = createSelectSchema(tasksChecklists);
