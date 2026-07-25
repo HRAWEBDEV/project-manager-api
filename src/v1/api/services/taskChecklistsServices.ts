@@ -34,7 +34,7 @@ class TaskChecklistsServices {
       .innerJoin(projects, eq(tasks.projectId, projects.id));
     const checklists = await baseQuery
       .where(and(...filterConditions))
-      .orderBy(tasksChecklists.sortNo, tasksChecklists.createdAt);
+      .orderBy(tasksChecklists.sortNo);
     return checklists;
   }
 

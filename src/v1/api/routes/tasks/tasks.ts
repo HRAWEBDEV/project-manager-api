@@ -18,6 +18,7 @@ import { insertTaskAssignee } from "../../../db/schemas/taskAssignees";
 import { insertTasksChecklists } from "../../../db/schemas/tasksChecklists";
 import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
 import { checkTaskAssignee } from "../../utils/checkTaskAssignee";
+import { TaskTagsService } from "../../services/taskTagsService";
 
 const tasksRoutes = new Hono().basePath("/tasks");
 
@@ -285,6 +286,8 @@ const handleUpdateTaskChecklists: Handler<{
 }> = async (c) => {
   const user = getContextUser(c);
   const workspaceId = getHeaderActiveWorkspace(c);
+  const organizationMember = getContextUserOrganizationMember(c);
+  const workspaceRole = getContextUserWorkspaceRole(c);
   const taskId = c.req.param("id");
   const { checklists } = await c.req.json();
   const taskService = new TasksService(db);
@@ -305,8 +308,19 @@ const handleUpdateTaskChecklists: Handler<{
       }),
     );
   }
+  if (organizationMember.role === "member" && workspaceRole === "member") {
+    await checkTaskAssignee({
+      db,
+      c,
+      filters: {
+        taskId: taskId!,
+        workspaceId: workspaceId!,
+        userId: user.id,
+      },
+    });
+  }
   const parsedChecklists = insertTasksChecklists
-    .omit({ taskId: true, createdAt: true, updatedAt: true })
+    .omit({ taskId: true })
     .array()
     .parse(checklists);
   const taskChecklistsService = new TaskChecklistsServices(db);
@@ -325,6 +339,32 @@ tasksRoutes.patch(
     rolePermission: "task_checklist:update",
   }),
   handleUpdateTaskChecklists,
+);
+
+const handleGetTaskTags: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const taskId = c.req.param("id");
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const taskTagService = new TaskTagsService(db);
+  const taskTags = await taskTagService.getTaskTags({
+    filters: {
+      taskId: taskId!,
+      workspaceId: workspaceId!,
+    },
+  });
+  return c.json({
+    taskTags,
+  });
+};
+
+tasksRoutes.get(
+  "/:id/tags",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task_tag:read",
+  }),
+  handleGetTaskTags,
 );
 
 export { tasksRoutes };

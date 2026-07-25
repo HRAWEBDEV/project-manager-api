@@ -47,9 +47,7 @@ class TaskAssigneesServices {
       .innerJoin(users, eq(organizationMembers.userId, users.id))
       .$dynamic();
 
-    baseQuery = baseQuery
-      .where(and(...filterCondition))
-      .orderBy(taskAssignees.createdAt);
+    baseQuery = baseQuery.where(and(...filterCondition));
     if (filters.userId) {
       baseQuery = baseQuery.limit(1);
     }
