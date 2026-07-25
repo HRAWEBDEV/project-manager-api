@@ -1,10 +1,11 @@
 import type { DBExecuter } from "../../db/connect";
-import { taskTags } from "../../db/schemas/taskTags";
+import { type InsertTaskTag, taskTags } from "../../db/schemas/taskTags";
 import { tags } from "../../db/schemas/tags";
 import { eq, and } from "drizzle-orm";
 
 class TaskTagsService {
   constructor(private readonly db: DBExecuter) {}
+
   async getTaskTags({
     filters,
   }: {
@@ -29,6 +30,45 @@ class TaskTagsService {
       .innerJoin(tags, eq(taskTags.tagId, tags.id));
     const taskTagsResult = await baseQuery.where(and(...filterConditions));
     return taskTagsResult;
+  }
+
+  async updateTaskTags({
+    taskId,
+    tags,
+  }: {
+    taskId: string;
+    tags: Pick<InsertTaskTag, "taskId" | "tagId">[];
+  }) {
+    const updatedTaskTags = await this.db.transaction(async (tx) => {
+      await this.deleteTaskTags({
+        taskId,
+        db: tx,
+      });
+      if (!!tags.length) {
+        const updatedTaskTags = await tx
+          .insert(taskTags)
+          .values(
+            tags.map((tag) => ({
+              taskId: tag.taskId,
+              tagId: tag.tagId,
+            })),
+          )
+          .returning({ id: taskTags.id });
+        return updatedTaskTags;
+      }
+      return [];
+    });
+    return updatedTaskTags;
+  }
+
+  private async deleteTaskTags({
+    db,
+    taskId,
+  }: {
+    db: DBExecuter;
+    taskId: string;
+  }) {
+    await db.delete(taskTags).where(eq(taskTags.taskId, taskId));
   }
 }
 

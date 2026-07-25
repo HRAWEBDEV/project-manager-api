@@ -19,6 +19,7 @@ import { insertTasksChecklists } from "../../../db/schemas/tasksChecklists";
 import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
 import { checkTaskAssignee } from "../../utils/checkTaskAssignee";
 import { TaskTagsService } from "../../services/taskTagsService";
+import { insertTaskTagSchema } from "../../../db/schemas/taskTags";
 
 const tasksRoutes = new Hono().basePath("/tasks");
 
@@ -365,6 +366,35 @@ tasksRoutes.get(
     rolePermission: "task_tag:read",
   }),
   handleGetTaskTags,
+);
+
+const handleUpdateTaskTags: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const taskId = c.req.param("id");
+  const { tags } = await c.req.json();
+  const parsedTags = insertTaskTagSchema
+    .pick({
+      taskId: true,
+      tagId: true,
+    })
+    .array()
+    .parse(tags);
+  const taskTagService = new TaskTagsService(db);
+  const updatedTaskTags = await taskTagService.updateTaskTags({
+    taskId: taskId!,
+    tags: parsedTags,
+  });
+  return c.json(updatedTaskTags);
+};
+
+tasksRoutes.patch(
+  "/:id/tags",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task_tag:update",
+  }),
+  handleUpdateTaskTags,
 );
 
 export { tasksRoutes };
