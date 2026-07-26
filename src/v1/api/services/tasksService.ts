@@ -1,10 +1,11 @@
 import type { DBExecuter } from "../../db/connect";
 import { type InsertTask, type Task, tasks } from "../../db/schemas/tasks";
+import { taskAssignees } from "../../db/schemas/taskAssignees";
 import { workspaces } from "../../db/schemas/workspaces";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { projects } from "../../db/schemas/projects";
 import { projectMembers } from "../../db/schemas/projectMembers";
-import { eq, and, or, isNotNull } from "drizzle-orm";
+import { eq, and, or, isNotNull, exists, inArray } from "drizzle-orm";
 
 class TasksService {
   constructor(private readonly db: DBExecuter) {}
@@ -16,6 +17,7 @@ class TasksService {
       projectId?: string;
       userId: string;
       taskId?: string;
+      assignees?: string[];
     };
   }) {
     let baseQuery = this.db
@@ -66,6 +68,21 @@ class TasksService {
     }
     if (filters.taskId) {
       filtersConditions.push(eq(tasks.id, filters.taskId));
+    }
+    if (filters.assignees && filters.assignees.length > 0) {
+      filtersConditions.push(
+        exists(
+          this.db
+            .select({ id: taskAssignees.id })
+            .from(taskAssignees)
+            .where(
+              and(
+                eq(taskAssignees.taskId, tasks.id),
+                inArray(taskAssignees.organizationMemberId, filters.assignees),
+              ),
+            ),
+        ),
+      );
     }
     baseQuery = baseQuery
       .where(and(...filtersConditions))

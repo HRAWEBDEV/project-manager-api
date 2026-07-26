@@ -20,6 +20,7 @@ import { getContextUserOrganizationMember } from "../../utils/userActiveOrganiza
 import { checkTaskAssignee } from "../../utils/checkTaskAssignee";
 import { TaskTagsService } from "../../services/taskTagsService";
 import { insertTaskTagSchema } from "../../../db/schemas/taskTags";
+import { selectTaskAssignee } from "../../../db/schemas/taskAssignees";
 
 const tasksRoutes = new Hono().basePath("/tasks");
 
@@ -30,11 +31,17 @@ const handleGetTasks: Handler<{
   const tasksService = new TasksService(db);
   const workspaceId = getHeaderActiveWorkspace(c);
   const projectId = c.req.query("project-id");
+  const assignees = c.req.queries("assignees");
+  const parsedAssignees = selectTaskAssignee.shape.organizationMemberId
+    .array()
+    .optional()
+    .parse(assignees);
   const tasks = await tasksService.getTasks({
     filters: {
       workspaceId: workspaceId!,
       projectId: projectId,
       userId: user.id,
+      assignees: parsedAssignees,
     },
   });
   return c.json({ tasks });
