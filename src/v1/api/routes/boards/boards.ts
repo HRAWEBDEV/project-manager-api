@@ -12,6 +12,9 @@ import {
 } from "../../../db/schemas/boards";
 import { db } from "../../../db/connect";
 import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
+import { StatusCodes } from "http-status-codes";
+import { getApiErrorShape } from "../../utils/apiTypes";
+import { ProjectsService } from "../../services/projectsService";
 
 const boardsRoutes = new Hono().basePath("/boards");
 
@@ -49,6 +52,7 @@ boardsRoutes.get(
 const handleCreateBoard: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
+  const user = getContextUser(c);
   const organizationMember = getContextUserOrganizationMember(c);
   const workspaceId = getHeaderActiveWorkspace(c);
   const { name, projectId, color } = await c.req.json();
@@ -63,6 +67,26 @@ const handleCreateBoard: Handler<{
       projectId,
       color,
     });
+
+  const projectService = new ProjectsService(db);
+  const project = await projectService.getProject({
+    filters: {
+      projectId: projectId!,
+      userId: user.id,
+      workspaceId: workspaceId!,
+    },
+  });
+  if (!project) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Task not found",
+      }),
+    );
+  }
+
   const boardService = new BoardsService(db);
   const board = await boardService.createBoard({
     name: parsedNewBoard.name,
