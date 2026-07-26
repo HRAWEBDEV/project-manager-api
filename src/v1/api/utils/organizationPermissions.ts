@@ -61,6 +61,10 @@ const organizationPermissions = {
     "tag:delete",
     "task_tag:read",
     "task_tag:update",
+    "board:read",
+    "board:create",
+    "board:update",
+    "board:delete",
   ],
   admin: [
     "workspace:read",
@@ -116,6 +120,10 @@ const organizationPermissions = {
     "tag:delete",
     "task_tag:read",
     "task_tag:update",
+    "board:read",
+    "board:create",
+    "board:update",
+    "board:delete",
   ],
   member: [],
 } as const;

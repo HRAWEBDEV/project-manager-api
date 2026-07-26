@@ -16,6 +16,7 @@ import { checkUserActiveOrganization } from "./middlewares/checkUserActiveOrgani
 import { checkUserActiveWorkspace } from "./middlewares/checkUserActiveWorkspace";
 import { tasksRoutes } from "./routes/tasks/tasks";
 import { tagsRoutes } from "./routes/tags/tags";
+import { boardsRoutes } from "./routes/boards/boards";
 
 const v1Routes = new Hono().basePath("/v1");
 
@@ -31,6 +32,7 @@ v1Routes.use(checkUserActiveWorkspace);
 v1Routes.route("/", projectsRoutes);
 v1Routes.route("/", tasksRoutes);
 v1Routes.route("/", tagsRoutes);
+v1Routes.route("/", boardsRoutes);
 
 v1Routes.onError((err, c) => {
   console.log(err);

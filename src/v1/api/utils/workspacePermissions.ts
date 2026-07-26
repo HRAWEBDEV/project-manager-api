@@ -48,6 +48,10 @@ const workspacePermissions = {
     "tag:delete",
     "task_tag:read",
     "task_tag:update",
+    "board:read",
+    "board:create",
+    "board:update",
+    "board:delete",
   ],
   member: [
     "workspace:read",
@@ -72,6 +76,7 @@ const workspacePermissions = {
     "tag:read",
     "task_tag:read",
     "task_tag:update",
+    "board:read",
   ],
 } as const;
 
