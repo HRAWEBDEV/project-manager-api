@@ -3,7 +3,7 @@ import {
   type InsertTaskAssignee,
   taskAssignees,
 } from "../../db/schemas/taskAssignees";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { tasks } from "../../db/schemas/tasks";
 import { projects } from "../../db/schemas/projects";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
@@ -16,14 +16,16 @@ class TaskAssigneesServices {
   }: {
     filters: {
       userId?: string;
-      taskId: string;
+      taskId: string | string[];
       workspaceId: string;
     };
   }) {
-    const filterCondition = [
-      eq(taskAssignees.taskId, filters.taskId),
-      eq(projects.workspaceId, filters.workspaceId),
-    ];
+    const filterCondition = [eq(projects.workspaceId, filters.workspaceId)];
+    if (typeof filters.taskId === "string") {
+      filterCondition.push(eq(taskAssignees.taskId, filters.taskId));
+    } else {
+      filterCondition.push(inArray(taskAssignees.taskId, filters.taskId));
+    }
     if (filters.userId) {
       filterCondition.push(eq(users.id, filters.userId));
     }
@@ -36,6 +38,7 @@ class TaskAssigneesServices {
         username: users.username,
         firstName: users.firstName,
         lastName: users.lastName,
+        avatar: users.avatar,
       })
       .from(taskAssignees)
       .innerJoin(tasks, eq(taskAssignees.taskId, tasks.id))

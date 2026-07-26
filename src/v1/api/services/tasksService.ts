@@ -6,6 +6,7 @@ import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { projects } from "../../db/schemas/projects";
 import { projectMembers } from "../../db/schemas/projectMembers";
 import { eq, and, or, isNotNull, exists, inArray } from "drizzle-orm";
+import { TaskAssigneesServices } from "./taskAssigneesServices";
 
 class TasksService {
   constructor(private readonly db: DBExecuter) {}
@@ -91,7 +92,23 @@ class TasksService {
       baseQuery = baseQuery.limit(1);
     }
     const tasksResult = await baseQuery;
-    return tasksResult;
+    const taskAssigneesService = new TaskAssigneesServices(this.db);
+    const assignees = await taskAssigneesService.getTaskAssignees({
+      filters: {
+        taskId: tasksResult.map((task) => task.id),
+        workspaceId: filters.workspaceId,
+      },
+    });
+    const assigneesByTask = new Map<string, typeof assignees>();
+    for (const assignee of assignees) {
+      const list = assigneesByTask.get(assignee.taskId) ?? [];
+      list.push(assignee);
+      assigneesByTask.set(assignee.taskId, list);
+    }
+    return tasksResult.map((task) => ({
+      ...task,
+      assignees: assigneesByTask.get(task.id) ?? [],
+    }));
   }
 
   async getTask({
