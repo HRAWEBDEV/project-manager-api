@@ -1,4 +1,4 @@
-import { pgTable, uuid, unique } from "drizzle-orm/pg-core";
+import { pgTable, uuid, unique, timestamp } from "drizzle-orm/pg-core";
 import { tasks } from "./tasks";
 import { organizationMembers } from "./organizationMembers";
 import {
@@ -24,6 +24,7 @@ const taskAssignees = pgTable(
       .references(() => organizationMembers.id, {
         onDelete: "cascade",
       }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
   },
   (table) => [
     unique("task_assignee_unique_member").on(

@@ -162,6 +162,20 @@
       "when": 1784955365404,
       "tag": "0022_soft_grey_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1785057537658,
+      "tag": "0023_wide_miracleman",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1785058406890,
+      "tag": "0024_acoustic_malice",
+      "breakpoints": true
     }
   ]
 }

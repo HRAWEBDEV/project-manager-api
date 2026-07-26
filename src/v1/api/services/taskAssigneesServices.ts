@@ -39,6 +39,7 @@ class TaskAssigneesServices {
         firstName: users.firstName,
         lastName: users.lastName,
         avatar: users.avatar,
+        completedAt: taskAssignees.completedAt,
       })
       .from(taskAssignees)
       .innerJoin(tasks, eq(taskAssignees.taskId, tasks.id))
