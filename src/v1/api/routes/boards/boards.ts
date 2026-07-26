@@ -9,6 +9,7 @@ import { getHeaderActiveWorkspace } from "../../utils/userActiveWorkspace";
 import {
   selectBoardSchema,
   insertBoardSchema,
+  updateBoardSchema,
 } from "../../../db/schemas/boards";
 import { db } from "../../../db/connect";
 import { getContextUserOrganizationMember } from "../../utils/userActiveOrganization";
@@ -104,6 +105,65 @@ boardsRoutes.post(
     rolePermission: "board:create",
   }),
   handleCreateBoard,
+);
+
+const handleUpdateBoard: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const boardId = c.req.param("id");
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const { name, color, position } = await c.req.json();
+  const parsedNewBoard = updateBoardSchema
+    .pick({
+      name: true,
+      color: true,
+      position: true,
+    })
+    .parse({
+      name,
+      position,
+      color,
+    });
+  const boardService = new BoardsService(db);
+  const updatedBoard = await boardService.updateBoard({
+    id: boardId!,
+    name: parsedNewBoard.name,
+    color: parsedNewBoard.color,
+    position: parsedNewBoard.position,
+    workspaceId: workspaceId!,
+  });
+  return c.json(updatedBoard);
+};
+
+boardsRoutes.patch(
+  "/:id",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "board:update",
+  }),
+  handleUpdateBoard,
+);
+
+const handleDeleteBoard: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const boardId = c.req.param("id");
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const boardService = new BoardsService(db);
+  const deleteBoard = await boardService.deleteBoard({
+    boardId: boardId!,
+    workspaceId: workspaceId!,
+  });
+  return c.json(deleteBoard);
+};
+
+boardsRoutes.delete(
+  "/:id",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "board:delete",
+  }),
+  handleDeleteBoard,
 );
 
 export { boardsRoutes };

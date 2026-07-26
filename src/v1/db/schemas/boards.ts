@@ -2,7 +2,11 @@ import { pgTable, uuid, varchar, integer, unique } from "drizzle-orm/pg-core";
 import { projects } from "./projects";
 import { trackChanges } from "../utils/trackChanges";
 import { organizationMembers } from "./organizationMembers";
-import { createSelectSchema, createInsertSchema } from "drizzle-zod";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
 
 type Board = typeof boards.$inferSelect;
 type InsertBoard = typeof boards.$inferInsert;
@@ -33,6 +37,7 @@ const boards = pgTable(
 
 const selectBoardSchema = createSelectSchema(boards);
 const insertBoardSchema = createInsertSchema(boards);
+const updateBoardSchema = createUpdateSchema(boards);
 
 export type { Board, InsertBoard };
-export { boards, selectBoardSchema, insertBoardSchema };
+export { boards, selectBoardSchema, insertBoardSchema, updateBoardSchema };
