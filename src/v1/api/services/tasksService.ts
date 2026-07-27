@@ -4,6 +4,7 @@ import { taskAssignees } from "../../db/schemas/taskAssignees";
 import { workspaces } from "../../db/schemas/workspaces";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { projects } from "../../db/schemas/projects";
+import { boards } from "../../db/schemas/boards";
 import { projectMembers } from "../../db/schemas/projectMembers";
 import { eq, and, or, isNotNull, exists, inArray } from "drizzle-orm";
 import { TaskAssigneesServices } from "./taskAssigneesServices";
@@ -37,6 +38,9 @@ class TasksService {
         projectName: projects.name,
         workspaceId: workspaces.id,
         workspaceName: workspaces.name,
+        boardId: boards.id,
+        boardName: boards.name,
+        boardColor: boards.color,
       })
       .from(tasks)
       .leftJoin(projects, eq(tasks.projectId, projects.id))
@@ -55,6 +59,7 @@ class TasksService {
           eq(projectMembers.organizationMemberId, organizationMembers.id),
         ),
       )
+      .leftJoin(boards, eq(boards.id, tasks.boardId))
       .$dynamic();
     const filtersConditions = [
       eq(workspaces.id, filters.workspaceId),
