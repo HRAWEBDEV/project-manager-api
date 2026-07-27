@@ -7,6 +7,7 @@ import {
   foreignKey,
 } from "drizzle-orm/pg-core";
 import { projects } from "./projects";
+import { boards } from "./boards";
 import { trackChanges } from "../utils/trackChanges";
 import { organizationMembers } from "./organizationMembers";
 import {
@@ -34,6 +35,9 @@ const tasks = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true }),
     parentTaskId: uuid("parent_task_id"),
     createdBy: uuid("created_by").references(() => organizationMembers.id, {
+      onDelete: "set null",
+    }),
+    boardId: uuid("board_id").references(() => boards.id, {
       onDelete: "set null",
     }),
     ...trackChanges,
