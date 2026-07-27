@@ -1,12 +1,19 @@
 import { type Server } from "bun";
 import { Hono } from "hono";
+import { structuredLogger } from "@hono/structured-logger";
+import pino from "pino";
 import { secureHeaders } from "hono/secure-headers";
 import { cors } from "hono/cors";
 import { serveStatic } from "hono/bun";
 import { requestId } from "hono/request-id";
-import { logger } from "hono/logger";
 import { connectionOK, closeConnection } from "./src/v1/db/connect";
 import { v1Routes } from "./src/v1/api";
+
+const rootLogger = pino({
+  transport: {
+    target: "pino-pretty",
+  },
+});
 
 // check env variables
 if (!process.env.PORT) {
@@ -20,7 +27,11 @@ const api = new Hono().basePath("/api");
 // request id
 app.use(requestId());
 // logger setup
-app.use(logger());
+app.use(
+  structuredLogger({
+    createLogger: (c) => rootLogger.child({ requestId: c.var.requestId }),
+  }),
+);
 // cors
 app.use(
   cors({

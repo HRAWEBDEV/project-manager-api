@@ -35,5 +35,8 @@ export const checkSessionUser: MiddlewareHandler<{
   }
   setContextUser(c, sessionUser.users);
   setContextSession(c, sessionUser.sessions);
+  c.var.logger.info(
+    `checking session user: ${sessionUser.users.id} ${sessionUser.users.username} ${sessionUser.users.firstName} ${sessionUser.users.lastName}`,
+  );
   await next();
 });

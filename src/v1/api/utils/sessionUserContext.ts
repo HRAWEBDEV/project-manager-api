@@ -3,6 +3,7 @@ import { type Session } from "../../db/schemas/sessions";
 import { type User } from "../../db/schemas/users";
 import { type OrganizationMember } from "../../db/schemas/organizationMembers";
 import { CONTEXT_USER_ORGANIZATION_MEMBER } from "./userActiveOrganization";
+import { type Logger } from "pino";
 
 const USER = "user";
 const SESSION = "session";
@@ -12,6 +13,7 @@ type WithSessionUserVariables = {
     [USER]: User;
     [SESSION]: Session;
     [CONTEXT_USER_ORGANIZATION_MEMBER]: OrganizationMember;
+    logger: Logger;
   };
 };
 
