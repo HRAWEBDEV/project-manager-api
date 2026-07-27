@@ -123,6 +123,9 @@ const handleUserSignin: Handler = async (c) => {
     token: createdSession.token,
     expiresAt: createdSession.expiresAt,
   });
+  c.var.logger.info(
+    `user signed in: ${user.id} ${user.username} ${user.firstName} ${user.lastName}`,
+  );
   return c.json({
     message: "User signed in successfully",
   });
