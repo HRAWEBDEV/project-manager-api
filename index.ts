@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { secureHeaders } from "hono/secure-headers";
 import { cors } from "hono/cors";
 import { serveStatic } from "hono/bun";
+import { requestId } from "hono/request-id";
 import { logger } from "hono/logger";
 import { connectionOK, closeConnection } from "./src/v1/db/connect";
 import { v1Routes } from "./src/v1/api";
@@ -16,6 +17,8 @@ let server: Server<undefined>;
 const app = new Hono();
 const api = new Hono().basePath("/api");
 
+// request id
+app.use(requestId());
 // logger setup
 app.use(logger());
 // cors
