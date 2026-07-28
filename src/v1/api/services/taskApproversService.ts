@@ -58,7 +58,7 @@ export class TaskApproversService {
     workspaceId: string;
     approvers: Pick<
       InsertTaskApprovers,
-      "id" | "organizationMemberId" | "taskId" | "approved"
+      "organizationMemberId" | "taskId" | "approved"
     >[];
   }) {
     const oldApprovers = await this.getTaskApprovers({
@@ -70,19 +70,17 @@ export class TaskApproversService {
     const insertedApprovers = await this.db.transaction(async (tx) => {
       await this.deleteTaskApprovers({ taskId, db: tx });
       if (approvers.length > 0) {
-        const insertedApprovers = await this.db
+        const insertedApprovers = await tx
           .insert(taskApprovers)
           .values(
             approvers.map((item) => {
               let approvedAt = null;
               if (item.approved) {
-                if (item.id) {
-                  approvedAt =
-                    oldApprovers.find((item) => item.id === item.id)
-                      ?.approvedAt || new Date();
-                } else {
-                  approvedAt = new Date();
-                }
+                approvedAt =
+                  oldApprovers.find(
+                    (item) =>
+                      item.organizationMemberId === item.organizationMemberId,
+                  )?.approvedAt || new Date();
               }
               return {
                 taskId,

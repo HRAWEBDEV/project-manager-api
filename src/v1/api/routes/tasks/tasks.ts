@@ -478,6 +478,7 @@ const handleUpdateTaskApprovers: Handler<{
     workspaceId: workspaceId!,
     approvers: parsedApprovers,
   });
+  // TODO when all the approvers are approved, update the task status to "done"
   return c.json(updatedApprovers);
 };
 
