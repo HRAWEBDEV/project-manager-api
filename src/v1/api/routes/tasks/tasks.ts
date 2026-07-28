@@ -21,6 +21,7 @@ import { checkTaskAssignee } from "../../utils/checkTaskAssignee";
 import { TaskTagsService } from "../../services/taskTagsService";
 import { insertTaskTagSchema } from "../../../db/schemas/taskTags";
 import { selectTaskAssignee } from "../../../db/schemas/taskAssignees";
+import { TaskApproversService } from "../../services/taskApproversService";
 
 const tasksRoutes = new Hono().basePath("/tasks");
 
@@ -177,6 +178,8 @@ tasksRoutes.patch(
   handleUpdateTask,
 );
 
+// assignees
+
 const handleGetTaskAssignees: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
@@ -262,6 +265,8 @@ tasksRoutes.patch(
   }),
   handleUpdateTaskAssignees,
 );
+
+// checklists
 
 const handleGetTaskChecklists: Handler<{
   Variables: WithSessionUserVariables["Variables"];
@@ -349,6 +354,7 @@ tasksRoutes.patch(
   handleUpdateTaskChecklists,
 );
 
+//  tags
 const handleGetTaskTags: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
@@ -402,6 +408,33 @@ tasksRoutes.patch(
     rolePermission: "task_tag:update",
   }),
   handleUpdateTaskTags,
+);
+
+//  task approvers
+const handleGetTaskApprovers: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const taskId = c.req.param("id");
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const taskApproversService = new TaskApproversService(db);
+  const taskApprovers = await taskApproversService.getTaskApprovers({
+    filters: {
+      taskId: taskId!,
+      workspaceId: workspaceId!,
+    },
+  });
+  return c.json({
+    taskApprovers,
+  });
+};
+
+tasksRoutes.get(
+  "/:id/approvers",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task_approver:read",
+  }),
+  handleGetTaskApprovers,
 );
 
 export { tasksRoutes };
