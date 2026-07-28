@@ -90,7 +90,10 @@ export class TaskApproversService {
               };
             }),
           )
-          .returning({ id: taskApprovers.id });
+          .returning({
+            id: taskApprovers.id,
+            approved: taskApprovers.approved,
+          });
         return insertedApprovers;
       }
       return [];

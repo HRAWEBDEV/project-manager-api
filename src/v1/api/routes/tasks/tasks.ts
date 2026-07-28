@@ -444,7 +444,6 @@ const handleUpdateTaskApprovers: Handler<{
   const user = getContextUser(c);
   const taskId = c.req.param("id");
   const workspaceId = getHeaderActiveWorkspace(c);
-  const taskApproversService = new TaskApproversService(db);
   const { approvers } = await c.req.json();
   const parsedApprovers = insertTaskApproversSchema
     .pick({
@@ -479,6 +478,8 @@ const handleUpdateTaskApprovers: Handler<{
     approvers: parsedApprovers,
   });
   // TODO when all the approvers are approved, update the task status to "done"
+  if (!updatedApprovers.some((item) => !item.approved)) {
+  }
   return c.json(updatedApprovers);
 };
 
