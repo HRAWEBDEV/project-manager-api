@@ -183,6 +183,13 @@
       "when": 1785124582584,
       "tag": "0025_worthless_fabian_cortez",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1785217491837,
+      "tag": "0026_long_lady_mastermind",
+      "breakpoints": true
     }
   ]
 }
