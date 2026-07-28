@@ -1,4 +1,4 @@
-import { pgTable, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { pgTable, timestamp, unique, uuid, boolean } from "drizzle-orm/pg-core";
 import { organizationMembers } from "./organizationMembers";
 import { tasks } from "./tasks";
 import {
@@ -20,6 +20,7 @@ const taskApprovers = pgTable(
     taskId: uuid("task_id")
       .notNull()
       .references(() => tasks.id),
+    approved: boolean("approved").notNull().default(false),
     approvedAt: timestamp("approved_at", { withTimezone: true }),
   },
   (table) => [

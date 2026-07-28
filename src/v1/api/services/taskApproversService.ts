@@ -1,7 +1,12 @@
 import type { DBExecuter } from "../../db/connect";
-import { taskApprovers } from "../../db/schemas/taskApprovers";
+import {
+  type InsertTaskApprovers,
+  taskApprovers,
+} from "../../db/schemas/taskApprovers";
 import { tasks } from "../../db/schemas/tasks";
 import { projects } from "../../db/schemas/projects";
+import { organizationMembers } from "../../db/schemas/organizationMembers";
+import { users } from "../../db/schemas/users";
 import { eq, and } from "drizzle-orm";
 
 export class TaskApproversService {
@@ -19,14 +24,89 @@ export class TaskApproversService {
       eq(projects.workspaceId, filters.workspaceId),
     ];
     const baseQuery = this.db
-      .select()
+      .select({
+        id: taskApprovers.id,
+        organizationMemberId: taskApprovers.organizationMemberId,
+        taskId: taskApprovers.taskId,
+        approved: taskApprovers.approved,
+        approvedAt: taskApprovers.approvedAt,
+        username: users.username,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        userAvatar: users.avatar,
+      })
       .from(taskApprovers)
       .innerJoin(tasks, eq(taskApprovers.taskId, tasks.id))
-      .innerJoin(projects, eq(tasks.projectId, projects.id));
+      .innerJoin(projects, eq(tasks.projectId, projects.id))
+      .innerJoin(
+        organizationMembers,
+        eq(organizationMembers.id, taskApprovers.organizationMemberId),
+      )
+      .innerJoin(users, eq(users.id, organizationMembers.userId));
 
     const taskApproversResult = await baseQuery.where(
       and(...filtersConditions),
     );
     return taskApproversResult;
+  }
+  async updateTaskApprovers({
+    taskId,
+    workspaceId,
+    approvers,
+  }: {
+    taskId: string;
+    workspaceId: string;
+    approvers: Pick<
+      InsertTaskApprovers,
+      "id" | "organizationMemberId" | "taskId" | "approved"
+    >[];
+  }) {
+    const oldApprovers = await this.getTaskApprovers({
+      filters: {
+        taskId,
+        workspaceId,
+      },
+    });
+    const insertedApprovers = await this.db.transaction(async (tx) => {
+      await this.deleteTaskApprovers({ taskId, db: tx });
+      if (approvers.length > 0) {
+        const insertedApprovers = await this.db
+          .insert(taskApprovers)
+          .values(
+            approvers.map((item) => {
+              let approvedAt = null;
+              if (item.approved) {
+                if (item.id) {
+                  approvedAt =
+                    oldApprovers.find((item) => item.id === item.id)
+                      ?.approvedAt || new Date();
+                } else {
+                  approvedAt = new Date();
+                }
+              }
+              return {
+                taskId,
+                organizationMemberId: item.organizationMemberId,
+                approvedAt,
+                approved: item.approved,
+              };
+            }),
+          )
+          .returning({ id: taskApprovers.id });
+        return insertedApprovers;
+      }
+      return [];
+    });
+    return insertedApprovers;
+  }
+
+  private async deleteTaskApprovers({
+    taskId,
+    db,
+  }: {
+    taskId: string;
+    db: DBExecuter;
+  }) {
+    await db.delete(taskApprovers).where(eq(taskApprovers.taskId, taskId));
   }
 }

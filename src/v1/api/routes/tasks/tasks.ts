@@ -22,6 +22,7 @@ import { TaskTagsService } from "../../services/taskTagsService";
 import { insertTaskTagSchema } from "../../../db/schemas/taskTags";
 import { selectTaskAssignee } from "../../../db/schemas/taskAssignees";
 import { TaskApproversService } from "../../services/taskApproversService";
+import { insertTaskApproversSchema } from "../../../db/schemas/taskApprovers";
 
 const tasksRoutes = new Hono().basePath("/tasks");
 
@@ -435,6 +436,58 @@ tasksRoutes.get(
     rolePermission: "task_approver:read",
   }),
   handleGetTaskApprovers,
+);
+
+const handleUpdateTaskApprovers: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const taskId = c.req.param("id");
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const taskApproversService = new TaskApproversService(db);
+  const { approvers } = await c.req.json();
+  const parsedApprovers = insertTaskApproversSchema
+    .pick({
+      organizationMemberId: true,
+      taskId: true,
+      approved: true,
+    })
+    .array()
+    .parse(approvers);
+  const assigneeSerivce = new TaskAssigneesServices(db);
+  const assignee = await assigneeSerivce.getTaskAssignee({
+    filters: {
+      taskId: taskId!,
+      workspaceId: workspaceId!,
+      userId: user.id,
+    },
+  });
+  if (!assignee) {
+    c.status(StatusCodes.FORBIDDEN);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.FORBIDDEN,
+        message: "You are not the assignee of this task",
+      }),
+    );
+  }
+  const taskApproverService = new TaskApproversService(db);
+  const updatedApprovers = await taskApproverService.updateTaskApprovers({
+    taskId: taskId!,
+    workspaceId: workspaceId!,
+    approvers: parsedApprovers,
+  });
+  return c.json(updatedApprovers);
+};
+
+tasksRoutes.patch(
+  "/:id/approvers",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task_approver:update",
+  }),
+  handleUpdateTaskApprovers,
 );
 
 export { tasksRoutes };
