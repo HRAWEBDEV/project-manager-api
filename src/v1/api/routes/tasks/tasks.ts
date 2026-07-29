@@ -449,7 +449,6 @@ const handleUpdateTaskApprovers: Handler<{
     .pick({
       organizationMemberId: true,
       taskId: true,
-      approved: true,
     })
     .array()
     .parse(approvers);
@@ -474,12 +473,9 @@ const handleUpdateTaskApprovers: Handler<{
   const taskApproverService = new TaskApproversService(db);
   const updatedApprovers = await taskApproverService.updateTaskApprovers({
     taskId: taskId!,
-    workspaceId: workspaceId!,
     approvers: parsedApprovers,
+    workspaceId: workspaceId!,
   });
-  // TODO when all the approvers are approved, update the task status to "done"
-  if (!updatedApprovers.some((item) => !item.approved)) {
-  }
   return c.json(updatedApprovers);
 };
 
@@ -490,6 +486,65 @@ tasksRoutes.patch(
     rolePermission: "task_approver:update",
   }),
   handleUpdateTaskApprovers,
+);
+
+const handleApproveTask: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const organizationMember = getContextUserOrganizationMember(c);
+  const taskId = c.req.param("id");
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const { approve } = await c.req.json();
+  const parsedApprovers = insertTaskApproversSchema
+    .pick({
+      approved: true,
+    })
+    .required()
+    .parse({ approved: approve });
+  const assigneeSerivce = new TaskAssigneesServices(db);
+  const assignee = await assigneeSerivce.getTaskAssignee({
+    filters: {
+      taskId: taskId!,
+      workspaceId: workspaceId!,
+      userId: user.id,
+    },
+  });
+  if (!assignee) {
+    c.status(StatusCodes.FORBIDDEN);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.FORBIDDEN,
+        message: "You are not the assignee of this task",
+      }),
+    );
+  }
+  const taskApproverService = new TaskApproversService(db);
+  const updatedApprove = await taskApproverService.approveTask({
+    organizationMemberId: organizationMember.id,
+    taskId: taskId!,
+    approve: parsedApprovers.approved,
+  });
+  const taskApprovers = await taskApproverService.getTaskApprovers({
+    filters: {
+      taskId: taskId!,
+      workspaceId: workspaceId!,
+    },
+  });
+  if (!taskApprovers.some((item) => !item.approved)) {
+    // TODO if all approvers have approved,
+  }
+  return c.json(updatedApprove);
+};
+
+tasksRoutes.patch(
+  "/:id/approvers/approve",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "task_approver:update",
+  }),
+  handleApproveTask,
 );
 
 export { tasksRoutes };

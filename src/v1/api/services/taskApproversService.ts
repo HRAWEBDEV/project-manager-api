@@ -49,6 +49,7 @@ export class TaskApproversService {
     );
     return taskApproversResult;
   }
+
   async updateTaskApprovers({
     taskId,
     workspaceId,
@@ -56,10 +57,7 @@ export class TaskApproversService {
   }: {
     taskId: string;
     workspaceId: string;
-    approvers: Pick<
-      InsertTaskApprovers,
-      "organizationMemberId" | "taskId" | "approved"
-    >[];
+    approvers: Pick<InsertTaskApprovers, "organizationMemberId" | "taskId">[];
   }) {
     const oldApprovers = await this.getTaskApprovers({
       filters: {
@@ -74,19 +72,16 @@ export class TaskApproversService {
           .insert(taskApprovers)
           .values(
             approvers.map((item) => {
-              let approvedAt = null;
-              if (item.approved) {
-                approvedAt =
-                  oldApprovers.find(
-                    (item) =>
-                      item.organizationMemberId === item.organizationMemberId,
-                  )?.approvedAt || new Date();
-              }
+              const targetItem = oldApprovers.find(
+                (item) =>
+                  item.organizationMemberId === item.organizationMemberId &&
+                  item.taskId === item.taskId,
+              );
               return {
                 taskId,
                 organizationMemberId: item.organizationMemberId,
-                approvedAt,
-                approved: item.approved,
+                approved: targetItem?.approved ?? false,
+                approvedAt: targetItem?.approvedAt ?? null,
               };
             }),
           )
@@ -99,6 +94,31 @@ export class TaskApproversService {
       return [];
     });
     return insertedApprovers;
+  }
+
+  async approveTask({
+    taskId,
+    organizationMemberId,
+    approve,
+  }: {
+    taskId: string;
+    organizationMemberId: string;
+    approve: boolean;
+  }) {
+    const [updatedApprover] = await this.db
+      .update(taskApprovers)
+      .set({
+        approved: approve,
+        approvedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(taskApprovers.taskId, taskId),
+          eq(taskApprovers.organizationMemberId, organizationMemberId),
+        ),
+      )
+      .returning({ id: taskApprovers.id });
+    return updatedApprover;
   }
 
   private async deleteTaskApprovers({
