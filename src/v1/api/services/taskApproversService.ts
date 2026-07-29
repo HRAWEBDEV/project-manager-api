@@ -109,7 +109,7 @@ export class TaskApproversService {
       .update(taskApprovers)
       .set({
         approved: approve,
-        approvedAt: new Date(),
+        approvedAt: approve ? new Date() : null,
       })
       .where(
         and(
