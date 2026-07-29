@@ -65,6 +65,11 @@
 - Date range tracking (start date, end date)
 - Filtering by project and assignees
 
+### Task Approvers
+
+- Task approvers — view, update, and approve/reject (`GET/PATCH /tasks/:id/approvers`, `PATCH /tasks/:id/approvers/approve`)
+- Task approve separate route (`PATCH /tasks/:id/approvers/approve`)
+
 ### Tags
 
 - CRUD for workspace-scoped tags (`GET/POST /tags`, `PATCH/DELETE /tags/:id`)
