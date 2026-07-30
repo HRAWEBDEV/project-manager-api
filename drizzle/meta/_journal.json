@@ -232,6 +232,13 @@
       "when": 1785417850204,
       "tag": "0032_smart_nitro",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1785423651263,
+      "tag": "0033_real_obadiah_stane",
+      "breakpoints": true
     }
   ]
 }
