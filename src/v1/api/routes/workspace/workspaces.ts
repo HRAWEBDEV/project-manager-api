@@ -17,6 +17,7 @@ import {
   insertWorkspaceMember,
   selectWorkspaceMemberSchema,
 } from "../../../db/schemas/workspaceMembers";
+import { WorkspaceActivityService } from "../../services/workspaceActivityServices";
 
 const workspacesRoutes = new Hono().basePath("/workspaces");
 
@@ -58,6 +59,7 @@ const handleCreateWorkspace: Handler<{
   const createdWorkspace = await db.transaction(async (tx) => {
     const workspaceService = new WorkspacesService(tx);
     const workspaceMemberService = new WorkspaceMembersService(tx);
+    const worksapceActivityService = new WorkspaceActivityService(tx);
     const createdWorkspace = await workspaceService.createWorkspace({
       name: parsedWorkspace.name,
       description: parsedWorkspace.description,
@@ -68,6 +70,13 @@ const handleCreateWorkspace: Handler<{
       workspaceId: createdWorkspace!.id,
       organizationMemberId: organizationMember.id,
       role: "admin",
+    });
+    await worksapceActivityService.createWorkspaceActivity({
+      workspaceId: createdWorkspace!.id,
+      organizationMembersId: organizationMember.id,
+      action: {
+        type: "created",
+      },
     });
     return createdWorkspace;
   });
@@ -95,12 +104,24 @@ const handleUpdateWorkspace: Handler<{
       description: true,
     })
     .parse({ name, description });
-  const workspaceService = new WorkspacesService(db);
-  const updatedWorkspace = await workspaceService.updateWorkspace({
-    id: workspaceId!,
-    name: parsedWorkspace.name,
-    description: parsedWorkspace.description,
-    organizationId: organizationMember.organizationId,
+  const updatedWorkspace = await db.transaction(async (tx) => {
+    const workspaceService = new WorkspacesService(tx);
+    const workspaceActivityService = new WorkspaceActivityService(tx);
+    const updatedWorkspace = await workspaceService.updateWorkspace({
+      id: workspaceId!,
+      name: parsedWorkspace.name,
+      description: parsedWorkspace.description,
+      organizationId: organizationMember.organizationId,
+    });
+    await workspaceActivityService.createWorkspaceActivity({
+      workspaceId: updatedWorkspace!.id,
+      organizationMembersId: organizationMember.id,
+      action: {
+        type: "updated",
+        meta: parsedWorkspace,
+      },
+    });
+    return updatedWorkspace;
   });
   if (!updatedWorkspace) {
     c.status(StatusCodes.NOT_FOUND);
@@ -129,10 +150,21 @@ const handleDeleteWorkspace: Handler<{
 }> = async (c) => {
   const id = c.req.param("id");
   const organizatinMember = getContextUserOrganizationMember(c);
-  const workspaceService = new WorkspacesService(db);
-  const deletedWorkspace = await workspaceService.deleteWorkspace({
-    organizationId: organizatinMember.organizationId,
-    id: id!,
+  const deletedWorkspace = await db.transaction(async (tx) => {
+    const workspaceService = new WorkspacesService(tx);
+    const workspaceActivityService = new WorkspaceActivityService(tx);
+    const deletedWorkspace = await workspaceService.deleteWorkspace({
+      organizationId: organizatinMember.organizationId,
+      id: id!,
+    });
+    await workspaceActivityService.createWorkspaceActivity({
+      workspaceId: deletedWorkspace!.id,
+      organizationMembersId: organizatinMember.id,
+      action: {
+        type: "deleted",
+      },
+    });
+    return deletedWorkspace;
   });
   if (!deletedWorkspace) {
     c.status(StatusCodes.NOT_FOUND);
