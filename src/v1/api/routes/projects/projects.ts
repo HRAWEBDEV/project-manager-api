@@ -19,6 +19,7 @@ import {
   ImageTooLargeError,
   InvalidImageTypeError,
 } from "../../utils/staticImagesService";
+import { ProjectActivityService } from "../../services/projectActivityServices";
 
 const projectsRoutes = new Hono().basePath("/projects");
 
@@ -69,6 +70,7 @@ const handleCreateProject: Handler<{
   const createdProject = await db.transaction(async (tx) => {
     const projectService = new ProjectsService(tx);
     const projectMemberService = new ProjectMembersService(tx);
+    const projectActivityService = new ProjectActivityService(tx);
     const createdProject = await projectService.createProject({
       ...parsedProject,
       organizationId: activeOrganizationMember.organizationId,
@@ -78,6 +80,10 @@ const handleCreateProject: Handler<{
     await projectMemberService.createMember({
       organizationMemberId: activeOrganizationMember.id,
       projectId: createdProject!.id,
+    });
+    await projectActivityService.createProjectActivity({
+      projectId: createdProject!.id,
+      organizationMembersId: activeOrganizationMember.id,
     });
     return createdProject;
   });
