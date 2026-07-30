@@ -225,6 +225,13 @@
       "when": 1785416936098,
       "tag": "0031_sudden_aaron_stack",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1785417850204,
+      "tag": "0032_smart_nitro",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,8 @@ const projectActivityType = pgEnum("project_activity_type", [
   "created",
   "updated",
   "deleted",
+  "member_added",
+  "member_removed",
 ]);
 
 type ProjectActivity = typeof projectActivities.$inferSelect;
