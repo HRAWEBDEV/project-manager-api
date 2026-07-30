@@ -42,7 +42,18 @@ export class ProjectActivityService {
       eq(projectActivities.projectId, filters.projectId),
     ];
     const baseQuery = this.db
-      .select()
+      .select({
+        id: projectActivities.id,
+        activityType: projectActivities.activityType,
+        metadata: projectActivities.metadata,
+        createdAt: projectActivities.createdAt,
+        organizationMembersId: projectActivities.organizationMembersId,
+        userId: users.id,
+        username: users.username,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        userAvatar: users.avatar,
+      })
       .from(projectActivities)
       .innerJoin(
         organizationMembers,

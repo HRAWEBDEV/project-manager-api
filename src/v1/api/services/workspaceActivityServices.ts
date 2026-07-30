@@ -42,7 +42,18 @@ export class WorkspaceActivityService {
       eq(workspaceActivities.workspaceId, filters.workspaceId),
     ];
     const baseQuery = this.db
-      .select()
+      .select({
+        id: workspaceActivities.id,
+        activityType: workspaceActivities.activityType,
+        metadata: workspaceActivities.metadata,
+        createdAt: workspaceActivities.createdAt,
+        organizationMembersId: workspaceActivities.organizationMembersId,
+        userId: users.id,
+        username: users.username,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        userAvatar: users.avatar,
+      })
       .from(workspaceActivities)
       .innerJoin(
         organizationMembers,
