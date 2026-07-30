@@ -8,8 +8,26 @@ import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { users } from "../../db/schemas/users";
 import {
   type UpdateProjectMeta,
+  type AddOrDeleteProjectMembersMeta,
   generateUpdateProjectMeta,
+  generateAddOrDeleteProjectMembersMeta,
 } from "../utils/projectActivitiesMeta";
+
+type ActivityAction =
+  | {
+      type: "created";
+    }
+  | {
+      type: "updated";
+      meta: UpdateProjectMeta;
+    }
+  | {
+      type: "deleted";
+    }
+  | {
+      type: "member_added" | "member_removed";
+      meta: AddOrDeleteProjectMembersMeta;
+    };
 
 export class ProjectActivityService {
   constructor(private readonly db: DBExecuter) {}
@@ -38,50 +56,25 @@ export class ProjectActivityService {
   }
   async createProjectActivity({
     projectId,
+    action,
     organizationMembersId,
-  }: Pick<InsertProjectActivity, "projectId" | "organizationMembersId">) {
-    const [createdActivity] = await this.db
-      .insert(projectActivities)
-      .values({
-        activityType: "created",
-        projectId,
-        organizationMembersId,
-      })
-      .returning({ id: projectActivities.id });
-    return createdActivity;
-  }
-  async updateProjectActivityMeta({
-    projectId,
-    organizationMembersId,
-    ...rest
-  }: UpdateProjectMeta & {
-    projectId: string;
-    organizationMembersId: string;
+  }: Pick<InsertProjectActivity, "projectId" | "organizationMembersId"> & {
+    action: ActivityAction;
   }) {
+    let meta = null;
+    if (action.type === "updated") {
+      meta = generateUpdateProjectMeta(action.meta);
+    }
+    if (action.type === "member_added" || action.type === "member_removed") {
+      meta = generateAddOrDeleteProjectMembersMeta(action.meta);
+    }
     const [createdActivity] = await this.db
       .insert(projectActivities)
       .values({
-        activityType: "updated",
+        activityType: action.type,
         projectId,
         organizationMembersId,
-        metadata: generateUpdateProjectMeta(rest),
-      })
-      .returning({ id: projectActivities.id });
-    return createdActivity;
-  }
-  async deleteProjectActivity({
-    projectId,
-    organizationMembersId,
-  }: {
-    projectId: string;
-    organizationMembersId: string;
-  }) {
-    const [createdActivity] = await this.db
-      .insert(projectActivities)
-      .values({
-        activityType: "deleted",
-        projectId,
-        organizationMembersId,
+        metadata: meta,
       })
       .returning({ id: projectActivities.id });
     return createdActivity;

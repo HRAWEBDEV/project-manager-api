@@ -84,6 +84,9 @@ const handleCreateProject: Handler<{
     await projectActivityService.createProjectActivity({
       projectId: createdProject!.id,
       organizationMembersId: activeOrganizationMember.id,
+      action: {
+        type: "created",
+      },
     });
     return createdProject;
   });
@@ -130,10 +133,13 @@ const handleUpdateProject: Handler<{
       id: id!,
       ...parsedProject,
     });
-    await projectActivityService.updateProjectActivityMeta({
+    await projectActivityService.createProjectActivity({
       organizationMembersId: activeOrganizationMember.id,
       projectId: updatedProject?.id!,
-      ...parsedProject,
+      action: {
+        type: "updated",
+        meta: parsedProject,
+      },
     });
     return updatedProject;
   });
@@ -200,10 +206,15 @@ const handleUpdateProjectIcon: Handler<{
         workspaceId: workspaceId!,
         icon: logoUrl,
       });
-      await projectActivities.updateProjectActivityMeta({
+      await projectActivities.createProjectActivity({
         projectId: projectId!,
         organizationMembersId: organizationMember.id,
-        icon: logoUrl,
+        action: {
+          type: "updated",
+          meta: {
+            icon: logoUrl,
+          },
+        },
       });
       if (project?.icon) {
         projectIconService.deleteStaticImage(project.icon);
@@ -256,9 +267,12 @@ const handleDeleteProject: Handler<{
       workspaceId: workspaceId!,
       id: id!,
     });
-    await projectActivityService.deleteProjectActivity({
+    await projectActivityService.createProjectActivity({
       projectId: deletedProject?.id!,
       organizationMembersId: activeOrganizationMember.id,
+      action: {
+        type: "deleted",
+      },
     });
     return deletedProject;
   });
@@ -341,11 +355,15 @@ const handleDeleteProjectMember: Handler<{
 }> = async (c) => {
   const projectId = c.req.param("projectId");
   const id = c.req.param("id");
-  const projectMemberService = new ProjectMembersService(db);
-  const deletedMember = await projectMemberService.deleteProjectMember(
-    id!,
-    projectId!,
-  );
+  const deletedMember = await db.transaction(async (tx) => {
+    const projectMemberService = new ProjectMembersService(tx);
+    const projectActivityService = new ProjectActivityService(tx);
+    const deletedMember = await projectMemberService.deleteProjectMember(
+      id!,
+      projectId!,
+    );
+    return deletedMember;
+  });
   if (!deletedMember) {
     c.status(StatusCodes.NOT_FOUND);
     return c.json(

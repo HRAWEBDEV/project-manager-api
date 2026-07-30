@@ -7,6 +7,10 @@ type UpdateProjectMeta = Partial<
   >
 >;
 
+type AddOrDeleteProjectMembersMeta = {
+  organizationMemberIds: string[];
+};
+
 function generateUpdateProjectMeta({
   archived,
   color,
@@ -25,5 +29,13 @@ function generateUpdateProjectMeta({
   };
 }
 
-export type { UpdateProjectMeta };
-export { generateUpdateProjectMeta };
+function generateAddOrDeleteProjectMembersMeta({
+  organizationMemberIds,
+}: AddOrDeleteProjectMembersMeta) {
+  return {
+    organizationMemberIds,
+  };
+}
+
+export type { UpdateProjectMeta, AddOrDeleteProjectMembersMeta };
+export { generateUpdateProjectMeta, generateAddOrDeleteProjectMembersMeta };
