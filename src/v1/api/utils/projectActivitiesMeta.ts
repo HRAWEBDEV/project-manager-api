@@ -1,0 +1,29 @@
+import { type Project } from "../../db/schemas/projects";
+
+type UpdateProjectMeta = Partial<
+  Omit<
+    Project,
+    "id" | "createdAt" | "updatedAt" | "organizationId" | "workspaceId"
+  >
+>;
+
+function generateUpdateProjectMeta({
+  archived,
+  color,
+  createdBy,
+  description,
+  icon,
+  name,
+}: UpdateProjectMeta) {
+  return {
+    archived,
+    color,
+    createdBy,
+    description,
+    icon,
+    name,
+  };
+}
+
+export type { UpdateProjectMeta };
+export { generateUpdateProjectMeta };

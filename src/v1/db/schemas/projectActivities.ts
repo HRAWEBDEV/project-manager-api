@@ -1,6 +1,5 @@
 import { pgTable, pgEnum, jsonb, uuid } from "drizzle-orm/pg-core";
 import { organizationMembers } from "./organizationMembers";
-import { projects } from "./projects";
 import { trackChanges } from "../utils/trackChanges";
 
 const projectActivityType = pgEnum("project_activity_type", [
@@ -14,11 +13,7 @@ type InsertProjectActivity = typeof projectActivities.$inferInsert;
 
 const projectActivities = pgTable("project_activities", {
   id: uuid("id").defaultRandom().primaryKey(),
-  projectId: uuid("project_id")
-    .notNull()
-    .references(() => projects.id, {
-      onDelete: "cascade",
-    }),
+  projectId: uuid("project_id").notNull(),
   organizationMembersId: uuid("organization_members_id")
     .notNull()
     .references(() => organizationMembers.id, {

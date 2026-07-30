@@ -6,6 +6,10 @@ import {
 import { eq, and } from "drizzle-orm";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { users } from "../../db/schemas/users";
+import {
+  type UpdateProjectMeta,
+  generateUpdateProjectMeta,
+} from "../utils/projectActivitiesMeta";
 
 export class ProjectActivityService {
   constructor(private readonly db: DBExecuter) {}
@@ -40,6 +44,42 @@ export class ProjectActivityService {
       .insert(projectActivities)
       .values({
         activityType: "created",
+        projectId,
+        organizationMembersId,
+      })
+      .returning({ id: projectActivities.id });
+    return createdActivity;
+  }
+  async updateProjectActivityMeta({
+    projectId,
+    organizationMembersId,
+    ...rest
+  }: UpdateProjectMeta & {
+    projectId: string;
+    organizationMembersId: string;
+  }) {
+    const [createdActivity] = await this.db
+      .insert(projectActivities)
+      .values({
+        activityType: "updated",
+        projectId,
+        organizationMembersId,
+        metadata: generateUpdateProjectMeta(rest),
+      })
+      .returning({ id: projectActivities.id });
+    return createdActivity;
+  }
+  async deleteProjectActivity({
+    projectId,
+    organizationMembersId,
+  }: {
+    projectId: string;
+    organizationMembersId: string;
+  }) {
+    const [createdActivity] = await this.db
+      .insert(projectActivities)
+      .values({
+        activityType: "deleted",
         projectId,
         organizationMembersId,
       })

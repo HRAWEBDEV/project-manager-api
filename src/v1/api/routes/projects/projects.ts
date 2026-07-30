@@ -121,12 +121,21 @@ const handleUpdateProject: Handler<{
       icon,
       archived,
     });
-  const projectService = new ProjectsService(db);
-  const updatedProject = await projectService.updateProject({
-    organizationId: activeOrganizationMember.organizationId,
-    workspaceId: workspaceId!,
-    id: id!,
-    ...parsedProject,
+  const updatedProject = await db.transaction(async (tx) => {
+    const projectService = new ProjectsService(tx);
+    const projectActivityService = new ProjectActivityService(tx);
+    const updatedProject = await projectService.updateProject({
+      organizationId: activeOrganizationMember.organizationId,
+      workspaceId: workspaceId!,
+      id: id!,
+      ...parsedProject,
+    });
+    await projectActivityService.updateProjectActivityMeta({
+      organizationMembersId: activeOrganizationMember.id,
+      projectId: updatedProject?.id!,
+      ...parsedProject,
+    });
+    return updatedProject;
   });
   if (!updatedProject) {
     c.status(StatusCodes.NOT_FOUND);
@@ -229,11 +238,19 @@ const handleDeleteProject: Handler<{
   const id = c.req.param("id");
   const activeOrganizationMember = getContextUserOrganizationMember(c);
   const workspaceId = getHeaderActiveWorkspace(c);
-  const projectService = new ProjectsService(db);
-  const deletedProject = await projectService.deleteProject({
-    organizationId: activeOrganizationMember.organizationId,
-    workspaceId: workspaceId!,
-    id: id!,
+  const deletedProject = await db.transaction(async (tx) => {
+    const projectService = new ProjectsService(tx);
+    const projectActivityService = new ProjectActivityService(tx);
+    const deletedProject = await projectService.deleteProject({
+      organizationId: activeOrganizationMember.organizationId,
+      workspaceId: workspaceId!,
+      id: id!,
+    });
+    await projectActivityService.deleteProjectActivity({
+      projectId: deletedProject?.id!,
+      organizationMembersId: activeOrganizationMember.id,
+    });
+    return deletedProject;
   });
   if (!deletedProject) {
     c.status(StatusCodes.NOT_FOUND);
