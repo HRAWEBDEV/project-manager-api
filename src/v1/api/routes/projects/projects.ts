@@ -181,7 +181,6 @@ const handleUpdateProjectIcon: Handler<{
   }
   const url = new URL(c.req.url);
   const baseUrl = url.origin;
-  const projectIconService = new ProjectIconService();
   try {
     const project = await projectService.getProject({
       filters: {
@@ -190,20 +189,31 @@ const handleUpdateProjectIcon: Handler<{
         projectId: projectId!,
       },
     });
-    const logoUrl = await projectIconService.saveStaticImage(image);
-    const updatedUser = await projectService.updateProject({
-      id: projectId!,
-      organizationId: organizationMember.organizationId,
-      workspaceId: workspaceId!,
-      icon: logoUrl,
+    const [updatedProject, logoUrl] = await db.transaction(async (tx) => {
+      const projectIconService = new ProjectIconService();
+      const projectService = new ProjectsService(tx);
+      const projectActivities = new ProjectActivityService(tx);
+      const logoUrl = await projectIconService.saveStaticImage(image);
+      const updatedProject = await projectService.updateProject({
+        id: projectId!,
+        organizationId: organizationMember.organizationId,
+        workspaceId: workspaceId!,
+        icon: logoUrl,
+      });
+      await projectActivities.updateProjectActivityMeta({
+        projectId: projectId!,
+        organizationMembersId: organizationMember.id,
+        icon: logoUrl,
+      });
+      if (project?.icon) {
+        projectIconService.deleteStaticImage(project.icon);
+      }
+      return [updatedProject, logoUrl];
     });
-    if (project?.icon) {
-      projectIconService.deleteStaticImage(project.icon);
-    }
     return c.json({
       message: "icon updated successfully",
       avatarUrl: `${baseUrl}${logoUrl}`,
-      userId: updatedUser ? updatedUser.id : null,
+      projectId: updatedProject ? updatedProject.id : null,
     });
   } catch (err) {
     if (
