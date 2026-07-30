@@ -3,7 +3,6 @@
 ### TODO
 
 - implement logging system
-- write task approvers service and route
 
 ### Infrastructure
 
