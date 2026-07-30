@@ -79,7 +79,7 @@ const handleCreateProject: Handler<{
       createdBy: user.id,
     });
     await projectMemberService.createMember({
-      organizationMemberId: activeOrganizationMember.id,
+      organizationMemberIds: [activeOrganizationMember.id],
       projectId: createdProject!.id,
     });
     await projectActivityService.createProjectActivity({
