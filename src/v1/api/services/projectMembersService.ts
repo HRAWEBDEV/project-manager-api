@@ -12,15 +12,20 @@ class ProjectMembersService {
   constructor(private readonly db: DBExecuter) {}
   async createMember({
     addedBy,
-    organizationMemberId,
+    organizationMemberIds,
     projectId,
-  }: Pick<
-    InsertProjectMember,
-    "addedBy" | "organizationMemberId" | "projectId"
-  >) {
-    const [createdProjectMember] = await this.db
+  }: Pick<InsertProjectMember, "addedBy" | "projectId"> & {
+    organizationMemberIds: InsertProjectMember["organizationMemberId"][];
+  }) {
+    const createdProjectMember = await this.db
       .insert(projectMembers)
-      .values({ addedBy, organizationMemberId, projectId })
+      .values(
+        organizationMemberIds.map((item) => ({
+          addedBy,
+          organizationMemberId: item,
+          projectId,
+        })),
+      )
       .returning({ id: projectMembers.id });
     return createdProjectMember;
   }

@@ -20,6 +20,7 @@ import {
   InvalidImageTypeError,
 } from "../../utils/staticImagesService";
 import { ProjectActivityService } from "../../services/projectActivityServices";
+import z from "zod";
 
 const projectsRoutes = new Hono().basePath("/projects");
 
@@ -327,16 +328,33 @@ const handleCreateProjectMember: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
   const user = getContextUser(c);
+  const organizationMember = getContextUserOrganizationMember(c);
   const projectId = c.req.param("id");
   const { organizationMemberId } = await c.req.json();
-  const parsedBody = insertProjectMemberSchema
-    .pick({ organizationMemberId: true })
-    .parse({ organizationMemberId });
-  const projectMemberService = new ProjectMembersService(db);
-  const createdMember = await projectMemberService.createMember({
-    addedBy: user.id,
-    organizationMemberId: parsedBody.organizationMemberId,
-    projectId: projectId!,
+  const schema = insertProjectMemberSchema.shape.organizationMemberId;
+  const parsedBody = schema.or(z.array(schema)).parse(organizationMemberId);
+  const createdMember = await db.transaction(async (tx) => {
+    const projectMemberService = new ProjectMembersService(tx);
+    const projectActivityService = new ProjectActivityService(tx);
+    const organizationMemberIds = Array.isArray(parsedBody)
+      ? parsedBody
+      : [parsedBody];
+    const createdMember = await projectMemberService.createMember({
+      addedBy: user.id,
+      organizationMemberIds,
+      projectId: projectId!,
+    });
+    await projectActivityService.createProjectActivity({
+      projectId: projectId!,
+      organizationMembersId: organizationMember.id,
+      action: {
+        type: "member_added",
+        meta: {
+          organizationMemberIds,
+        },
+      },
+    });
+    return createdMember;
   });
   return c.json(createdMember);
 };
@@ -353,6 +371,7 @@ projectsRoutes.post(
 const handleDeleteProjectMember: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
+  const organizationMember = getContextUserOrganizationMember(c);
   const projectId = c.req.param("projectId");
   const id = c.req.param("id");
   const deletedMember = await db.transaction(async (tx) => {
@@ -362,6 +381,16 @@ const handleDeleteProjectMember: Handler<{
       id!,
       projectId!,
     );
+    await projectActivityService.createProjectActivity({
+      projectId: projectId!,
+      organizationMembersId: organizationMember.id,
+      action: {
+        type: "member_removed",
+        meta: {
+          organizationMemberIds: [deletedMember?.id!],
+        },
+      },
+    });
     return deletedMember;
   });
   if (!deletedMember) {
