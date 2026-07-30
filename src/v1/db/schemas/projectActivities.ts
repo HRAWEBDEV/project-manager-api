@@ -12,7 +12,7 @@ const projectActivityType = pgEnum("project_activity_type", [
 type ProjectActivity = typeof projectActivities.$inferSelect;
 type InsertProjectActivity = typeof projectActivities.$inferInsert;
 
-const projectActivities = pgTable("task_activities", {
+const projectActivities = pgTable("project_activities", {
   id: uuid("id").defaultRandom().primaryKey(),
   projectId: uuid("project_id")
     .notNull()
