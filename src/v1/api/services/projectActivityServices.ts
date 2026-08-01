@@ -7,7 +7,6 @@ import { eq, and } from "drizzle-orm";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { users } from "../../db/schemas/users";
 import {
-  type UpdateProjectMeta,
   type AddOrDeleteProjectMembersMeta,
   generateUpdateProjectMeta,
   generateAddOrDeleteProjectMembersMeta,
@@ -19,7 +18,7 @@ type ActivityAction =
     }
   | {
       type: "updated";
-      meta: UpdateProjectMeta;
+      meta: Parameters<typeof generateUpdateProjectMeta>[0];
     }
   | {
       type: "deleted";
@@ -75,6 +74,7 @@ export class ProjectActivityService {
     let meta = null;
     if (action.type === "updated") {
       meta = generateUpdateProjectMeta(action.meta);
+      if (meta.length === 0) return undefined;
     }
     if (action.type === "member_added" || action.type === "member_removed") {
       meta = generateAddOrDeleteProjectMembersMeta(action.meta);

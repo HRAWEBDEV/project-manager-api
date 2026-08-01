@@ -127,21 +127,33 @@ const handleUpdateProject: Handler<{
     });
   const updatedProject = await db.transaction(async (tx) => {
     const projectService = new ProjectsService(tx);
-    const projectActivityService = new ProjectActivityService(tx);
+    const projectActivities = new ProjectActivityService(tx);
+    const oldProject = await projectService.getProject({
+      filters: {
+        projectId: id!,
+        userId: activeOrganizationMember.userId,
+        workspaceId: workspaceId!,
+      },
+    });
     const updatedProject = await projectService.updateProject({
       organizationId: activeOrganizationMember.organizationId,
       workspaceId: workspaceId!,
       id: id!,
       ...parsedProject,
     });
-    await projectActivityService.createProjectActivity({
-      organizationMembersId: activeOrganizationMember.id,
-      projectId: updatedProject?.id!,
-      action: {
-        type: "updated",
-        meta: parsedProject,
-      },
-    });
+    if (oldProject) {
+      await projectActivities.createProjectActivity({
+        organizationMembersId: activeOrganizationMember.id,
+        projectId: id!,
+        action: {
+          type: "updated",
+          meta: {
+            oldProject: oldProject,
+            newProject: parsedProject,
+          },
+        },
+      });
+    }
     return updatedProject;
   });
   if (!updatedProject) {
@@ -207,19 +219,24 @@ const handleUpdateProjectIcon: Handler<{
         workspaceId: workspaceId!,
         icon: logoUrl,
       });
-      await projectActivities.createProjectActivity({
+      if (project?.icon) {
+        projectIconService.deleteStaticImage(project.icon);
+      }
+      projectActivities.createProjectActivity({
         projectId: projectId!,
         organizationMembersId: organizationMember.id,
         action: {
           type: "updated",
           meta: {
-            icon: logoUrl,
+            oldProject: {
+              icon: project?.icon,
+            },
+            newProject: {
+              icon: logoUrl,
+            },
           },
         },
       });
-      if (project?.icon) {
-        projectIconService.deleteStaticImage(project.icon);
-      }
       return [updatedProject, logoUrl];
     });
     return c.json({

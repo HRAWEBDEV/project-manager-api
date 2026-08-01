@@ -71,13 +71,6 @@ const handleCreateWorkspace: Handler<{
       organizationMemberId: organizationMember.id,
       role: "admin",
     });
-    await worksapceActivityService.createWorkspaceActivity({
-      workspaceId: createdWorkspace!.id,
-      organizationMembersId: organizationMember.id,
-      action: {
-        type: "created",
-      },
-    });
     return createdWorkspace;
   });
   return c.json(createdWorkspace);
@@ -112,14 +105,6 @@ const handleUpdateWorkspace: Handler<{
       name: parsedWorkspace.name,
       description: parsedWorkspace.description,
       organizationId: organizationMember.organizationId,
-    });
-    await workspaceActivityService.createWorkspaceActivity({
-      workspaceId: updatedWorkspace!.id,
-      organizationMembersId: organizationMember.id,
-      action: {
-        type: "updated",
-        meta: parsedWorkspace,
-      },
     });
     return updatedWorkspace;
   });

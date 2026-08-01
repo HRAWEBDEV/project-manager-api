@@ -72,8 +72,31 @@ async function startApp() {
     }
     const port = process.env.PORT || "8080";
     server = Bun.serve({
-      fetch: app.fetch,
+      fetch: (req, server) => {
+        if (server.upgrade(req)) {
+          return;
+        }
+        return app.fetch(req, server);
+      },
       port,
+      websocket: {
+        message(ws, message) {
+          console.log(`WebSocket message: ${message}`);
+          ws.send(message);
+          // a message is received
+        },
+        open(ws) {
+          console.log(`WebSocket opened`);
+          // a socket is opened
+        },
+        close(ws, code, message) {
+          console.log(`WebSocket closed`);
+          // a socket is closed
+        },
+        drain(ws) {
+          // the socket is ready to receive more data
+        },
+      },
     });
     console.log(`App started on port: ${port}`);
   } catch (err) {
