@@ -7,7 +7,6 @@ import { eq, and } from "drizzle-orm";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { users } from "../../db/schemas/users";
 import {
-  type UpdateWorkspaceMeta,
   type AddOrDeleteWorkspaceMembersMeta,
   generateAddOrDeleteWorkspaceMembersMeta,
   generateUpdateWorkspaceMeta,
@@ -19,7 +18,7 @@ type ActivityAction =
     }
   | {
       type: "updated";
-      meta: UpdateWorkspaceMeta;
+      meta: Parameters<typeof generateUpdateWorkspaceMeta>[0];
     }
   | {
       type: "deleted";

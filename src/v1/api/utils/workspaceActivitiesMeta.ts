@@ -1,25 +1,40 @@
 import { type Workspace } from "../../db/schemas/workspaces";
 
-type UpdateWorkspaceMeta = Partial<
+type UpdateWorkspace = Partial<
   Omit<Workspace, "id" | "createdAt" | "updatedAt" | "organizationId">
 >;
+
+type UpdateWorkspaceMeta = {
+  field: keyof UpdateWorkspace;
+  old: UpdateWorkspace[keyof UpdateWorkspace];
+  new: UpdateWorkspace[keyof UpdateWorkspace];
+};
 
 type AddOrDeleteWorkspaceMembersMeta = {
   organizationMemberIds: string[];
 };
 
 function generateUpdateWorkspaceMeta({
-  createdBy,
-  description,
-  name,
-  slug,
-}: UpdateWorkspaceMeta) {
-  return {
-    createdBy,
-    description,
-    name,
-    slug,
-  };
+  oldWorkspace,
+  newWorkspace,
+}: {
+  oldWorkspace: UpdateWorkspace;
+  newWorkspace: UpdateWorkspace;
+}) {
+  return Object.entries(newWorkspace).reduce<UpdateWorkspaceMeta[]>(
+    (acc, [field, newValue]) => {
+      const oldValue = oldWorkspace[field as keyof UpdateWorkspace];
+      if (newValue !== undefined && oldValue !== newValue) {
+        acc.push({
+          field: field as keyof UpdateWorkspace,
+          old: oldValue,
+          new: newValue,
+        });
+      }
+      return acc;
+    },
+    [],
+  );
 }
 
 function generateAddOrDeleteWorkspaceMembersMeta({
