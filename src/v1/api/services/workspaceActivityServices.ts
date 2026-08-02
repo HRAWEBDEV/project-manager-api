@@ -74,6 +74,7 @@ export class WorkspaceActivityService {
     let meta = null;
     if (action.type === "updated") {
       meta = generateUpdateWorkspaceMeta(action.meta);
+      if (meta.length === 0) return [];
     }
     if (action.type === "member_added" || action.type === "member_removed") {
       meta = generateAddOrDeleteWorkspaceMembersMeta(action.meta);

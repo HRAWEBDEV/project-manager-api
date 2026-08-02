@@ -120,7 +120,7 @@ const handleUpdateWorkspace: Handler<{
     if (oldWorkspace) {
       await workspaceActivityService.createWorkspaceActivity({
         workspaceId: workspaceId!,
-        organizationMembersId: organizationMember.userId,
+        organizationMembersId: organizationMember.id,
         action: {
           type: "updated",
           meta: {
