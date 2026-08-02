@@ -4,7 +4,12 @@ import { structuredLogger } from "@hono/structured-logger";
 import pino from "pino";
 import { secureHeaders } from "hono/secure-headers";
 import { cors } from "hono/cors";
-import { serveStatic } from "hono/bun";
+import {
+  serveStatic,
+  upgradeWebSocket,
+  websocket,
+  type BunWebSocketData,
+} from "hono/bun";
 import { requestId } from "hono/request-id";
 import { connectionOK, closeConnection } from "./src/v1/db/connect";
 import { v1Routes } from "./src/v1/api";
@@ -20,7 +25,7 @@ if (!process.env.PORT) {
   console.warn(`PORT is not defined`);
 }
 
-let server: Server<undefined>;
+let server: Server<BunWebSocketData>;
 const app = new Hono();
 const api = new Hono().basePath("/api");
 
@@ -64,6 +69,26 @@ async function stopApp(exitCode: number = 1) {
   }
 }
 
+// TODO
+// app websocket setup
+app.get(
+  "/ws",
+  upgradeWebSocket((c) => {
+    return {
+      onOpen() {
+        console.log("Connection opened");
+      },
+      onMessage(event, ws) {
+        console.log(`Message from client: ${event.data}`);
+        ws.send("Hello from server!");
+      },
+      onClose: () => {
+        console.log("Connection closed");
+      },
+    };
+  }),
+);
+
 async function startApp() {
   try {
     const connectionIsOK = await connectionOK();
@@ -72,31 +97,9 @@ async function startApp() {
     }
     const port = process.env.PORT || "8080";
     server = Bun.serve({
-      fetch: (req, server) => {
-        if (server.upgrade(req)) {
-          return;
-        }
-        return app.fetch(req, server);
-      },
+      fetch: app.fetch,
       port,
-      websocket: {
-        message(ws, message) {
-          console.log(`WebSocket message: ${message}`);
-          ws.send(message);
-          // a message is received
-        },
-        open(ws) {
-          console.log(`WebSocket opened`);
-          // a socket is opened
-        },
-        close(ws, code, message) {
-          console.log(`WebSocket closed`);
-          // a socket is closed
-        },
-        drain(ws) {
-          // the socket is ready to receive more data
-        },
-      },
+      websocket: websocket,
     });
     console.log(`App started on port: ${port}`);
   } catch (err) {
