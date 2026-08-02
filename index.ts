@@ -5,14 +5,16 @@ import pino from "pino";
 import { secureHeaders } from "hono/secure-headers";
 import { cors } from "hono/cors";
 import {
+  type BunWebSocketData,
   serveStatic,
   upgradeWebSocket,
   websocket,
-  type BunWebSocketData,
 } from "hono/bun";
 import { requestId } from "hono/request-id";
 import { connectionOK, closeConnection } from "./src/v1/db/connect";
 import { v1Routes } from "./src/v1/api";
+import { WebSocketManager } from "./src/v1/services/webSocketManager";
+import { WsConnectionsManager } from "./src/v1/services/wsConnectionsManager";
 
 const rootLogger = pino({
   transport: {
@@ -71,23 +73,10 @@ async function stopApp(exitCode: number = 1) {
 
 // TODO
 // app websocket setup
-app.get(
-  "/ws",
-  upgradeWebSocket((c) => {
-    return {
-      onOpen() {
-        console.log("Connection opened");
-      },
-      onMessage(event, ws) {
-        console.log(`Message from client: ${event.data}`);
-        ws.send("Hello from server!");
-      },
-      onClose: () => {
-        console.log("Connection closed");
-      },
-    };
-  }),
-);
+const connectionsManager = new WsConnectionsManager();
+const webSocketManager = new WebSocketManager(connectionsManager);
+
+app.get("/ws/*", upgradeWebSocket(webSocketManager.createConnection));
 
 async function startApp() {
   try {
