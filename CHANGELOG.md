@@ -91,3 +91,13 @@
 - Automatic audit timestamps (createdAt, updatedAt) on core entities
 - Cascade deletes across the entity hierarchy
 - Unique constraints to prevent duplicate memberships and assignments
+
+### Workspace Activity
+
+- save user workspace activity for create/update/delete operations
+- save user workspace membership activity for update/delete operations
+
+### Project Activity
+
+- save user project activity for create/update/delete operations
+- save user project membership activity for update/delete operations
