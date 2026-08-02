@@ -19,9 +19,10 @@ class WorkspacesService {
     filters: {
       userId: string;
       organizationId?: string;
+      workspaceId?: string;
     };
   }) {
-    const baseQuery = this.db
+    let baseQuery = this.db
       .select({
         id: workspaces.id,
         name: workspaces.name,
@@ -55,7 +56,8 @@ class WorkspacesService {
           eq(workspaceMembers.workspaceId, workspaces.id),
           eq(workspaceMembers.organizationMemberId, organizationMembers.id),
         ),
-      );
+      )
+      .$dynamic();
     const filterConditions = [
       or(
         isNotNull(workspaceMembers.organizationMemberId),
@@ -68,10 +70,27 @@ class WorkspacesService {
         eq(workspaces.organizationId, filters.organizationId),
       );
     }
-    const workspacesResult = await baseQuery
+    if (filters.workspaceId) {
+      filterConditions.push(eq(workspaces.id, filters.workspaceId));
+    }
+    baseQuery = baseQuery
       .where(and(...filterConditions))
       .orderBy(workspaces.createdAt);
+    if (filters.workspaceId) {
+      baseQuery = baseQuery.limit(1);
+    }
+    const workspacesResult = await baseQuery;
     return workspacesResult;
+  }
+  async getWorkspace({
+    filters,
+  }: {
+    filters: {
+      userId: string;
+      workspaceId: string;
+    };
+  }) {
+    return (await this.getWorkspaces({ filters }))[0];
   }
   async createWorkspace({
     name,

@@ -71,6 +71,11 @@ const handleCreateWorkspace: Handler<{
       organizationMemberId: organizationMember.id,
       role: "admin",
     });
+    await worksapceActivityService.createWorkspaceActivity({
+      workspaceId: createdWorkspace!.id,
+      organizationMembersId: organizationMember.id,
+      action: { type: "created" },
+    });
     return createdWorkspace;
   });
   return c.json(createdWorkspace);
@@ -100,12 +105,31 @@ const handleUpdateWorkspace: Handler<{
   const updatedWorkspace = await db.transaction(async (tx) => {
     const workspaceService = new WorkspacesService(tx);
     const workspaceActivityService = new WorkspaceActivityService(tx);
+    const oldWorkspace = await workspaceService.getWorkspace({
+      filters: {
+        userId: organizationMember.userId,
+        workspaceId: workspaceId!,
+      },
+    });
     const updatedWorkspace = await workspaceService.updateWorkspace({
       id: workspaceId!,
       name: parsedWorkspace.name,
       description: parsedWorkspace.description,
       organizationId: organizationMember.organizationId,
     });
+    if (oldWorkspace) {
+      await workspaceActivityService.createWorkspaceActivity({
+        workspaceId: workspaceId!,
+        organizationMembersId: organizationMember.userId,
+        action: {
+          type: "updated",
+          meta: {
+            oldWorkspace,
+            newWorkspace: parsedWorkspace,
+          },
+        },
+      });
+    }
     return updatedWorkspace;
   });
   if (!updatedWorkspace) {
