@@ -1,11 +1,11 @@
 import type { WSContext } from "hono/ws";
 
-type RoomType = "project" | "chat";
+type RoomType = "organization" | "workspace" | "project" | "chat";
 
 interface ConnectionData {
   id: string;
   ws: WSContext;
-  jonedRooms: Map<RoomType, Set<string>>;
+  joinedRooms: Map<RoomType, Set<string>>;
 }
 
 class WsConnectionsManager {
@@ -21,20 +21,30 @@ class WsConnectionsManager {
     this.connections.delete(id);
   }
   // project
+  broadcastToProjectRoom(projectId: string, message: string) {
+    for (const connection of this.connections.values()) {
+      if (
+        connection.joinedRooms.has("project") &&
+        connection.joinedRooms.get("project")!.has(projectId)
+      ) {
+        connection.ws.send(message);
+      }
+    }
+  }
   joinProjectRoom(id: string, projectId: string) {
     const connection = this.connections.get(id);
     if (connection) {
-      if (!connection.jonedRooms.has("project")) {
-        connection.jonedRooms.set("project", new Set());
+      if (!connection.joinedRooms.has("project")) {
+        connection.joinedRooms.set("project", new Set());
       }
-      connection.jonedRooms.get("project")!.add(projectId);
+      connection.joinedRooms.get("project")!.add(projectId);
     }
   }
   exitProjectRoom(id: string, projectId: string) {
     const connection = this.connections.get(id);
     if (connection) {
-      if (connection.jonedRooms.has("project")) {
-        connection.jonedRooms.get("project")!.delete(projectId);
+      if (connection.joinedRooms.has("project")) {
+        connection.joinedRooms.get("project")!.delete(projectId);
       }
     }
   }

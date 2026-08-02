@@ -7,26 +7,10 @@ import { eq, and } from "drizzle-orm";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { users } from "../../db/schemas/users";
 import {
-  type AddOrDeleteProjectMembersMeta,
+  type ActivityAction,
   generateUpdateProjectMeta,
   generateAddOrDeleteProjectMembersMeta,
 } from "../utils/projectActivitiesMeta";
-
-type ActivityAction =
-  | {
-      type: "created";
-    }
-  | {
-      type: "updated";
-      meta: Parameters<typeof generateUpdateProjectMeta>[0];
-    }
-  | {
-      type: "deleted";
-    }
-  | {
-      type: "member_added" | "member_removed";
-      meta: AddOrDeleteProjectMembersMeta;
-    };
 
 export class ProjectActivityService {
   constructor(private readonly db: DBExecuter) {}
@@ -79,7 +63,7 @@ export class ProjectActivityService {
     if (action.type === "member_added" || action.type === "member_removed") {
       meta = generateAddOrDeleteProjectMembersMeta(action.meta);
     }
-    const [createdActivity] = await this.db
+    await this.db
       .insert(projectActivities)
       .values({
         activityType: action.type,
@@ -88,6 +72,10 @@ export class ProjectActivityService {
         metadata: meta,
       })
       .returning({ id: projectActivities.id });
-    return createdActivity;
+    return {
+      type: action.type,
+      projectId: projectId,
+      meta,
+    };
   }
 }

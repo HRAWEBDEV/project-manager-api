@@ -15,6 +15,7 @@ import { connectionOK, closeConnection } from "./src/v1/db/connect";
 import { v1Routes } from "./src/v1/api";
 import { WebSocketManager } from "./src/v1/services/webSocketManager";
 import { WsConnectionsManager } from "./src/v1/services/wsConnectionsManager";
+import { registerAppEvents } from "./src/v1/api/utils/registerAppEvents";
 
 const rootLogger = pino({
   transport: {
@@ -76,7 +77,10 @@ async function stopApp(exitCode: number = 1) {
 const connectionsManager = new WsConnectionsManager();
 const webSocketManager = new WebSocketManager(connectionsManager);
 
-app.get("/ws/*", upgradeWebSocket(webSocketManager.createConnection));
+app.get(
+  "/ws/*",
+  upgradeWebSocket((c) => webSocketManager.createConnection(c)),
+);
 
 async function startApp() {
   try {
@@ -85,6 +89,7 @@ async function startApp() {
       process.exit(1);
     }
     const port = process.env.PORT || "8080";
+    registerAppEvents(connectionsManager);
     server = Bun.serve({
       fetch: app.fetch,
       port,

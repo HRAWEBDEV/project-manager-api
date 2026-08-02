@@ -21,6 +21,7 @@ import {
 } from "../../utils/staticImagesService";
 import { ProjectActivityService } from "../../services/projectActivityServices";
 import z from "zod";
+import { eventBus } from "../../utils/eventBus";
 
 const projectsRoutes = new Hono().basePath("/projects");
 
@@ -82,13 +83,16 @@ const handleCreateProject: Handler<{
       organizationMemberIds: [activeOrganizationMember.id],
       projectId: createdProject!.id,
     });
-    await projectActivityService.createProjectActivity({
+    const activity = await projectActivityService.createProjectActivity({
       projectId: createdProject!.id,
       organizationMembersId: activeOrganizationMember.id,
       action: {
         type: "created",
       },
     });
+    if (activity) {
+      eventBus.emit(activity.type, activity);
+    }
     return createdProject;
   });
   return c.json(createdProject);
@@ -142,7 +146,7 @@ const handleUpdateProject: Handler<{
       ...parsedProject,
     });
     if (oldProject) {
-      await projectActivities.createProjectActivity({
+      const activity = await projectActivities.createProjectActivity({
         organizationMembersId: activeOrganizationMember.id,
         projectId: id!,
         action: {
@@ -153,6 +157,9 @@ const handleUpdateProject: Handler<{
           },
         },
       });
+      if (activity) {
+        eventBus.emit(activity.type, activity);
+      }
     }
     return updatedProject;
   });
@@ -222,7 +229,7 @@ const handleUpdateProjectIcon: Handler<{
       if (project?.icon) {
         projectIconService.deleteStaticImage(project.icon);
       }
-      projectActivities.createProjectActivity({
+      const activity = await projectActivities.createProjectActivity({
         projectId: projectId!,
         organizationMembersId: organizationMember.id,
         action: {
@@ -237,6 +244,9 @@ const handleUpdateProjectIcon: Handler<{
           },
         },
       });
+      if (activity) {
+        eventBus.emit(activity.type, activity);
+      }
       return [updatedProject, logoUrl];
     });
     return c.json({
@@ -285,13 +295,16 @@ const handleDeleteProject: Handler<{
       workspaceId: workspaceId!,
       id: id!,
     });
-    await projectActivityService.createProjectActivity({
+    const activity = await projectActivityService.createProjectActivity({
       projectId: deletedProject?.id!,
       organizationMembersId: activeOrganizationMember.id,
       action: {
         type: "deleted",
       },
     });
+    if (activity) {
+      eventBus.emit(activity.type, activity);
+    }
     return deletedProject;
   });
   if (!deletedProject) {
@@ -361,7 +374,7 @@ const handleCreateProjectMember: Handler<{
       organizationMemberIds,
       projectId: projectId!,
     });
-    await projectActivityService.createProjectActivity({
+    const activity = await projectActivityService.createProjectActivity({
       projectId: projectId!,
       organizationMembersId: organizationMember.id,
       action: {
@@ -371,6 +384,9 @@ const handleCreateProjectMember: Handler<{
         },
       },
     });
+    if (activity) {
+      eventBus.emit(activity.type, activity);
+    }
     return createdMember;
   });
   return c.json(createdMember);
@@ -398,7 +414,7 @@ const handleDeleteProjectMember: Handler<{
       id!,
       projectId!,
     );
-    await projectActivityService.createProjectActivity({
+    const activity = await projectActivityService.createProjectActivity({
       projectId: projectId!,
       organizationMembersId: organizationMember.id,
       action: {
@@ -408,6 +424,9 @@ const handleDeleteProjectMember: Handler<{
         },
       },
     });
+    if (activity) {
+      eventBus.emit(activity.type, activity);
+    }
     return deletedMember;
   });
   if (!deletedMember) {

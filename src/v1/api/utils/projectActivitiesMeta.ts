@@ -1,5 +1,21 @@
 import { type Project } from "../../db/schemas/projects";
 
+type ActivityAction =
+  | {
+      type: "created";
+    }
+  | {
+      type: "updated";
+      meta: Parameters<typeof generateUpdateProjectMeta>[0];
+    }
+  | {
+      type: "deleted";
+    }
+  | {
+      type: "member_added" | "member_removed";
+      meta: AddOrDeleteProjectMembersMeta;
+    };
+
 type UpdateProject = Partial<
   Omit<
     Project,
@@ -48,5 +64,9 @@ function generateAddOrDeleteProjectMembersMeta({
   };
 }
 
-export type { UpdateProjectMeta, AddOrDeleteProjectMembersMeta };
+export type {
+  UpdateProjectMeta,
+  AddOrDeleteProjectMembersMeta,
+  ActivityAction,
+};
 export { generateUpdateProjectMeta, generateAddOrDeleteProjectMembersMeta };
