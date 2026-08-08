@@ -2,7 +2,7 @@
 
 ### TODO
 
-- implement logging system
+- implement tasks audit logging
 
 ### Infrastructure
 

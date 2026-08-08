@@ -74,7 +74,7 @@ const handleUserSignup: Handler = async (c) => {
   return c.json({ message: "User signed up successfully" });
 };
 
-authRoutes.post("/signup", handleUserSignup);
+authRoutes.post("/sign-up", handleUserSignup);
 
 const handleUserSignin: Handler = async (c) => {
   const { username, password } = await c.req.json();
