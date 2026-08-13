@@ -42,7 +42,10 @@ const handleUpdateUserInfo: Handler<{
       email,
       phoneNumber,
     });
-  const updatedUser = usersService.updateUser({ id: user.id, ...parsedBody });
+  const updatedUser = await usersService.updateUser({
+    id: user.id,
+    ...parsedBody,
+  });
   return c.json(updatedUser);
 };
 usersRoutes.patch("/", handleUpdateUserInfo);
