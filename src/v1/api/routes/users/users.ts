@@ -16,8 +16,36 @@ import {
   ImageTooLargeError,
   InvalidImageTypeError,
 } from "../../utils/staticImagesService";
+import { updateUserSchema } from "../../../db/schemas/users";
 
 const usersRoutes = new Hono().basePath("/users");
+
+const handleUpdateUserInfo: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const { username, firstName, lastName, email, phoneNumber } =
+    await c.req.json();
+  const user = getContextUser(c);
+  const usersService = new UsersService(db);
+  const parsedBody = updateUserSchema
+    .pick({
+      username: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phoneNumber: true,
+    })
+    .parse({
+      username,
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+    });
+  const updatedUser = usersService.updateUser({ id: user.id, ...parsedBody });
+  return c.json(updatedUser);
+};
+usersRoutes.patch("/", handleUpdateUserInfo);
 
 const handleGetUserInfo: Handler<{
   Variables: WithSessionUserVariables["Variables"];
