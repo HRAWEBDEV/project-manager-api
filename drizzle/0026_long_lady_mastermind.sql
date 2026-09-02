@@ -1,1 +1,0 @@
-ALTER TABLE "task_approvers" ADD COLUMN "approved" boolean DEFAULT false NOT NULL;

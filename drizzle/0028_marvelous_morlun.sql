@@ -1,1 +1,0 @@
-CREATE TYPE "public"."project_activity_type" AS ENUM('created', 'updated', 'deleted');

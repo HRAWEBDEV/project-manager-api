@@ -1,1 +1,0 @@
-ALTER TABLE "tasks_checklists" RENAME COLUMN "order_no" TO "order";

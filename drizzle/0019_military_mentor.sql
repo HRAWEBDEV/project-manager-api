@@ -1,1 +1,0 @@
-ALTER TABLE "tags" ADD CONSTRAINT "tag_workspace_name_unique" UNIQUE("name","workspace_id");

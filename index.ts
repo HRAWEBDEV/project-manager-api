@@ -102,7 +102,8 @@ async function startApp() {
   }
 }
 
-process.on("SIGINT", stopApp);
-process.on("SIGTERM", stopApp);
+// TODO does not work on linux
+process.on("SIGINT", () => stopApp(0));
+process.on("SIGTERM", () => stopApp(0));
 
 startApp();
