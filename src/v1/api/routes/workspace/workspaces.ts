@@ -113,6 +113,7 @@ const handleUpdateWorkspace: Handler<{
     });
     const updatedWorkspace = await workspaceService.updateWorkspace({
       id: workspaceId!,
+      userId: organizationMember.userId,
       name: parsedWorkspace.name,
       description: parsedWorkspace.description,
       organizationId: organizationMember.organizationId,

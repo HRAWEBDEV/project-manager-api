@@ -131,18 +131,25 @@ class WorkspacesService {
   }
   async updateWorkspace({
     id,
+    userId,
     name,
     description,
     organizationId,
-  }: Pick<Workspace, "id" | "organizationId"> &
-    Partial<Pick<InsertWorkspace, "name" | "description">>) {
+  }: Pick<Workspace, "id" | "organizationId"> & { userId: string } & Partial<
+      Pick<InsertWorkspace, "name" | "description">
+    >) {
     let slug: string | undefined = undefined;
     if (name) {
-      slug = `${slugify(name, {
-        trim: true,
-        strict: true,
-        lower: true,
-      })}_${nanoid(8)}`;
+      const currentWorkspace = await this.getWorkspace({
+        filters: { userId, workspaceId: id },
+      });
+      if (currentWorkspace && currentWorkspace.name !== name) {
+        slug = `${slugify(name, {
+          trim: true,
+          strict: true,
+          lower: true,
+        })}_${nanoid(8)}`;
+      }
     }
     const [updatedWorkspace] = await this.db
       .update(workspaces)
