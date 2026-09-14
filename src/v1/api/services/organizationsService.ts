@@ -12,12 +12,17 @@ import { eq, and } from "drizzle-orm";
 class OrganizationsService {
   constructor(private readonly db: DBExecuter) {}
   async getOrganizations({
-    filters: { userId },
+    filters: { userId, organizationId },
   }: {
     filters: {
       userId: string;
+      organizationId?: string;
     };
   }) {
+    const filterConditions = [eq(organizationMembers.userId, userId)];
+    if (organizationId) {
+      filterConditions.push(eq(organizations.id, organizationId));
+    }
     const organizationsResult = await this.db
       .select({
         id: organizations.id,
@@ -37,9 +42,19 @@ class OrganizationsService {
           eq(organizationMembers.userId, userId),
         ),
       )
-      .where(and(eq(organizationMembers.userId, userId)))
+      .where(and(...filterConditions))
       .orderBy(organizations.createdAt);
     return organizationsResult;
+  }
+  async getOrganization({
+    filters,
+  }: {
+    filters: {
+      userId: string;
+      organizationId: string;
+    };
+  }) {
+    return (await this.getOrganizations({ filters }))[0];
   }
   async createOrganization({
     name,
