@@ -71,6 +71,7 @@ class OrganizationsService {
   }: Pick<Organization, "id"> &
     Partial<Pick<InsertOrganization, "name" | "logo" | "description">>) {
     let slug: string | undefined = undefined;
+    // todo check if the organization name changes then change organization slug
     if (name) {
       slug = `${slugify(name, {
         lower: true,
