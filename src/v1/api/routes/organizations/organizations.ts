@@ -25,6 +25,7 @@ const organizationsRoutes = new Hono().basePath("/organizations");
 const handleUpdateOrganization: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
+  const user = getContextUser(c);
   const organizationMember = getContextUserOrganizationMember(c);
   const { name, description } = await c.req.json();
   const parsedBody = updateOrganizationSchema
@@ -33,6 +34,7 @@ const handleUpdateOrganization: Handler<{
   const organizationService = new OrganizationsService(db);
   const updatedOrganization = await organizationService.updateOrganization({
     id: organizationMember.organizationId,
+    userId: user.id,
     name: parsedBody.name,
     description: parsedBody.description,
   });
@@ -53,6 +55,7 @@ const handleUpdateOrganizationLogo: Handler<{
 }> = async (c) => {
   const parseBody = await c.req.parseBody();
   const image = parseBody.image;
+  const user = getContextUser(c);
   const organizationMember = getContextUserOrganizationMember(c);
   const organizationService = new OrganizationsService(db);
   if (!(image instanceof File)) {
@@ -72,6 +75,7 @@ const handleUpdateOrganizationLogo: Handler<{
     const logoUrl = await organizationLogoService.saveStaticImage(image);
     const updatedUser = await organizationService.updateOrganization({
       id: organizationMember.organizationId,
+      userId: user.id,
       logo: logoUrl,
     });
     return c.json({

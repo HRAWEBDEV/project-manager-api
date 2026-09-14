@@ -80,19 +80,25 @@ class OrganizationsService {
 
   async updateOrganization({
     id,
+    userId,
     name,
     logo,
     description,
-  }: Pick<Organization, "id"> &
-    Partial<Pick<InsertOrganization, "name" | "logo" | "description">>) {
+  }: Pick<Organization, "id"> & { userId: string } & Partial<
+      Pick<InsertOrganization, "name" | "logo" | "description">
+    >) {
     let slug: string | undefined = undefined;
-    // todo check if the organization name changes then change organization slug
     if (name) {
-      slug = `${slugify(name, {
-        lower: true,
-        strict: true,
-        trim: true,
-      })}_${nanoid(8)}`;
+      const currentOrganization = await this.getOrganization({
+        filters: { userId, organizationId: id },
+      });
+      if (currentOrganization && currentOrganization.name !== name) {
+        slug = `${slugify(name, {
+          lower: true,
+          strict: true,
+          trim: true,
+        })}_${nanoid(8)}`;
+      }
     }
     const [updatedOrganization] = await this.db
       .update(organizations)
