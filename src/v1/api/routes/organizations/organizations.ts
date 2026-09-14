@@ -26,14 +26,15 @@ const handleUpdateOrganization: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
   const organizationMember = getContextUserOrganizationMember(c);
-  const { name } = await c.req.json();
+  const { name, description } = await c.req.json();
   const parsedBody = updateOrganizationSchema
-    .pick({ name: true })
-    .parse({ name });
+    .pick({ name: true, description: true })
+    .parse({ name, description });
   const organizationService = new OrganizationsService(db);
   const updatedOrganization = await organizationService.updateOrganization({
     id: organizationMember.organizationId,
     name: parsedBody.name,
+    description: parsedBody.description,
   });
   return c.json(updatedOrganization);
 };

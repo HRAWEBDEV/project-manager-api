@@ -67,8 +67,9 @@ class OrganizationsService {
     id,
     name,
     logo,
+    description,
   }: Pick<Organization, "id"> &
-    Partial<Pick<InsertOrganization, "name" | "logo">>) {
+    Partial<Pick<InsertOrganization, "name" | "logo" | "description">>) {
     let slug: string | undefined = undefined;
     if (name) {
       slug = `${slugify(name, {
@@ -83,6 +84,7 @@ class OrganizationsService {
         name,
         logo,
         slug,
+        description,
       })
       .where(eq(organizations.id, id))
       .returning({
