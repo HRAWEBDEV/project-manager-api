@@ -32,6 +32,7 @@ class WorkspacesService {
         organizationId: workspaces.organizationId,
         organizationName: organizations.name,
         organizationRole: organizationMembers.role,
+        organizationSlug: organizations.slug,
         workspaceMemberRole: sql<string>`
           CASE
             WHEN ${organizationMembers.role} = ${"owner"}
