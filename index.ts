@@ -48,7 +48,11 @@ app.use(
   }),
 );
 // secure headers
-app.use(secureHeaders());
+app.use(
+  secureHeaders({
+    crossOriginResourcePolicy: "cross-origin",
+  }),
+);
 // attach api routes
 api.route("/", v1Routes);
 app.route("/", api);
@@ -94,6 +98,7 @@ async function startApp() {
       fetch: app.fetch,
       port,
       websocket: websocket,
+      hostname: "0.0.0.0",
     });
     console.log(`App started on port: ${port}`);
   } catch (err) {
