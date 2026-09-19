@@ -281,6 +281,82 @@ projectsRoutes.post(
   handleUpdateProjectIcon,
 );
 
+const handleDeleteProjectIcon: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const projectId = c.req.param("id");
+  const workspaceId = getHeaderActiveWorkspace(c);
+  const organizationMember = getContextUserOrganizationMember(c);
+  const projectService = new ProjectsService(db);
+  const projectIconService = new ProjectIconService();
+  const project = await projectService.getProject({
+    filters: {
+      userId: user.id,
+      workspaceId: workspaceId!,
+      projectId: projectId!,
+    },
+  });
+  if (!project) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Project not found",
+      }),
+    );
+  }
+  if (!project.icon) {
+    return c.json({
+      message: "icon removed successfully",
+      projectId: project.id,
+    });
+  }
+  await db.transaction(async (tx) => {
+    const projectService = new ProjectsService(tx);
+    const projectActivities = new ProjectActivityService(tx);
+    await projectIconService.deleteStaticImage(project.icon!);
+    await projectService.updateProject({
+      id: projectId!,
+      organizationId: organizationMember.organizationId,
+      workspaceId: workspaceId!,
+      icon: "",
+    });
+    const activity = await projectActivities.createProjectActivity({
+      projectId: projectId!,
+      organizationMembersId: organizationMember.id,
+      action: {
+        type: "updated",
+        meta: {
+          oldProject: {
+            icon: project.icon,
+          },
+          newProject: {
+            icon: "",
+          },
+        },
+      },
+    });
+    if (activity) {
+      eventBus.emit(activity.type, activity);
+    }
+  });
+  return c.json({
+    message: "icon removed successfully",
+    projectId: project.id,
+  });
+};
+
+projectsRoutes.delete(
+  "/:id/icon",
+  checkUserPermission({
+    type: "organizationAndWorkspace",
+    rolePermission: "project:update",
+  }),
+  handleDeleteProjectIcon,
+);
+
 const handleDeleteProject: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
