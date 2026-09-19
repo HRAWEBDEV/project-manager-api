@@ -68,8 +68,6 @@ const handleUpdateOrganizationLogo: Handler<{
       }),
     );
   }
-  const url = new URL(c.req.url);
-  const baseUrl = url.origin;
   const organizationLogoService = new OrganizationLogoService();
   try {
     const logoUrl = await organizationLogoService.saveStaticImage(image);
@@ -79,8 +77,8 @@ const handleUpdateOrganizationLogo: Handler<{
       logo: logoUrl,
     });
     return c.json({
-      message: "Avatar updated successfully",
-      avatarUrl: `${baseUrl}${logoUrl}`,
+      message: "logo updated successfully",
+      avatarUrl: logoUrl,
       userId: updatedUser ? updatedUser.id : null,
     });
   } catch (err) {
@@ -108,6 +106,54 @@ organizationsRoutes.post(
     rolePermission: "organization:update",
   }),
   handleUpdateOrganizationLogo,
+);
+
+const handleDeleteOrganizationLogo: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const user = getContextUser(c);
+  const organizationMember = getContextUserOrganizationMember(c);
+  const organizationService = new OrganizationsService(db);
+  const organizationLogoService = new OrganizationLogoService();
+  const organization = await organizationService.getOrganization({
+    filters: {
+      userId: user.id,
+      organizationId: organizationMember.organizationId,
+    },
+  });
+  if (!organization) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Organization not found",
+      }),
+    );
+  }
+  if (!organization.logo)
+    return c.json({
+      message: "logo removed successfully",
+    });
+  await organizationLogoService.deleteStaticImage(organization.logo);
+  await organizationService.updateOrganization({
+    id: organizationMember.organizationId,
+    userId: user.id,
+    logo: "",
+  });
+  return c.json({
+    message: "logo removed successfully",
+    organizationId: organization.id,
+  });
+};
+
+organizationsRoutes.delete(
+  "/logo",
+  checkUserPermission({
+    type: "organization",
+    rolePermission: "organization:update",
+  }),
+  handleDeleteOrganizationLogo,
 );
 
 // invitations
