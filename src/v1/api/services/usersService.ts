@@ -116,6 +116,24 @@ class UsersService {
       });
     return updatedUser;
   }
+  async isUsernameAvailable(username: string) {
+    const [existingUser] = await this.db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.username, username))
+      .limit(1);
+    return !existingUser;
+  }
+
+  async isEmailAvailable(email: string) {
+    const [existingUser] = await this.db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    return !existingUser;
+  }
+
   private hashPassword(password: string) {
     return argon2.hash(password, {
       type: argon2.argon2id,
