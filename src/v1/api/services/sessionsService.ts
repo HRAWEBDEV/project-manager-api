@@ -62,7 +62,12 @@ class SessionsService {
       .select()
       .from(sessions)
       .innerJoin(users, eq(sessions.userId, users.id))
-      .where(eq(sessions.token, hashedToken))
+      .where(
+        and(
+          eq(sessions.token, hashedToken),
+          gt(sessions.expiresAt, new Date()),
+        ),
+      )
       .limit(1);
     return sessionUser || null;
   }

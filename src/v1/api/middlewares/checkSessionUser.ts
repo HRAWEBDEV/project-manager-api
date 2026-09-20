@@ -1,12 +1,17 @@
 import { createMiddleware } from "hono/factory";
 import { type MiddlewareHandler } from "hono";
 import { type WithSessionUserVariables } from "../utils/sessionUserContext";
-import { getSessionCookie } from "../services/sessionsService";
+import {
+  getSessionCookie,
+  setSessionCookie,
+} from "../services/sessionsService";
 import { getApiErrorShape } from "../utils/apiTypes";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { SessionsService } from "../services/sessionsService";
 import { db } from "../../db/connect";
 import { setContextSession, setContextUser } from "../utils/sessionUserContext";
+
+const SESSION_REFRESH_THRESHOLD_MS = 1000 * 60 * 5; // 5 minutes
 
 export const checkSessionUser: MiddlewareHandler<{
   Variables: WithSessionUserVariables["Variables"];
@@ -35,6 +40,14 @@ export const checkSessionUser: MiddlewareHandler<{
   }
   setContextUser(c, sessionUser.users);
   setContextSession(c, sessionUser.sessions);
+
+  const remainingMs = sessionUser.sessions.expiresAt.getTime() - Date.now();
+  if (remainingMs < SESSION_REFRESH_THRESHOLD_MS) {
+    const { expiresAt } = await sessionService.refreshSession(token);
+    setContextSession(c, { ...sessionUser.sessions, expiresAt });
+    setSessionCookie({ c, token, expiresAt });
+  }
+
   c.var.logger.info(
     `checking session user: ${sessionUser.users.id} ${sessionUser.users.username} ${sessionUser.users.firstName} ${sessionUser.users.lastName}`,
   );
