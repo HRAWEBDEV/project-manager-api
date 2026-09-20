@@ -147,4 +147,34 @@ const handleUserLogout: Handler = async (c) => {
 
 authRoutes.post("logout", handleUserLogout);
 
+const handleUsernameAvailability: Handler = async (c) => {
+  const { username } = insertUserSchema
+    .pick({
+      username: true,
+    })
+    .parse({
+      username: c.req.query("username"),
+    });
+  const userService = new UsersService(db);
+  const isAvailable = await userService.isUsernameAvailable(username);
+  return c.json({ isAvailable });
+};
+
+authRoutes.get("/username-availability", handleUsernameAvailability);
+
+const handleEmailAvailability: Handler = async (c) => {
+  const { email } = insertUserSchema
+    .pick({
+      email: true,
+    })
+    .parse({
+      email: c.req.query("email"),
+    });
+  const userService = new UsersService(db);
+  const isAvailable = await userService.isEmailAvailable(email);
+  return c.json({ isAvailable });
+};
+
+authRoutes.get("/email-availability", handleEmailAvailability);
+
 export { authRoutes };
