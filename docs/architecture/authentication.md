@@ -28,7 +28,7 @@ This means a leaked database row doesn't hand out usable session tokens — only
 
 Each session row also carries `ipAddress` and `userAgent` (captured via `getUserIpAddress` / `getUserAgent` at sign-up/sign-in time) and an `expiresAt` set to **1 day** from creation (`SessionsService.SESSION_EXPIRE_MS`). Sessions are looked up with `getSessionUser`, which joins `sessions` to `users` on a matching, non-expired token.
 
-`SessionsService` also exposes `validateSession`, `refreshSession`, and `deleteExpiredSessions`, but none of these are currently called by any route or middleware — sessions are fixed-lifetime today (they expire outright after one day) rather than sliding on activity, and there's no cron/job wired up yet to sweep expired rows.
+`SessionsService` also exposes `validateSession` and `deleteExpiredSessions`, but neither is currently called by any route or middleware — there's no cron/job wired up yet to sweep expired rows. `refreshSession`, however, is called from `checkSessionUser` (see below), so sessions do slide on activity rather than being strictly fixed-lifetime.
 
 ## Resolving a session on each request
 
@@ -37,5 +37,6 @@ Each session row also carries `ipAddress` and `userAgent` (captured via `getUser
 1. Read the session cookie. Missing cookie → `401 Unauthorized`.
 2. Look up the session + user via `SessionsService.getSessionUser(token)`. No match (revoked, wrong token, or expired — the join in `getSessionUser` only returns rows where the hash matches) → `401 Unauthorized`.
 3. On success, store the resolved `user` and `session` in request context via `setContextUser` / `setContextSession` (`utils/sessionUserContext.ts`).
+4. If the session's `expiresAt` is less than 5 minutes away (`SESSION_REFRESH_THRESHOLD_MS`), refresh it: call `sessionService.refreshSession(token)` to push `expiresAt` out another `SESSION_EXPIRE_MS` (1 day), re-store the updated session in context via `setContextSession`, and reset the cookie's expiry with `setSessionCookie`. This is what gives active sessions a sliding lifetime — a client making requests at least once every 5 minutes never hits the hard 1-day expiry; an idle client still expires outright at `expiresAt`, since nothing refreshes a session between requests.
 
 Downstream handlers read that identity with `getContextUser(c)` / `getContextSession(c)`. Both getters **throw** if called before `checkSessionUser` has run, rather than returning `undefined` — this is deliberate: a handler that's accidentally reachable without authentication fails loudly instead of leaking `undefined`-shaped data. The same pattern is reused one level up for organization/workspace identity (`getContextUserOrganizationMember`, `getContextUserWorkspaceRole`), so authentication, organization membership, and workspace role are each a separate, independently-enforced context layer.
