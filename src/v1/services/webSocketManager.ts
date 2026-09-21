@@ -62,7 +62,7 @@ export class WebSocketManager {
       }
     }
 
-    function onClose(this: WebSocketManager, _: CloseEvent, ws: WSContext) {
+    function onClose(this: WebSocketManager, _: CloseEvent, __: WSContext) {
       this.connectionManager.removeConnection(connectionId);
     }
 

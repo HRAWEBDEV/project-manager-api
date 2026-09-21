@@ -3,7 +3,7 @@ import { users, type InsertUser, type User } from "../../db/schemas/users";
 import { organizations } from "../../db/schemas/organizations";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import * as argon2 from "argon2";
-import { and, eq, ilike, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 class UsersService {
   constructor(private readonly db: DBExecuter) {}
