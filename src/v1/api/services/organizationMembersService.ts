@@ -53,11 +53,11 @@ class OrganizationMembersService {
         userPhoneNumber: users.phoneNumber,
       })
       .from(organizationMembers)
-      .leftJoin(
+      .innerJoin(
         organizations,
         eq(organizations.id, organizationMembers.organizationId),
       )
-      .leftJoin(users, eq(users.id, organizationMembers.userId))
+      .innerJoin(users, eq(users.id, organizationMembers.userId))
       .where(eq(organizationMembers.organizationId, filters.organizationId))
       .orderBy(organizationMembers.joinedAt);
     return members;
