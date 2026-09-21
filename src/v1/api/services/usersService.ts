@@ -3,7 +3,7 @@ import { users, type InsertUser, type User } from "../../db/schemas/users";
 import { organizations } from "../../db/schemas/organizations";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import * as argon2 from "argon2";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, ilike, inArray, sql } from "drizzle-orm";
 
 class UsersService {
   constructor(private readonly db: DBExecuter) {}
@@ -15,6 +15,7 @@ class UsersService {
       userId?: string;
       ids?: string[];
       active?: boolean;
+      email?: string;
     };
     paging?: {
       page: number;
@@ -30,6 +31,9 @@ class UsersService {
     }
     if (filters.active !== undefined) {
       filterConditions.push(eq(users.active, filters.active));
+    }
+    if (filters.email) {
+      filterConditions.push(ilike(users.email, `${filters.email}%`));
     }
     const whereClause = filterConditions.length
       ? and(...filterConditions)

@@ -25,6 +25,7 @@ const handleGetUsers: Handler<{
 }> = async (c) => {
   const ids = c.req.query("ids");
   const active = c.req.query("active");
+  const email = c.req.query("email");
   const page = c.req.query("page");
   const pageSize = c.req.query("pageSize");
   const usersService = new UsersService(db);
@@ -32,6 +33,7 @@ const handleGetUsers: Handler<{
     filters: {
       ids: ids ? ids.split(",") : undefined,
       active: active === undefined ? undefined : active === "true",
+      email,
     },
     paging:
       page && pageSize
