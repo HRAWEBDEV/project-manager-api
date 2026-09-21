@@ -3,10 +3,64 @@ import { users, type InsertUser, type User } from "../../db/schemas/users";
 import { organizations } from "../../db/schemas/organizations";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import * as argon2 from "argon2";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 class UsersService {
   constructor(private readonly db: DBExecuter) {}
+  async getUsers({
+    filters,
+  }: {
+    filters: {
+      userId?: string;
+      ids?: string[];
+      active?: boolean;
+    };
+  }) {
+    let baseQuery = this.db
+      .select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        phoneNumber: users.phoneNumber,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        avatar: users.avatar,
+        emailVerified: users.emailVerified,
+        phoneNumberVerified: users.phoneNumberVerified,
+        active: users.active,
+      })
+      .from(users)
+      .$dynamic();
+    const filterConditions = [];
+    if (filters.userId) {
+      filterConditions.push(eq(users.id, filters.userId));
+    }
+    if (filters.ids) {
+      filterConditions.push(inArray(users.id, filters.ids));
+    }
+    if (filters.active !== undefined) {
+      filterConditions.push(eq(users.active, filters.active));
+    }
+    if (filterConditions.length) {
+      baseQuery = baseQuery.where(and(...filterConditions));
+    }
+    baseQuery = baseQuery.orderBy(users.createdAt);
+    if (filters.userId) {
+      baseQuery = baseQuery.limit(1);
+    }
+    const usersResult = await baseQuery;
+    return usersResult;
+  }
+  async getUser({
+    filters,
+  }: {
+    filters: {
+      userId: string;
+      active?: boolean;
+    };
+  }) {
+    return (await this.getUsers({ filters }))[0];
+  }
   async createUser({
     firstName,
     lastName,
