@@ -16,6 +16,7 @@ class UsersService {
       ids?: string[];
       active?: boolean;
       email?: string;
+      username?: string;
     };
     paging?: {
       page: number;
@@ -33,7 +34,10 @@ class UsersService {
       filterConditions.push(eq(users.active, filters.active));
     }
     if (filters.email) {
-      filterConditions.push(ilike(users.email, `${filters.email}%`));
+      filterConditions.push(eq(users.email, `${filters.email}%`));
+    }
+    if (filters.username) {
+      filterConditions.push(eq(users.username, `${filters.username}%`));
     }
     const whereClause = filterConditions.length
       ? and(...filterConditions)
@@ -44,12 +48,9 @@ class UsersService {
         id: users.id,
         username: users.username,
         email: users.email,
-        phoneNumber: users.phoneNumber,
         firstName: users.firstName,
         lastName: users.lastName,
         avatar: users.avatar,
-        emailVerified: users.emailVerified,
-        phoneNumberVerified: users.phoneNumberVerified,
         active: users.active,
       })
       .from(users)
