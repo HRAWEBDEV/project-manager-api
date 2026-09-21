@@ -3,19 +3,38 @@ import { users, type InsertUser, type User } from "../../db/schemas/users";
 import { organizations } from "../../db/schemas/organizations";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import * as argon2 from "argon2";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 class UsersService {
   constructor(private readonly db: DBExecuter) {}
   async getUsers({
     filters,
+    paging,
   }: {
     filters: {
       userId?: string;
       ids?: string[];
       active?: boolean;
     };
+    paging?: {
+      page: number;
+      pageSize: number;
+    };
   }) {
+    const filterConditions = [];
+    if (filters.userId) {
+      filterConditions.push(eq(users.id, filters.userId));
+    }
+    if (filters.ids) {
+      filterConditions.push(inArray(users.id, filters.ids));
+    }
+    if (filters.active !== undefined) {
+      filterConditions.push(eq(users.active, filters.active));
+    }
+    const whereClause = filterConditions.length
+      ? and(...filterConditions)
+      : undefined;
+
     let baseQuery = this.db
       .select({
         id: users.id,
@@ -30,26 +49,24 @@ class UsersService {
         active: users.active,
       })
       .from(users)
+      .where(whereClause)
       .$dynamic();
-    const filterConditions = [];
-    if (filters.userId) {
-      filterConditions.push(eq(users.id, filters.userId));
-    }
-    if (filters.ids) {
-      filterConditions.push(inArray(users.id, filters.ids));
-    }
-    if (filters.active !== undefined) {
-      filterConditions.push(eq(users.active, filters.active));
-    }
-    if (filterConditions.length) {
-      baseQuery = baseQuery.where(and(...filterConditions));
-    }
     baseQuery = baseQuery.orderBy(users.createdAt);
     if (filters.userId) {
       baseQuery = baseQuery.limit(1);
+    } else if (paging) {
+      baseQuery = baseQuery
+        .limit(paging.pageSize)
+        .offset((paging.page - 1) * paging.pageSize);
     }
-    const usersResult = await baseQuery;
-    return usersResult;
+    const [usersResult, totalResult] = await Promise.all([
+      baseQuery,
+      this.db
+        .select({ total: sql<number>`count(*)::int` })
+        .from(users)
+        .where(whereClause),
+    ]);
+    return { users: usersResult, total: totalResult[0]?.total ?? 0 };
   }
   async getUser({
     filters,
@@ -59,7 +76,7 @@ class UsersService {
       active?: boolean;
     };
   }) {
-    return (await this.getUsers({ filters }))[0];
+    return (await this.getUsers({ filters })).users[0];
   }
   async createUser({
     firstName,

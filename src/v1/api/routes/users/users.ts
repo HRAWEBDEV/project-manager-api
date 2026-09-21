@@ -20,6 +20,28 @@ import { updateUserSchema } from "../../../db/schemas/users";
 
 const usersRoutes = new Hono().basePath("/users");
 
+const handleGetUsers: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const ids = c.req.query("ids");
+  const active = c.req.query("active");
+  const page = c.req.query("page");
+  const pageSize = c.req.query("pageSize");
+  const usersService = new UsersService(db);
+  const { users, total } = await usersService.getUsers({
+    filters: {
+      ids: ids ? ids.split(",") : undefined,
+      active: active === undefined ? undefined : active === "true",
+    },
+    paging:
+      page && pageSize
+        ? { page: Number(page), pageSize: Number(pageSize) }
+        : undefined,
+  });
+  return c.json({ users, total });
+};
+usersRoutes.get("/", handleGetUsers);
+
 const handleUpdateUserInfo: Handler<{
   Variables: WithSessionUserVariables["Variables"];
 }> = async (c) => {
