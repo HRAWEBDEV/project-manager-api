@@ -34,10 +34,10 @@ class UsersService {
       filterConditions.push(eq(users.active, filters.active));
     }
     if (filters.email) {
-      filterConditions.push(eq(users.email, `${filters.email}%`));
+      filterConditions.push(eq(users.email, filters.email));
     }
     if (filters.username) {
-      filterConditions.push(eq(users.username, `${filters.username}%`));
+      filterConditions.push(eq(users.username, filters.username));
     }
     const whereClause = filterConditions.length
       ? and(...filterConditions)
