@@ -45,6 +45,7 @@ class OrganizationMembersService {
         joinedAt: organizationMembers.joinedAt,
         addedBy: organizationMembers.addedBy,
         organizationName: organizations.name,
+        userId: users.id,
         username: users.username,
         userAvatar: users.avatar,
         userFirstName: users.firstName,
