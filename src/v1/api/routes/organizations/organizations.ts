@@ -165,6 +165,7 @@ const handleGetInvitations: Handler<{
   const invitations = await organizationInvitationsService.getUserInvitations({
     filters: {
       organizationId: organizationMember.organizationId,
+      userId: c.req.query("userId"),
     },
   });
   return c.json({ invitations });
@@ -213,10 +214,11 @@ const handleDeleteInvitation: Handler<{
   const id = c.req.param("id");
   const organizationMember = getContextUserOrganizationMember(c);
   const organizationInvitationsService = new OrganizationInvitationsService(db);
-  const deletedInvitation = await organizationInvitationsService.deleteInvitation({
-    id: id!,
-    organizationId: organizationMember.organizationId,
-  });
+  const deletedInvitation =
+    await organizationInvitationsService.deleteInvitation({
+      id: id!,
+      organizationId: organizationMember.organizationId,
+    });
   if (!deletedInvitation) {
     c.status(StatusCodes.NOT_FOUND);
     return c.json(

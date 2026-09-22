@@ -217,6 +217,10 @@ const handleUpdateUserInvitation: Handler<{
         userId: user.id,
         addedBy: updatedInvitation.userId,
       });
+      await organizationInvitationsService.deleteInvitation({
+        organizationId: updatedInvitation.organizationId,
+        id: updatedInvitation.id,
+      });
     }
     return updatedInvitation;
   });
