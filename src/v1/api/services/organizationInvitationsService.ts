@@ -134,14 +134,14 @@ class OrganizationInvitationsService {
 
   async deleteInvitation({
     id,
-    userId,
-  }: Pick<OrganizationInvitation, "id" | "userId">) {
+    organizationId,
+  }: Pick<OrganizationInvitation, "id" | "organizationId">) {
     const [deletedInvitation] = await this.db
       .delete(organizationInvitations)
       .where(
         and(
           eq(organizationInvitations.id, id),
-          eq(organizationInvitations.userId, userId),
+          eq(organizationInvitations.organizationId, organizationId),
         ),
       )
       .returning({

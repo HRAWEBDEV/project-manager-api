@@ -206,6 +206,38 @@ organizationsRoutes.post(
   }),
   handleInvite,
 );
+
+const handleDeleteInvitation: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  const id = c.req.param("id");
+  const organizationMember = getContextUserOrganizationMember(c);
+  const organizationInvitationsService = new OrganizationInvitationsService(db);
+  const deletedInvitation = await organizationInvitationsService.deleteInvitation({
+    id: id!,
+    organizationId: organizationMember.organizationId,
+  });
+  if (!deletedInvitation) {
+    c.status(StatusCodes.NOT_FOUND);
+    return c.json(
+      getApiErrorShape({
+        status: "failed",
+        code: StatusCodes.NOT_FOUND,
+        message: "Invitation not found",
+      }),
+    );
+  }
+  return c.json(deletedInvitation);
+};
+
+organizationsRoutes.delete(
+  "/invitations/:id",
+  checkUserPermission({
+    type: "organization",
+    rolePermission: "organization_invitation:delete",
+  }),
+  handleDeleteInvitation,
+);
 // members
 const handleGetOrganizationMembers: Handler<{
   Variables: WithSessionUserVariables["Variables"];
