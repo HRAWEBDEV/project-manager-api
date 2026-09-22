@@ -4,6 +4,7 @@ import {
   type OrganizationInvitation,
   organizationInvitations,
 } from "../../db/schemas/organizationInvitations";
+import { alias } from "drizzle-orm/pg-core";
 import { eq, inArray, and, gte } from "drizzle-orm";
 import { users } from "../../db/schemas/users";
 import { organizations } from "../../db/schemas/organizations";
@@ -16,11 +17,12 @@ import {
 class OrganizationInvitationsService {
   constructor(private readonly db: DBExecuter) {}
   getUserInvitations = async ({
-    filters: { userId, organizationId },
+    filters: { userId, organizationId, active },
   }: {
     filters: {
       userId?: string;
       organizationId?: string;
+      active?: boolean;
     };
   }) => {
     if (!userId && !organizationId) {
@@ -43,14 +45,24 @@ class OrganizationInvitationsService {
         .where(eq(users.id, userId));
       filterConditions.push(inArray(organizationInvitations.email, targetUser));
     }
+    if (active) {
+      filterConditions.push(gte(organizationInvitations.expiresAt, new Date()));
+    }
+    const invitedUser = alias(users, "invitedUser");
     const invitations = await this.db
       .select({
         id: organizationInvitations.id,
         organizationId: organizationInvitations.organizationId,
         organizationName: organizations.name,
         userId: organizationInvitations.userId,
-        userName: users.firstName,
+        username: users.username,
+        userFirstName: users.firstName,
         userLastName: users.lastName,
+        invitedUserId: invitedUser.id,
+        invitedUserAvatar: invitedUser.avatar,
+        invitedUsername: invitedUser.username,
+        invitedUserFirstName: invitedUser.firstName,
+        invitedUserLastName: invitedUser.lastName,
         email: organizationInvitations.email,
         status: organizationInvitations.status,
         expiresAt: organizationInvitations.expiresAt,
@@ -59,6 +71,10 @@ class OrganizationInvitationsService {
       })
       .from(organizationInvitations)
       .innerJoin(users, eq(users.id, organizationInvitations.userId))
+      .innerJoin(
+        invitedUser,
+        eq(invitedUser.email, organizationInvitations.email),
+      )
       .innerJoin(
         organizations,
         eq(organizations.id, organizationInvitations.organizationId),
