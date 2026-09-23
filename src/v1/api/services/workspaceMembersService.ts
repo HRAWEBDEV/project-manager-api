@@ -5,6 +5,7 @@ import {
   workspaceMembers,
 } from "../../db/schemas/workspaceMembers";
 import { eq, and, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { workspaces } from "../../db/schemas/workspaces";
 import { organizationMembers } from "../../db/schemas/organizationMembers";
 import { users } from "../../db/schemas/users";
@@ -19,6 +20,7 @@ class WorkspaceMembersService {
       workspaceId: string;
     };
   }) {
+    const addedByUsers = alias(users, "addedByUsers");
     const members = await this.db
       .select({
         id: workspaceMembers.id,
@@ -34,6 +36,9 @@ class WorkspaceMembersService {
         `,
         joinedAt: workspaceMembers.joinedAt,
         addedBy: workspaceMembers.addedBy,
+        addedByUsername: addedByUsers.username,
+        addedByFirstName: addedByUsers.firstName,
+        addedByLastName: addedByUsers.lastName,
         workspaceName: workspaces.name,
         userId: users.id,
         userAvatar: users.avatar,
@@ -53,6 +58,7 @@ class WorkspaceMembersService {
       )
       .innerJoin(organizations, eq(organizations.id, workspaces.organizationId))
       .innerJoin(users, eq(organizationMembers.userId, users.id))
+      .leftJoin(addedByUsers, eq(organizationMembers.addedBy, addedByUsers.id))
       .where(eq(workspaceMembers.workspaceId, filters.workspaceId))
       .orderBy(workspaceMembers.joinedAt);
     return members;
