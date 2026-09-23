@@ -211,12 +211,14 @@ const handleUpdateUserInvitation: Handler<{
         userId: user.id,
         status: parsedBody.status,
       });
-    if (updatedInvitation && updatedInvitation.status === "accepted") {
-      await organizationMembersService.createMember({
-        organizationId: updatedInvitation.organizationId,
-        userId: user.id,
-        addedBy: updatedInvitation.userId,
-      });
+    if (updatedInvitation) {
+      if (updatedInvitation.status === "accepted") {
+        await organizationMembersService.createMember({
+          organizationId: updatedInvitation.organizationId,
+          userId: user.id,
+          addedBy: updatedInvitation.userId,
+        });
+      }
       await organizationInvitationsService.deleteInvitation({
         organizationId: updatedInvitation.organizationId,
         id: updatedInvitation.id,

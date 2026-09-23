@@ -46,13 +46,13 @@ class WorkspaceMembersService {
         organizationName: organizations.name,
       })
       .from(workspaceMembers)
-      .leftJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
-      .leftJoin(
+      .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
+      .innerJoin(
         organizationMembers,
         eq(workspaceMembers.organizationMemberId, organizationMembers.id),
       )
-      .leftJoin(organizations, eq(organizations.id, workspaces.organizationId))
-      .leftJoin(users, eq(organizationMembers.userId, users.id))
+      .innerJoin(organizations, eq(organizations.id, workspaces.organizationId))
+      .innerJoin(users, eq(organizationMembers.userId, users.id))
       .where(eq(workspaceMembers.workspaceId, filters.workspaceId))
       .orderBy(workspaceMembers.joinedAt);
     return members;

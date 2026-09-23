@@ -5,6 +5,7 @@ import {
   organizationMembers,
 } from "../../db/schemas/organizationMembers";
 import { and, eq, not, type SQLWrapper } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { organizations } from "../../db/schemas/organizations";
 import { users } from "../../db/schemas/users";
 
@@ -37,6 +38,7 @@ class OrganizationMembersService {
   }: {
     filters: { organizationId: string };
   }) {
+    const addedByUsers = alias(users, "addedByUsers");
     const members = await this.db
       .select({
         id: organizationMembers.id,
@@ -44,6 +46,9 @@ class OrganizationMembersService {
         role: organizationMembers.role,
         joinedAt: organizationMembers.joinedAt,
         addedBy: organizationMembers.addedBy,
+        addedByUsername: addedByUsers.username,
+        addedByFirstName: addedByUsers.firstName,
+        addedByLastName: addedByUsers.lastName,
         organizationName: organizations.name,
         userId: users.id,
         username: users.username,
@@ -59,6 +64,7 @@ class OrganizationMembersService {
         eq(organizations.id, organizationMembers.organizationId),
       )
       .innerJoin(users, eq(users.id, organizationMembers.userId))
+      .leftJoin(addedByUsers, eq(addedByUsers.id, organizationMembers.addedBy))
       .where(eq(organizationMembers.organizationId, filters.organizationId))
       .orderBy(organizationMembers.joinedAt);
     return members;
