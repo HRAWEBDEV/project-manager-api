@@ -18,6 +18,7 @@ import {
   selectWorkspaceMemberSchema,
 } from "../../../db/schemas/workspaceMembers";
 import { WorkspaceActivityService } from "../../services/workspaceActivityServices";
+import { workspacePermissions } from "../../utils/workspacePermissions";
 
 const workspacesRoutes = new Hono().basePath("/workspaces");
 
@@ -316,5 +317,14 @@ workspacesRoutes.delete(
   }),
   handleDeleteWorkspaceMember,
 );
+
+// permissions
+const handleGetWorkspacePermissions: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  return c.json({ permissions: workspacePermissions });
+};
+
+workspacesRoutes.get("/permissions", handleGetWorkspacePermissions);
 
 export { workspacesRoutes };

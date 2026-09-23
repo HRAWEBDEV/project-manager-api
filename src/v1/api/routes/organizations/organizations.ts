@@ -19,6 +19,7 @@ import {
   ImageTooLargeError,
   InvalidImageTypeError,
 } from "../../utils/staticImagesService";
+import { organizationPermissions } from "../../utils/organizationPermissions";
 
 const organizationsRoutes = new Hono().basePath("/organizations");
 
@@ -345,5 +346,14 @@ organizationsRoutes.delete(
   }),
   handleDeleteOrganizationMember,
 );
+
+// permissions
+const handleGetOrganizationPermissions: Handler<{
+  Variables: WithSessionUserVariables["Variables"];
+}> = async (c) => {
+  return c.json({ permissions: organizationPermissions });
+};
+
+organizationsRoutes.get("/permissions", handleGetOrganizationPermissions);
 
 export { organizationsRoutes };
